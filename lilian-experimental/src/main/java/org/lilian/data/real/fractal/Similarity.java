@@ -1,55 +1,53 @@
 package org.lilian.data.real.fractal;
 
-import static org.junit.Assert.*;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.math.linear.RealVector;
-import org.junit.Test;
 import org.lilian.Global;
-import org.lilian.data.real.AffineMap;
+import org.lilian.data.real.Generator;
 import org.lilian.data.real.Map;
 import org.lilian.data.real.Maps;
 import org.lilian.data.real.Point;
+import org.lilian.data.real.Rotation;
 import org.lilian.data.real.Similitude;
-import org.lilian.util.MatrixTools;
+import org.lilian.util.Series;
 
 public class Similarity
 {
-	private static double VAR = 5.0;
-	private int maxCandidates = 100;
-	private int maxN = 5;
+	private static double VAR = 2.0;
 	
-	private int samples = 10;
-	private double margin = 0.05;
-	
-	private List<Candidate> candidates = new ArrayList<Candidate>(maxCandidates + 1);
-	private List<Point> data;
+	private List<Point> data; 
+	private List<Candidate> candidates = new ArrayList<Candidate>();
+	private int maxN;
+	private int dim;
+	private int samples;
+	private double margin;
+	private int maxCandidates;
+	private double lambda;
 	
 	private int numBoosts = 0;
 	
-	public Similarity(List<Point> data, double margin, int maxN)
+	
+	
+	public Similarity(List<Point> data, int maxN, int samples, double margin,
+			int maxCandidates, double lambda)
 	{
 		this.data = data;
-		this.margin = margin;
 		this.maxN = maxN;
+		this.samples = samples;
+		this.margin = margin;
+		this.maxCandidates = maxCandidates;
+		this.lambda = lambda;
+		
+		dim = data.get(0).size();
 	}
-	
+
 	public void step()
 	{
-		// * Draw a new map
-		Point a0 = data.get(Global.random.nextInt(data.size())),
-		      a1 = data.get(Global.random.nextInt(data.size())),
-		      b0 = data.get(Global.random.nextInt(data.size())),
-		      b1 = data.get(Global.random.nextInt(data.size()));  
-		
-		Map map = Maps.findMap(
-				Arrays.asList(a0, a1),
-				Arrays.asList(b0, b1));
-		
+	
+		Map map = generate();
 		List<Map> powers = powers(map, maxN);
 		
 		boolean boosted = false;
@@ -83,8 +81,41 @@ public class Similarity
 				Collections.shuffle(candidates);
 				
 			candidates = new ArrayList<Candidate>(candidates.subList(0, maxCandidates/2));
-		}
+		}			
+
 	}
+	
+	private static List<Map> powers(Map map, int max)
+	{
+		List<Map >powers = new ArrayList<Map>(max);
+		
+		powers.add(map);
+		Map last = map;
+		
+		for(int i = 0; i < max; i++)
+			powers.add(last = last.compose(map));
+		
+		return powers;
+	}
+	
+	public List<Map> maps()
+	{
+		List<Map> maps = new ArrayList<Map>(candidates.size());
+		for(Candidate candidate : candidates)
+			maps.add(candidate.map());
+		
+		return maps;
+	}
+	
+	public int boosted()
+	{
+		return numBoosts;
+	}
+	
+//	public List<IFS<Similitude>> compose()
+//	{
+//		
+//	}
 	
 	/**
 	 * Tests whether these maps are functionally equal
@@ -110,6 +141,7 @@ public class Similarity
 		
 		return true;
 	}
+	
 	
 	private class Candidate implements Comparable<Candidate>
 	{
@@ -148,93 +180,78 @@ public class Similarity
 		}
 	}
 	
-	public static List<Map> powers(Map map, int max)
+	public List<Point> points(int n)
 	{
-		List<Map >powers = new ArrayList<Map>(max);
+		List<Point> points = new ArrayList<Point>(n);
 		
-		powers.add(map);
-		Map last = map;
+		for(int i = 0; i < n; i++)
+			points.add(point());
 		
-		for(int i = 0; i < max; i++)
-			powers.add(last = last.compose(map));
-		
-		return powers;
+		return points;
 	}
 	
-	public int boosted()
+	public Point point()
 	{
-		return numBoosts;
+		return discretize(data.get(Global.random.nextInt(data.size())), lambda);
 	}
 	
-	public List<Map> maps()
+	public double generateScale()
 	{
-		List<Map> maps = new ArrayList<Map>(candidates.size());
-		for(Candidate candidate : candidates)
-			maps.add(candidate.map());
+		Point[] a = new Point[]{point(), point()};
+		Point[] b = new Point[]{point(), point()};
 		
-		return maps;
+		double al = a[1].getVector().subtract(a[0].getVector()).getNorm();
+		double bl = b[1].getVector().subtract(b[0].getVector()).getNorm();
+		
+		return Math.min(al/bl, bl/al);
 	}
 	
-	/**
-	 * Finds the similitude that maps line segment a to line segment b
-	 * 
-	 * The similitude always aligns points a0 and b0 then rotates, then scales.
-	 * @param a0
-	 * @param a1
-	 * @param b
-	 * @return
-	 */
-	public static Similitude findSimilitude(Point a0, Point a1, Point b0, Point b1)
+	public List<Double> generateTrans()
+	{
+		Point a = point();
+		Point b = point();
+		
+		List<Double> t = new ArrayList<Double>(a.size());
+		for(int i = 0; i < a.size(); i++)
+			t.add(Math.abs(a.get(i) - b.get(i)));
+		
+		return t;
+	}	
+	
+	public List<Double> generateAngles()
+	{			
+		List<Point> a = points(dim);
+		List<Point> b = points(dim);
+		
+		List<Double> angles = Rotation.findAngles(a, b, 2000, 1);
+		
+		return angles;
+	}
+	
+	public Similitude generate()
 	{
 		return new Similitude(
-				findScale(a0, a1, b0, b1),
-				findTranslation(a0, b0),
-				findAngles(a0, a1, b0, b1)
-			);
-		
+				generateScale(),
+				generateTrans(),
+				generateAngles());
 	}
 	
-	public static double findScale(Point a0, Point a1, Point b0, Point b1)
+	public Point[] discretize(Point[] in, double lambda) 
 	{
-		RealVector a = a1.getVector().subtract(a0.getVector());
-		RealVector b = b1.getVector().subtract(b0.getVector());
-		
-		double la = a.getNorm(), lb = b.getNorm();
-		
-		return Math.min(la/lb, lb/la);
+		return new Point[] {
+			discretize(in[0], lambda),
+			discretize(in[1], lambda)};
 	}
 	
-	public static List<Double> findTranslation(Point a, Point b)
+	public Point discretize(Point in, double lambda) 
 	{
-		RealVector t = a.getVector().subtract(b.getVector());
-		
-		ArrayList<Double> list = new ArrayList<Double>(t.getDimension());
-		for(int i = 0; i < t.getDimension(); i++)
-			list.add(t.getEntry(i));
-		
-		return list;
+		return new Point(
+			discretize(in.get(0), lambda),
+			discretize(in.get(1), lambda));
 	}
 	
-	public static List<Double> findAngles(Point a0, Point a1, Point b0, Point b1)
+	public double discretize(double in, double lambda)
 	{
-
-		int dim = a0.size();
-		List<Double> angles	= new ArrayList<Double>((dim*dim-dim)/2);
-		
-		for(int i = 0; i < dim-1; i++)
-			for(int j = i+1; j < dim; j++)
-			{
-				double[] a = new double[]{a1.get(i) - a0.get(i), a1.get(j) - a0.get(j)};
-				double[] b = new double[]{b1.get(i) - b0.get(i), b1.get(j) - b0.get(j)};
-			
-				// product of magnitudes
-				double mag = Math.sqrt((a[0]*a[0] + a[1]*a[1]) * (b[0]*b[0] + b[1]*b[1]));
-				
-				// dot product (= product of magnitudes * cos(angle))
-				double dot = a[0] * b[0] + a[1] * b[1];
-				angles.add( mag == 0.0 ? 0.0 : Math.acos(dot/mag) );
-			}
-		
-		return angles;	
-	}
+		return in - in % lambda;
+	}		
 }
