@@ -1,5 +1,7 @@
 package org.lilian.data.real.fractal;
 
+import static java.lang.Math.abs;
+import static java.lang.Math.pow;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
@@ -17,7 +19,7 @@ import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
 import org.lilian.util.MatrixTools;
 
-public class Similarity
+public class SimilarityScaling
 {
 	private static double VAR = 5.0;
 	private int maxCandidates = 100;
@@ -31,7 +33,7 @@ public class Similarity
 	
 	private int numBoosts = 0;
 	
-	public Similarity(List<Point> data, double margin, int maxN)
+	public SimilarityScaling(List<Point> data, double margin, int maxN)
 	{
 		this.data = data;
 		this.margin = margin;
@@ -45,27 +47,28 @@ public class Similarity
 		      a1 = data.get(Global.random.nextInt(data.size())),
 		      b0 = data.get(Global.random.nextInt(data.size())),
 		      b1 = data.get(Global.random.nextInt(data.size()));  
+
+		double la = a1.getVector().subtract(a0.getVector()).getNorm();
+		double lb = b1.getVector().subtract(b0.getVector()).getNorm();
 		
-		Map map = Maps.findMap(
-				Arrays.asList(a0, a1),
-				Arrays.asList(b0, b1));
-		
-		List<Map> powers = powers(map, maxN);
+		double scale = Math.min(la/lb, lb/la);
 		
 		boolean boosted = false;
 		for(Candidate candidate : candidates)
 		{
 			for(int i = 1; i <= maxN; i++)
-				if(!boosted && equals(candidate.power(i), map, samples, margin))
+				if(!boosted &&
+						abs(pow(candidate.scale(), i) - scale) < margin)
 				{
 					candidate.boost();
 					boosted = true;
 				}
 			
 			for(int i = 1; i <= maxN; i++)
-				if(!boosted && equals(candidate.map(), powers.get(i), samples, margin))
+				if(!boosted && 
+						abs(candidate.scale() - pow(scale, i)) < margin)
 				{
-					candidate.setMap(map);
+					candidate.setScale(scale);
 					candidate.boost();
 					boosted = true;
 				}
@@ -73,7 +76,7 @@ public class Similarity
 
 		// *
 		if(!boosted)
-			candidates.add(new Candidate(map));
+			candidates.add(new Candidate(scale));
 		
 		if(candidates.size() > maxCandidates)
 		{
@@ -86,39 +89,19 @@ public class Similarity
 		}
 	}
 	
-	/**
-	 * Tests whether these maps are functionally equal
-	 * 
-	 * @param first
-	 * @param second
-	 * @param margin
-	 * @return
-	 */
-	public static boolean equals(Map first, Map second, int samples, double margin)
-	{
-		List<Point> in = new ArrayList<Point>(samples);
-		for(int i = 0; i < samples; i++)
-			in.add(Point.random(first.dimension(), VAR));
-			
-		List<Point> outFirst = first.map(in);
-		List<Point> outSecond = second.map(in);
-		
-		for(int i = 0; i < samples; i++)
-			for(int j = 0; j < first.dimension(); j++)
-				if(Math.abs(outFirst.get(i).get(j) - outSecond.get(i).get(j)) > margin)
-					return false;
-		
-		return true;
-	}
-	
 	private class Candidate implements Comparable<Candidate>
 	{
 		double weight = 1.0;
-		List<Map> powers;
-	
-		public Candidate(Map map)
+		double scale;
+		
+		public Candidate(double scale)
 		{
-			setMap(map);
+			this.scale = scale;
+		}
+
+		public double scale()
+		{
+			return scale;
 		}
 
 		public void boost()
@@ -127,19 +110,9 @@ public class Similarity
 			numBoosts++;
 		}
 		
-		public Map map()
+		public void setScale(double scale)
 		{
-			return powers.get(0);
-		}
-		
-		public Map power(int n)
-		{
-			return powers.get(n-1);
-		}
-		
-		public void setMap(Map map)
-		{
-			powers = powers(map, maxN);
+			this.scale = scale;
 		}
 
 		public int compareTo(Candidate other)
@@ -166,13 +139,13 @@ public class Similarity
 		return numBoosts;
 	}
 	
-	public List<Map> maps()
+	public List<Double> scales()
 	{
-		List<Map> maps = new ArrayList<Map>(candidates.size());
+		List<Double> scales = new ArrayList<Double>(candidates.size());
 		for(Candidate candidate : candidates)
-			maps.add(candidate.map());
+			scales.add(candidate.scale());
 		
-		return maps;
+		return scales;
 	}
 	
 	/**
