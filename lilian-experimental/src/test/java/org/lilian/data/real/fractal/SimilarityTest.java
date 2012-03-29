@@ -19,7 +19,7 @@ import org.lilian.util.Series;
 public class SimilarityTest
 {
 	public static int DATASIZE = 10000;
-	public static int STEPS = 10000;
+	public static int STEPS = 300;
 	
 	// @Test
 	public void testEquals()
@@ -38,21 +38,21 @@ public class SimilarityTest
 	{
 		List<Point> data = IFSs.sierpinski().generator().generate(DATASIZE);
 		
-		Similarity sim = new Similarity(data, 3, 3, 0.01, 1000, 0.1);
+		MCSimilarity sim = new MCSimilarity(data, 100, 100, 10, 50, 3);
 		
 		Functions.tic();
 		for(int i : Series.series(STEPS))
-		{
+		{		
 			sim.step();
-			if(i % (STEPS/100) == 0)
+
+			if(i % (STEPS/30) == 0)
 			{
-				System.out.println(i + ": " + sim.boosted() + " " + Functions.toc());
-				Functions.tic();
+				sim.print(System.out);
+				System.out.println("****************");
 			}
 		}
-		
-		for(Map map : sim.maps())
-			System.out.println(map);
+	
+		sim.print(System.out);
 	}
 
 	// @Test

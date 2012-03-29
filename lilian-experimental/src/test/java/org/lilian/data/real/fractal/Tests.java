@@ -84,7 +84,7 @@ public class Tests
 //				2, initial.size()*2, 0, 
 //				ES.CrossoverMode.UNIFORM);
 		
-		Builder<AffineMap> builder = AffineMap.builder(2);
+		Builder<AffineMap> builder = AffineMap.affineMapBuilder(2);
 		ES<AffineMap> es = new ES<AffineMap>(
 			builder, new MapTarget(in, out), ES.initial(POP_SIZE, builder.numParameters(), 0.1)
 			);
