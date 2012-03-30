@@ -3,6 +3,7 @@ package org.lilian.data.real.fractal.em;
 import static org.lilian.util.Series.series;
 
 import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.*;
 
 import org.apache.commons.math.linear.ArrayRealVector;
@@ -25,7 +26,7 @@ import org.lilian.util.Series;
  * @author Peter
  *
  */
-public class EM {
+public class EM implements Serializable {
 	
 	private static final double DEV = 0.8;
 	private static final double PERTURB_VAR = 0.001;
@@ -261,7 +262,7 @@ public class EM {
 		return maps;
 	}
 		
-	private class Node
+	private class Node implements Serializable
 	{
 		Node parent;
 		Map<Integer, Node> children;
