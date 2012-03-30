@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -46,6 +47,13 @@ public class FractalEA extends AbstractExperiment
 	protected int components;
 	protected int dim;
 	
+	/**
+	 * State information
+	 */
+	public @State int currentGeneration;
+	public @State ES<IFS<Similitude>> es;
+	public @State List<Double> scores;
+	
 	private Distance<List<Point>> distance = new HausdorffDistance<Point>(new SquaredEuclideanDistance());
 
 	private double bestDistance = Double.MAX_VALUE;
@@ -67,37 +75,53 @@ public class FractalEA extends AbstractExperiment
 	@Override
 	protected void body()
 	{
-		File dir = Environment.current().directory();
-		PrintStream out = Environment.current().out();
+		Functions.tic();		
+		while(currentGeneration < generations)
+		{
+			currentGeneration++;
+
+			es.breed();
+			double d = distance.distance(
+					Datasets.sample(data, SAMPLE_SIZE_TEST),
+					es.best().instance().generator().generate(SAMPLE_SIZE_TEST));
+			scores.add(d);
+			bestDistance = Math.min(bestDistance, d);
+
+			if(currentGeneration % (generations/5) == 0)
+			{
+				write(es.best().instance(), dir, String.format("generation%04d", currentGeneration));
+				out.println("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
+				Functions.tic();				
+				save();
+			
+			}	
+		}
+	}
+	
+	public void setup()
+	{
+		currentGeneration = 0;
 		
 		Target<IFS<Similitude>> target = new IFSTarget<Similitude>(SAMPLE_SIZE, data); 
 		
 		Builder<IFS<Similitude>> builder = IFS.builder(components, Similitude.similitudeBuilder(dim));
 		List<List<Double>> initial = ES.initial(populationSize, builder.numParameters(), VAR);
 		
-		ES<IFS<Similitude>> es = new ES<IFS<Similitude>>(
+		scores = new ArrayList<Double>(generations);
+		
+		es = new ES<IFS<Similitude>>(
 				builder, target, initial, 
 				2, initial.size()*2, 0, 
 				ES.CrossoverMode.UNIFORM);
-		
-		Functions.tic();		
-		for(int i : Series.series(generations))
-		{
-			es.breed();
-			double d = distance.distance(
-					Datasets.sample(data, SAMPLE_SIZE_TEST),
-					es.best().instance().generator().generate(SAMPLE_SIZE_TEST));
-			bestDistance = Math.min(bestDistance, d);
-
-			if(i%(generations/20) == 0)
-			{
-				write(es.best().instance(), dir, String.format("generation%04d", i));
-				out.println("generation " + i + ": " + Functions.toc() + " seconds.");
-				Functions.tic();				
-			}	
-		}
+				
 	}
 	
+	@Result(name = "Scores")
+	public List<Double> scores()
+	{
+		return scores;
+	}
+
 	@Result(name = "Best score")
 	public double bestScore()
 	{
