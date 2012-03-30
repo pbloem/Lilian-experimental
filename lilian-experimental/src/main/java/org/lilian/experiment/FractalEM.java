@@ -118,6 +118,16 @@ public class FractalEM extends AbstractExperiment
 		
 		em = new EM(components, dim, depth, data, VAR);
 		em.distributePoints(SAMPLE_SIZE);
+		
+		BufferedImage im = Draw.draw(data, 1000, false);
+		try
+		{
+			ImageIO.write(im, "png", new File(dir, "data.png"));
+		} catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
+		
 	}
 	
 	@Result(name = "Scores")
@@ -143,7 +153,7 @@ public class FractalEM extends AbstractExperiment
 		double[] xrange = new double[]{-2.1333, 2.1333};
 		double[] yrange = new double[]{-1.2, 1.2};
 		
-		BufferedImage image = Draw.draw(ifs.generator(), 10000000, xrange, yrange, 1920, 1080, true);
+		BufferedImage image = Draw.draw(ifs.generator(), 50000000, xrange, yrange, 1920, 1080, true);
 		try
 		{
 			ImageIO.write(image, "PNG", new File(dir, name + ".png") );
