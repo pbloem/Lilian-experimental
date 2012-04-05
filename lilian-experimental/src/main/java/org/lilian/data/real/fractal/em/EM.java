@@ -11,6 +11,7 @@ import org.apache.commons.math.linear.RealVector;
 import org.lilian.Global;
 import org.lilian.data.real.AffineMap;
 import org.lilian.data.real.Datasets;
+import org.lilian.data.real.MVN;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSs;
@@ -31,7 +32,8 @@ public class EM implements Serializable {
 	private static final double DEV = 0.8;
 	private static final double PERTURB_VAR = 0.001;
 	private static final double THRESHOLD = 0.00000000001;
-
+	private static final int PAIR_SAMPLE_SIZE = 20;
+	private static final double PAIR_SAMPLE_VAR  = 0.01;
 	
 	private List<Point> data;
 	
@@ -264,6 +266,8 @@ public class EM implements Serializable {
 		
 	private class Node implements Serializable
 	{
+		MVN mvn = null;
+		
 		Node parent;
 		Map<Integer, Node> children;
 		int depth = 0;
@@ -272,7 +276,8 @@ public class EM implements Serializable {
 		double frequency;
 		
 		boolean isLeaf = false;
-		RealVector pointSum = new ArrayRealVector(dim);
+		// RealVector pointSum = new ArrayRealVector(dim);
+		List<Point> points = new ArrayList<Point>();
 		
 		public Node(int symbol, Node parent)
 		{
@@ -317,7 +322,9 @@ public class EM implements Serializable {
 		public void show(List<Integer> code, Point point)
 		{
 			frequency++;
-			pointSum = pointSum.add(point.getVector());
+			// pointSum = pointSum.add(point.getVector());
+			points.add(point);
+			mvn = null; // signal that the mvn need to be recomputed
 			
 			if(code.size() == 0)
 			{
@@ -332,20 +339,24 @@ public class EM implements Serializable {
 			children.get(symbol).show(code.subList(1, code.size()), point);
 		}
 		
+		public List<Point> points()
+		{
+			return points;
+		}
+		
 		public boolean isLeaf()
 		{
 			return isLeaf;
 		}
 		
-		/**
-		 * Returns the point associated with this node
-		 * @return
-		 */
-		public Point point()
+		public MVN mvn()
 		{
-			return new Point(pointSum.mapMultiply(1/frequency));
+			if(mvn == null)
+				mvn = MVN.find(points);
+			
+			return mvn;
 		}
-		
+				
 		public void print(PrintStream out, int indent)
 		{
 			String ind = "";
@@ -356,7 +367,7 @@ public class EM implements Serializable {
 			for(int i : code())
 				code += i;
 			
-			out.println(ind + code + " f:" + frequency + ", p: " + point());
+			out.println(ind + code + " f:" + frequency + ", p: " + points());
 			for(int symbol : children.keySet())
 				children.get(symbol).print(out, indent+1);
 		}
@@ -393,7 +404,34 @@ public class EM implements Serializable {
 				
 				Node nodeFrom = root.find(codeFrom);
 				if(nodeFrom != null)
-					maps.add(t, nodeFrom.point(), this.point());
+				{
+					// Add the points from matching nodes in arbitrary order
+					int m = Math.min(nodeFrom.points.size(), this.points.size());
+					
+//					for(int i = 0; i < m; i ++)	
+//						maps.add(t, nodeFrom.points.get(i), this.points.get(i));
+					
+					MVN from = nodeFrom.mvn(), to = mvn();
+					if(m < 3) // not enough points to consider covariance
+					{
+						maps.add(t, from.mean(), to.mean());
+						System.out.println("!");
+					} else
+					{
+						System.out.println("*" + m);
+						// MVN normal = new MVN(dim);
+						
+						for(int i = 0; i < PAIR_SAMPLE_SIZE; i++)
+						{
+							Point p = Point.random(dim, PAIR_SAMPLE_VAR); //normal.generate();
+							
+							Point pf = from.map().map(p);
+							Point pt = to.map().map(p);
+							
+							maps.add(t, pf, pt);
+						}
+					}
+				}
 			}
 		}
 		
@@ -408,6 +446,7 @@ public class EM implements Serializable {
 	
 	/**
 	 * Small helper class for storing a to and from list for each component map
+	 * 
 	 * @author Peter
 	 *
 	 */

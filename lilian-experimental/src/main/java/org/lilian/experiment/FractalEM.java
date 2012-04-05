@@ -1,5 +1,10 @@
 package org.lilian.experiment;
 
+import static org.lilian.data.real.Draw.toPixel;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -35,9 +40,6 @@ public class FractalEM extends AbstractExperiment
 {
 	@Reportable
 	private static final double VAR = 0.6;
-	
-	@Reportable
-	private static final int SAMPLE_SIZE = 150;
 	
 	@Reportable
 	private static final int SAMPLE_SIZE_TEST = 500;
@@ -87,6 +89,22 @@ public class FractalEM extends AbstractExperiment
 			currentGeneration++;
 
 			em.distributePoints(distSampleSize);
+			
+//			EM.Maps maps = em.findMaps();
+//			System.out.println(maps);
+//			for(int j : Series.series(components))
+//			{
+//				System.out.println(j);
+//				BufferedImage im = drawMap(maps.from(j), maps.to(j));
+//				try
+//				{
+//					ImageIO.write(im, "PNG", new File(dir, String.format("map%d.%02d.png", j, currentGeneration)));
+//				} catch (IOException e)
+//				{
+//					throw new RuntimeException(e);
+//				}			
+//			}			
+			
 			em.findIFS();
 			
 			double d = distance.distance(
@@ -117,7 +135,7 @@ public class FractalEM extends AbstractExperiment
 		scores = new ArrayList<Double>(generations);
 		
 		em = new EM(components, dim, depth, data, VAR);
-		em.distributePoints(SAMPLE_SIZE);
+		em.distributePoints(distSampleSize);
 		
 		BufferedImage im = Draw.draw(data, 1000, false);
 		try
@@ -153,7 +171,7 @@ public class FractalEM extends AbstractExperiment
 		double[] xrange = new double[]{-2.1333, 2.1333};
 		double[] yrange = new double[]{-1.2, 1.2};
 		
-		BufferedImage image = Draw.draw(ifs.generator(), 50000000, xrange, yrange, 1920, 1080, true);
+		BufferedImage image = Draw.draw(ifs.generator(), 1000000000, xrange, yrange, 1920, 1080, true);
 		try
 		{
 			ImageIO.write(image, "PNG", new File(dir, name + ".png") );
@@ -161,6 +179,76 @@ public class FractalEM extends AbstractExperiment
 		{
 			e.printStackTrace();
 		}
-	}		
+	}
+	
+	
+	public static BufferedImage drawMap(List<Point> from, List<Point> to)
+	{
+		double[] xrange = {-1.0, 1.0};
+		double[] yrange = {-1.0, 1.0};
+		int res = 1000;
+		boolean log = false;
+		
+		double 	xDelta = xrange[1] - xrange[0],
+				yDelta = yrange[1] - yrange[0];
+		
+		double maxDelta = Math.max(xDelta, yDelta); 		
+		double minDelta = Math.min(xDelta, yDelta);
+		
+		double step = minDelta/(double) res;
+		
+		int xRes = (int) (xDelta / step);
+		int yRes = (int) (yDelta / step);
+
+		float max = Float.NEGATIVE_INFINITY;
+		float min = 0.0f;		
+		
+		float[][] matrixFrom = new float[yRes][];
+		float[][] matrixTo = new float[yRes][];
+
+		for(int x = 0; x < xRes; x++)
+		{
+			matrixFrom[x] = new float[yRes];
+			matrixTo[x] = new float[yRes];
+
+			for(int y = 0; y < yRes; y++)
+			{
+				matrixFrom[x][y] = 0.0f;
+				matrixTo[x][y] = 0.0f;
+			}
+		}
+		
+		BufferedImage image = 
+				new BufferedImage(xRes, yRes, BufferedImage.TYPE_INT_RGB);
+		
+		Graphics2D g = image.createGraphics();
+		for(int i = 0; i < from.size(); i++)
+		{
+			Point pointFrom = from.get(i);
+			Point pointTo = to.get(i);
+			
+//			System.out.println(pointFrom + " " + pointTo);
+			
+			int xf = toPixel(pointFrom.get(0), xRes, xrange[0], xrange[1]); 
+			int yf = toPixel(pointFrom.get(1), yRes, yrange[0], yrange[1]);
+
+			int xt = toPixel(pointTo.get(0), xRes, xrange[0], xrange[1]); 
+			int yt = toPixel(pointTo.get(1), yRes, yrange[0], yrange[1]);			
+			
+			g.setColor(Color.WHITE);
+			g.setStroke(new BasicStroke(2.0f));	
+			g.drawLine(xf, yf, xt, yt);
+			
+			g.setColor(Color.BLUE);
+			g.fillOval(xf-2, yf-2, 4, 4);
+			
+			g.setColor(Color.GREEN);
+			g.fillOval(xt-1, yt-1, 2, 2);
+			
+		}
+		g.dispose();
+		
+		return image;
+	}	
 	
 }
