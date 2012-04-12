@@ -42,7 +42,7 @@ public class FractalEM extends AbstractExperiment
 	private static final double VAR = 0.6;
 	
 	@Reportable
-	private static final int SAMPLE_SIZE_TEST = 500;
+	private static final int SAMPLE_SIZE_TEST = 1000;
 	
 	protected List<Point> data;
 	protected int depth;
@@ -116,13 +116,13 @@ public class FractalEM extends AbstractExperiment
 			if(true)
 			{
 				write(em.model, dir, String.format("generation%04d", currentGeneration));
-				out.println("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
+				logger.info("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
 				Functions.tic();				
 				save();
 			}	
 			
-			out.println("Scores: " + scores());
-			out.println("Best: " + bestScore());
+			logger.info("Scores (" + currentGeneration + ") : " + scores());
+			logger.info("Best   (" + currentGeneration + ") : " + bestScore());
 		}
 		
 
@@ -137,7 +137,9 @@ public class FractalEM extends AbstractExperiment
 		em = new EM(components, dim, depth, data, VAR);
 		em.distributePoints(distSampleSize);
 		
-		BufferedImage im = Draw.draw(data, 1000, false);
+		logger.info("Data size: " + data.size());
+		
+		BufferedImage im = Draw.draw(data, 300, true);
 		try
 		{
 			ImageIO.write(im, "png", new File(dir, "data.png"));
@@ -171,7 +173,7 @@ public class FractalEM extends AbstractExperiment
 		double[] xrange = new double[]{-2.1333, 2.1333};
 		double[] yrange = new double[]{-1.2, 1.2};
 		
-		BufferedImage image = Draw.draw(ifs.generator(), 1000000000, xrange, yrange, 1920, 1080, true);
+		BufferedImage image = Draw.draw(ifs.generator(), 10000000, xrange, yrange, 1920, 1080, true);
 		try
 		{
 			ImageIO.write(image, "PNG", new File(dir, name + ".png") );

@@ -90,7 +90,7 @@ public class FractalEA extends AbstractExperiment
 			if(currentGeneration % (generations/5) == 0)
 			{
 				write(es.best().instance(), dir, String.format("generation%04d", currentGeneration));
-				out.println("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
+				logger.info("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
 				Functions.tic();				
 				save();
 			

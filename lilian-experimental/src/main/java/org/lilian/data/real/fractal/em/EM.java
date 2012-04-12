@@ -179,7 +179,6 @@ public class EM implements Serializable {
 	public void findIFS()
 	{
 		Maps maps = findMaps();
-		System.out.println(maps);
 		
 		priors = new BasicFrequencyModel<Integer>();
 		root.count(priors);
@@ -209,7 +208,6 @@ public class EM implements Serializable {
 				
 				double det = MatrixTools.getDeterminant(
 						map.getTransformation());
-				System.out.println(det);
 				if(Double.isNaN(det))
 					System.out.println(map);
 				
@@ -415,10 +413,8 @@ public class EM implements Serializable {
 					if(m < 3) // not enough points to consider covariance
 					{
 						maps.add(t, from.mean(), to.mean());
-						System.out.println("!");
 					} else
 					{
-						System.out.println("*" + m);
 						// MVN normal = new MVN(dim);
 						
 						for(int i = 0; i < PAIR_SAMPLE_SIZE; i++)
