@@ -152,13 +152,13 @@ public class FractalEM extends AbstractExperiment
 		em.distributePoints(distSampleSize);
 	}
 	
-	@Result(name = "Scores")
+	@Result(name = "Scores", description="The scores over successive generations.")
 	public List<Double> scores()
 	{
 		return scores;
 	}
 
-	@Result(name = "Best score")
+	@Result(name = "Best score", description="The best (lowest) score over all generations.")
 	public double bestScore()
 	{
 		return bestDistance;
