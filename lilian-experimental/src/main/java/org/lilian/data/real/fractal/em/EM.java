@@ -29,6 +29,12 @@ import org.lilian.util.Series;
  */
 public class EM implements Serializable {
 	
+	public static enum ProbMode {NONE, OLD, NEW} // How to determine the component priors
+												 // NEW is better
+	public static final ProbMode probMode = ProbMode.NEW;
+	
+	
+	
 	private static final double DEV = 0.8;
 	private static final double PERTURB_VAR = 0.001;
 	private static final double THRESHOLD = 0.00000000001;
@@ -43,6 +49,11 @@ public class EM implements Serializable {
 	private List<AffineMap> transformations;
 	private List<Double> probabilities;
 	public  IFS<AffineMap> model;	
+	
+	// * If true, we do not just consider the means of the points with matching codes
+	//   but also the variance (by mapping a small amount of random points to 
+	//   both of the matching codes)
+	private boolean considerVariance;
 		
 	private int num;
 	private int dim;
@@ -61,12 +72,13 @@ public class EM implements Serializable {
 	 * @param depth
 	 * @param data
 	 */
-	public EM(int numComponents, int dimension, int depth, List<Point> data, double dev)
+	public EM(int numComponents, int dimension, int depth, List<Point> data, double dev, boolean considerVariance)
 	{
 		this.num = numComponents;
 		this.dim = dimension;
 		this.data = data;
 		this.depth = depth;
+		this.considerVariance = considerVariance;
 		
 		if(dimension != data.get(0).dimensionality())
 			throw new IllegalArgumentException("Data dimension ("+data.get(0).dimensionality()+") must match dimension argument ("+dimension+")");
@@ -90,12 +102,14 @@ public class EM implements Serializable {
 		root = new Node(-1, null);
 	}
 	
-	public EM(int numComponents, int dimension, int depth, List<Point> data)
+	public EM(int numComponents, int dimension, int depth, List<Point> data, boolean considerVariance)
 	{
 		this.num = numComponents;
 		this.dim = dimension;
 		this.data = data;
 		this.depth = depth;
+		this.considerVariance = considerVariance;
+
 		 
 		root = new Node(-1, null);
 
@@ -110,12 +124,14 @@ public class EM implements Serializable {
 		}
 	}
 	
-	public EM(IFS<AffineMap> initial, int depth, List<Point> data)
+	public EM(IFS<AffineMap> initial, int depth, List<Point> data, boolean considerVariance)
 	{
 		this.num = initial.size();
 		this.dim = initial.dimension();
 		this.data = data;
 		this.depth = depth;
+		this.considerVariance = considerVariance;
+
 		
 		this.model = initial;
 
@@ -216,7 +232,10 @@ public class EM implements Serializable {
 			
 				
 				trans.set(i, map);
-				weights.set(i, priors.probability(i));
+				if(probMode == ProbMode.OLD) 
+					weights.set(i, priors.probability(i));
+				else
+					weights.set(i, findScalar(maps.fromWeights(i), maps.toWeights(i)));
 				
 				assigned.add(i);
 			} else {
@@ -248,6 +267,28 @@ public class EM implements Serializable {
 		
 	}
 	
+	
+	/**
+	 * Findst the optimal scalar c so that sum (x - c * y)^2 is minimized.
+	 * 
+	 * @param x
+	 * @param y
+	 * @return
+	 */
+	public static double findScalar(List<Double> x, List<Double> y)
+	{
+		double sumYY = 0.0;
+		double sumYX = 0.0;
+		
+		for(int i = 0; i < x.size(); i++)
+		{
+			sumYY += y.get(i) * y.get(i);
+			sumYX += y.get(i) * x.get(i);
+		}
+		
+		return sumYX / sumYY;
+	}
+	
 	/**
 	 * Returns, for each component, a set of domain and range points that 
 	 * define the map. The points are means of subsets of the data.
@@ -271,7 +312,7 @@ public class EM implements Serializable {
 		int depth = 0;
 		
 		List<Integer> code;
-		double frequency;
+		//double frequency;
 		
 		boolean isLeaf = false;
 		// RealVector pointSum = new ArrayRealVector(dim);
@@ -319,7 +360,6 @@ public class EM implements Serializable {
 		
 		public void show(List<Integer> code, Point point)
 		{
-			frequency++;
 			// pointSum = pointSum.add(point.getVector());
 			points.add(point);
 			mvn = null; // signal that the mvn need to be recomputed
@@ -340,6 +380,11 @@ public class EM implements Serializable {
 		public List<Point> points()
 		{
 			return points;
+		}
+		
+		public double frequency()
+		{
+			return points.size();
 		}
 		
 		public boolean isLeaf()
@@ -365,16 +410,17 @@ public class EM implements Serializable {
 			for(int i : code())
 				code += i;
 			
-			out.println(ind + code + " f:" + frequency + ", p: " + points());
+			out.println(ind + code + " f:" + frequency() + ", p: " + points());
 			for(int symbol : children.keySet())
 				children.get(symbol).print(out, indent+1);
 		}
 		
-		public int frequency()
-		{
-			return (int)frequency;
-		}
-		
+		/**
+		 * Returns the node for the given code (starting from this node).
+		 * 
+		 * @param code
+		 * @return
+		 */
 		public Node find(List<Integer> code)
 		{
 			if(code.size() == 0)
@@ -387,15 +433,23 @@ public class EM implements Serializable {
 			return children.get(symbol).find(code.subList(1, code.size()));
 		}
 		
+		/**
+		 * start at the leaves of this node, take its code and find the longest 
+		 * code that that shares its tail, save for the last symbol t. The 
+		 * transformation t should map that node onto this.
+		 * 
+		 * 
+		 * @param maps
+		 */
 		public void findPairs(Maps maps)
 		{
-			if(children.size() > 0)
+			if(children.size() > 0) // Recurse
 			{
 				for(int i : children.keySet())
 					children.get(i).findPairs(maps);	
 			}
 			
-			if(code().size() > 0)
+			if(code().size() > 0) // Execute for this node
 			{
 				List<Integer> codeFrom = new ArrayList<Integer>(code);
 				int t = codeFrom.remove(0);
@@ -403,19 +457,19 @@ public class EM implements Serializable {
 				Node nodeFrom = root.find(codeFrom);
 				if(nodeFrom != null)
 				{
-					// Add the points from matching nodes in arbitrary order
 					int m = Math.min(nodeFrom.points.size(), this.points.size());
-					
-//					for(int i = 0; i < m; i ++)	
-//						maps.add(t, nodeFrom.points.get(i), this.points.get(i));
+
 					
 					MVN from = nodeFrom.mvn(), to = mvn();
-					if(m < 3) // not enough points to consider covariance
+//					Global.log().info(considerVariance + " ");
+					
+					if(m < 3 || ! considerVariance) // not enough points to consider covariance
 					{
 						maps.add(t, from.mean(), to.mean());
 					} else
 					{
-						// MVN normal = new MVN(dim);
+						// Consider the covariance by taking not just the means, 
+						// but points close to zero mapped to both distributions
 						
 						for(int i = 0; i < PAIR_SAMPLE_SIZE; i++)
 						{
@@ -427,6 +481,9 @@ public class EM implements Serializable {
 							maps.add(t, pf, pt);
 						}
 					}
+					
+					// Register the drop in frequency as the symbol t gets added to the code
+					maps.weight(t, nodeFrom.frequency(), this.frequency());
 				}
 			}
 		}
@@ -451,6 +508,9 @@ public class EM implements Serializable {
 		private List<List<Point>> from = new ArrayList<List<Point>>();
 		private List<List<Point>> to = new ArrayList<List<Point>>();
 		
+		private List<List<Double>> fromWeights = new ArrayList<List<Double>>();
+		private List<List<Double>> toWeights = new ArrayList<List<Double>>();
+		
 		public int size(int i)
 		{
 			ensure(i);
@@ -463,6 +523,13 @@ public class EM implements Serializable {
 			this.from.get(component).add(from);
 			this.to.get(component).add(to);
 		}
+		
+		public void weight(int component, double from, double to)
+		{
+			ensure(component);
+			this.fromWeights.get(component).add(from);
+			this.toWeights.get(component).add(to);
+		}
 
 		private void ensure(int component)
 		{
@@ -470,6 +537,11 @@ public class EM implements Serializable {
 				from.add(new ArrayList<Point>());
 			while(to.size() <= component)
 				to.add(new ArrayList<Point>());
+			
+			while(fromWeights.size() <= component)
+				fromWeights.add(new ArrayList<Double>());
+			while(toWeights.size() <= component)
+				toWeights.add(new ArrayList<Double>());
 		}
 		
 		public List<Point> from(int component)
@@ -487,6 +559,23 @@ public class EM implements Serializable {
 			
 			return Collections.emptyList();
 		}
+		
+		public List<Double> fromWeights(int component)
+		{
+			if(component < fromWeights.size())
+				return fromWeights.get(component);
+			
+			return Collections.emptyList();
+		}
+		
+		public List<Double> toWeights(int component)
+		{
+			if(component < toWeights.size())
+				return toWeights.get(component);
+			
+			return Collections.emptyList();
+		}
+		
 		
 		public String toString()
 		{

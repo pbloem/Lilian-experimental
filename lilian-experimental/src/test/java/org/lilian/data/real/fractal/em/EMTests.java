@@ -147,7 +147,7 @@ public class EMTests
 		
 		int num = 2;
 		int dim = data.get(0).dimensionality();
-		EM em = new EM(num, dim, 6, data, 0.2);
+		EM em = new EM(num, dim, 6, data, 0.2, true);
 		em.distributePoints(SAMPLE_SIZE);
 		
 		for(int i : Series.series(100))
@@ -245,5 +245,21 @@ public class EMTests
 		g.dispose();
 		
 		return image;
+	}
+	
+	@Test
+	public void findScalarTest()
+	{
+		List<Double> x, y;
+		x = Arrays.asList(0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0);
+		y = Arrays.asList(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0);
+		
+		assertEquals(EM.findScalar(x, y), 2.0, 0.0);
+		
+		x = Arrays.asList(0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0);
+		y = Arrays.asList(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.1);
+		
+		assertEquals(EM.findScalar(x, y), 2.0, 0.1);
+	
 	}
 }

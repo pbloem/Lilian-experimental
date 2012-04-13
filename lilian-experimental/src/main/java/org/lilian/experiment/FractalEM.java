@@ -50,6 +50,7 @@ public class FractalEM extends AbstractExperiment
 	protected int components;
 	protected int dim;
 	protected int distSampleSize;
+	protected boolean considerVariance;
 	
 	/**
 	 * State information
@@ -68,7 +69,8 @@ public class FractalEM extends AbstractExperiment
 			@Parameter(name="generations") 			int generations,
 			@Parameter(name="number of components") int components, 
 			@Parameter(name="dimension") 			int dim,
-			@Parameter(name="distribution sample size") int distSampleSize
+			@Parameter(name="distribution sample size") int distSampleSize,
+			@Parameter(name="consider variance")	boolean considerVariance
 			)
 	{
 		this.data = data;
@@ -77,6 +79,7 @@ public class FractalEM extends AbstractExperiment
 		this.components = components;
 		this.dim = dim;
 		this.distSampleSize = distSampleSize;
+		this.considerVariance = considerVariance;
 		
 	}
 	
@@ -134,9 +137,6 @@ public class FractalEM extends AbstractExperiment
 		
 		scores = new ArrayList<Double>(generations);
 		
-		em = new EM(components, dim, depth, data, VAR);
-		em.distributePoints(distSampleSize);
-		
 		logger.info("Data size: " + data.size());
 		
 		BufferedImage im = Draw.draw(data, 300, true);
@@ -148,6 +148,8 @@ public class FractalEM extends AbstractExperiment
 			throw new RuntimeException(e);
 		}
 		
+		em = new EM(components, dim, depth, data, VAR, considerVariance);
+		em.distributePoints(distSampleSize);
 	}
 	
 	@Result(name = "Scores")
