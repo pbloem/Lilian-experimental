@@ -177,7 +177,7 @@ public class IFSClassificationES extends AbstractExperiment
 	 * @param dir
 	 * @param name
 	 */
-	private static void write(IFSClassifier ifs, File dir, String name)
+	private void write(IFSClassifier ifs, File dir, String name)
 	{
 		double[] xrange = new double[]{-1, 1};
 		double[] yrange = new double[]{-1, 1};
@@ -186,7 +186,7 @@ public class IFSClassificationES extends AbstractExperiment
 			BufferedImage image; 
 			for(int i : Series.series(ifs.size()))
 			{
-				image = Draw.draw(ifs.model(i).generator(), 100000, xrange, yrange, 1000, 1000, true);
+				image = Draw.draw(ifs.model(i).generator(), 100000, xrange, yrange, resolution, resolution, true);
 				ImageIO.write(image, "PNG", new File(dir, name + "." + i + ".png") );
 			}
 			
