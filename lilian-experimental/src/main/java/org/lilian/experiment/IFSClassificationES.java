@@ -137,6 +137,8 @@ public class IFSClassificationES extends AbstractExperiment
 		// * Draw the dataset
 		BufferedImage image;
 		
+		logger.info("Directory:" + dir);
+		
 		try
 		{
 			image = Classifiers.draw(trainingData, 100, true);
