@@ -106,7 +106,7 @@ public class IFSClassificationES extends AbstractExperiment
 			
 			if(true)
 			{
-				write(es.best().instance(), dir, String.format("generation%04d", currentGeneration));
+				// write(es.best().instance(), dir, String.format("generation%04d", currentGeneration));
 				logger.info("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
 				Functions.tic();				
 				save();
