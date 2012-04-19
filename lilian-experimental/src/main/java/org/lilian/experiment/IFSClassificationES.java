@@ -190,7 +190,9 @@ public class IFSClassificationES extends AbstractExperiment
 				ImageIO.write(image, "PNG", new File(dir, name + "." + i + ".png") );
 			}
 			
+			long tt0 = System.currentTimeMillis();
 			image = Classifiers.draw(ifs, resolution);
+			logger.info("Writing classifier at resolution of " + resolution + " took " +  (System.currentTimeMillis()-tt0)/1000.0 + " seconds.");
 
 			ImageIO.write(image, "PNG", new File(dir, name + ".png") );
 		} catch (IOException e)
