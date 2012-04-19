@@ -190,7 +190,7 @@ public class IFSClassificationES extends AbstractExperiment
 				ImageIO.write(image, "PNG", new File(dir, name + "." + i + ".png") );
 			}
 			
-			image = Classifiers.draw(ifs, 1000);
+			image = Classifiers.draw(ifs, resolution);
 
 			ImageIO.write(image, "PNG", new File(dir, name + ".png") );
 		} catch (IOException e)
