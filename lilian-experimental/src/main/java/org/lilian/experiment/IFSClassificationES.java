@@ -106,7 +106,7 @@ public class IFSClassificationES extends AbstractExperiment
 			
 			if(true)
 			{
-				// write(es.best().instance(), dir, String.format("generation%04d", currentGeneration));
+				write(es.best().instance(), dir, String.format("generation%04d", currentGeneration));
 				logger.info("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
 				Functions.tic();				
 				save();
@@ -175,7 +175,7 @@ public class IFSClassificationES extends AbstractExperiment
 	 * @param dir
 	 * @param name
 	 */
-	private static <M extends Map & Parametrizable> void write(IFSClassifier ifs, File dir, String name)
+	private static void write(IFSClassifier ifs, File dir, String name)
 	{
 		double[] xrange = new double[]{-1, 1};
 		double[] yrange = new double[]{-1, 1};
