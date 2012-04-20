@@ -130,7 +130,7 @@ public class Triangles
 		for(Maps.MapResult res : top)
 			out.add(new Point(
 					abs(res.scale()),
-					abs(res.similitude(2000, 1).angles().get(0)/Math.PI)
+					abs(res.similitude().angles().get(0)/Math.PI)
 				));
 		
 		try
@@ -244,7 +244,7 @@ public class Triangles
 		for(Maps.MapResult res : top)
 			out.add(new Point(
 					abs(res.translation().getEntry(0)),
-					abs(res.similitude(2000, 1).angles().get(0)/Math.PI)
+					abs(res.similitude().angles().get(0)/Math.PI)
 				));
 		
 		try

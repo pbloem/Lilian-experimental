@@ -13,6 +13,7 @@ import org.lilian.data.real.AffineMap;
 import org.lilian.data.real.Datasets;
 import org.lilian.data.real.MVN;
 import org.lilian.data.real.Point;
+import org.lilian.data.real.Similitude;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSs;
 import org.lilian.models.BasicFrequencyModel;
@@ -46,9 +47,9 @@ public class EM implements Serializable {
 	// private HashMap<List<Integer>, List<Point>> distribution;
 
 	private List<List<Integer>> codes;	
-	private List<AffineMap> transformations;
+	private List<Similitude> transformations;
 	private List<Double> probabilities;
-	public  IFS<AffineMap> model;	
+	public  IFS<Similitude> model;	
 	
 	// * If true, we do not just consider the means of the points with matching codes
 	//   but also the variance (by mapping a small amount of random points to 
@@ -84,19 +85,19 @@ public class EM implements Serializable {
 			throw new IllegalArgumentException("Data dimension ("+data.get(0).dimensionality()+") must match dimension argument ("+dimension+")");
 			
 		// Create random Similitudes
-		int np = AffineMap.affineMapBuilder(dimension).numParameters();
+		int np = Similitude.similitudeBuilder(dimension).numParameters();
 
 		List<Double> parameters = new ArrayList<Double>();
 		for(int i = 0; i < np; i++)
 			parameters.add(Global.random.nextGaussian() * dev);
 		
-		model = new IFS<AffineMap>(new AffineMap(parameters), 1.0);
+		model = new IFS<Similitude>(new Similitude(parameters), 1.0);
 		for(int i = 1; i < num; i++)
 		{
 			parameters.clear();
 			for(int j = 0; j < np; j++)
 				parameters.add(Global.random.nextGaussian() * DEV);
-			model.addMap(new AffineMap(parameters), 1.0);
+			model.addMap(new Similitude(parameters), 1.0);
 		}
 		
 		root = new Node(-1, null);
@@ -110,9 +111,7 @@ public class EM implements Serializable {
 		this.depth = depth;
 		this.considerVariance = considerVariance;
 
-		 
 		root = new Node(-1, null);
-
 		
 		for(Point point : data)
 		{
@@ -124,7 +123,7 @@ public class EM implements Serializable {
 		}
 	}
 	
-	public EM(IFS<AffineMap> initial, int depth, List<Point> data, boolean considerVariance)
+	public EM(IFS<Similitude> initial, int depth, List<Point> data, boolean considerVariance)
 	{
 		this.num = initial.size();
 		this.dim = initial.dimension();
@@ -138,7 +137,7 @@ public class EM implements Serializable {
 		root = new Node(-1, null);
 	}	
 	
-	public IFS<AffineMap> model()
+	public IFS<Similitude> model()
 	{
 		return model;
 	}
@@ -148,7 +147,7 @@ public class EM implements Serializable {
 		return codes;
 	}
 	
-	public List<AffineMap> transformations()
+	public List<Similitude> transformations()
 	{
 		return transformations;
 	}
@@ -201,7 +200,7 @@ public class EM implements Serializable {
 		
 		model = null;
 		
-		List<AffineMap> trans = new ArrayList<AffineMap>(num);
+		List<Similitude> trans = new ArrayList<Similitude>(num);
 		for(int i : Series.series(num))
 			trans.add(null);
 
@@ -216,7 +215,7 @@ public class EM implements Serializable {
 		{
 			int n = maps.size(i);
 			
-			AffineMap map;
+			Similitude map;
 			if(n != 0)
 			{
 				map = org.lilian.data.real.Maps.findMap(
@@ -228,7 +227,7 @@ public class EM implements Serializable {
 					System.out.println(map);
 				
 				if(Math.abs(det) < THRESHOLD || Double.isNaN(det))
-					map = Parameters.perturb(map, AffineMap.affineMapBuilder(dim), PERTURB_VAR);
+					map = Parameters.perturb(map, Similitude.similitudeBuilder(dim), PERTURB_VAR);
 			
 				
 				trans.set(i, map);
@@ -253,15 +252,15 @@ public class EM implements Serializable {
 		for(int i : unassigned)
 		{
 			int j = assigned.get(Global.random.nextInt(assigned.size()));
-			AffineMap source = trans.get(j);
-			AffineMap perturbed = 
+			Similitude source = trans.get(j);
+			Similitude perturbed = 
 					Parameters.perturb(source,
-						AffineMap.affineMapBuilder(dim), 
+						Similitude.similitudeBuilder(dim), 
 						PERTURB_VAR);
 			trans.set(i, perturbed);
 		}
 		
-		model = new IFS<AffineMap>(trans.get(0), weights.get(0));
+		model = new IFS<Similitude>(trans.get(0), weights.get(0));
 		for(int i = 1; i < num; i++)
 			model.addMap(trans.get(i), weights.get(i));
 		

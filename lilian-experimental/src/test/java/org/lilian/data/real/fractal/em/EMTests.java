@@ -66,7 +66,7 @@ public class EMTests
 			
 			Similitude sim = Maps.findMap(
 					Arrays.asList(a, b), 
-					Arrays.asList(as, bs), 2000, 10);
+					Arrays.asList(as, bs));
 			
 			List<Double> params = sim.parameters();
 			for(int j : Series.series(n))
