@@ -51,6 +51,8 @@ public class IFSClassificationEM extends AbstractExperiment
 	protected int testingSample;
 	protected int resolution;
 	protected int distSampleSize;
+	protected int beamWidth;
+	protected boolean print;
 	
 	/**
 	 * State information
@@ -81,8 +83,11 @@ public class IFSClassificationEM extends AbstractExperiment
 			@Parameter(name="resolution")
 				int resolution,
 			@Parameter(name="distribution sample size")
-			 int distSampleSize
-				
+				int distSampleSize,
+			@Parameter(name="beam width")
+				int beamWidth,
+			@Parameter(name="print classifier")
+				boolean print
 	)
 	{
 		this.trainingData = trainingData;
@@ -94,6 +99,8 @@ public class IFSClassificationEM extends AbstractExperiment
 		this.initialVar = initialVar;
 		this.resolution = resolution;
 		this.distSampleSize = distSampleSize;
+		this.beamWidth = beamWidth;
+		this.print = print;
 		
 		this.classes = trainingData.numClasses();
 	}
@@ -109,12 +116,11 @@ public class IFSClassificationEM extends AbstractExperiment
 			// * Iterate the EM's
 			for(EM em : ems)
 			{
-				em.distributePoints(distSampleSize);
+				em.distributePoints(distSampleSize, beamWidth);
 				em.findIFS();
 			}
 			
 			// * Construct a model
-			
 			IFSClassifier ic = null;
 			for(int i : series(trainingData.numClasses()))
 			{
@@ -127,17 +133,18 @@ public class IFSClassificationEM extends AbstractExperiment
 			}
 			
 			write(ic, dir, String.format("generation%04d", currentGeneration));
-			logger.info("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
-			Functions.tic();				
-			save();
 			
 			double d = Classification.symmetricError(
 					ic,
 					Classification.sample(testData, testingSample)
 					);
+
 			scores.add(d);
 			bestDistance = Math.min(bestDistance, d);
-
+			
+			logger.info("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
+			Functions.tic();				
+			save();
 		}
 	}
 	
@@ -175,7 +182,7 @@ public class IFSClassificationEM extends AbstractExperiment
 		for(int i : series(trainingData.numClasses()))
 		{
 			EM em = new EM(components, dim, depth, trainingData.points(i), initialVar, true);
-			em.distributePoints(distSampleSize);
+			em.distributePoints(distSampleSize, beamWidth);
 			ems.add(em);
 		}
 	}
@@ -212,9 +219,11 @@ public class IFSClassificationEM extends AbstractExperiment
 			}
 			
 			long tt0 = System.currentTimeMillis();
-			image = Classifiers.draw(ifs, resolution);
-			logger.info("Writing classifier at resolution of " + resolution + " took " +  (System.currentTimeMillis()-tt0)/1000.0 + " seconds.");
-
+			
+			int r = print || currentGeneration == generations - 1 ? resolution : 50;
+			image = Classifiers.draw(ifs, r);
+			logger.info("Writing classifier at resolution of " + r + " took " +  (System.currentTimeMillis()-tt0)/1000.0 + " seconds.");
+	
 			ImageIO.write(image, "PNG", new File(dir, name + ".png") );
 		} catch (IOException e)
 		{

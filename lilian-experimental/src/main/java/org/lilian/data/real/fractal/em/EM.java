@@ -16,6 +16,7 @@ import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSs;
+import org.lilian.data.real.fractal.Tools;
 import org.lilian.models.BasicFrequencyModel;
 import org.lilian.models.FrequencyModel;
 import org.lilian.search.Parameters;
@@ -162,9 +163,9 @@ public class EM implements Serializable {
 		root.print(out, 0);
 	}
 	
-	public void step(int sampleSize)
+	public void step(int sampleSize, int beamWidth)
 	{
-		distributePoints(sampleSize);
+		distributePoints(sampleSize, beamWidth);
 		findIFS();
 	}
 	
@@ -176,7 +177,7 @@ public class EM implements Serializable {
 	 * @param model
 	 * @return
 	 */
-	public void distributePoints(int sampleSize)
+	public void distributePoints(int sampleSize, int beamWidth)
 	{
 		List<Point> sample =  
 			sampleSize	== -1 ? data : Datasets.sample(data, sampleSize);
@@ -185,7 +186,18 @@ public class EM implements Serializable {
 				
 		for(Point point : sample)
 		{
-			List<Integer> code = IFS.code(model, point, depth);
+			List<Integer> code = null; 
+			if(beamWidth == -1)
+				code = IFS.code(model, point, depth);
+			else
+			{
+				code = Tools.search(point, model, depth, beamWidth);
+				List code2 = IFS.code(model, point, depth);
+				if(!code2.equals(code))
+					System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + code + " " + code2);
+				else
+					System.out.print("+");
+			}
 			
 			root.show(code, point);
 		}

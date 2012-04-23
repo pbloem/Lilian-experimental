@@ -51,6 +51,7 @@ public class FractalEM extends AbstractExperiment
 	protected int dim;
 	protected int distSampleSize;
 	protected boolean considerVariance;
+	protected int beamWidth;
 	
 	/**
 	 * State information
@@ -64,13 +65,22 @@ public class FractalEM extends AbstractExperiment
 	private double bestDistance = Double.MAX_VALUE;
 	
 	public FractalEM(
-			@Parameter(name="data") 				List<Point> data, 
-			@Parameter(name="depth") 				int depth, 
-			@Parameter(name="generations") 			int generations,
-			@Parameter(name="number of components") int components, 
-			@Parameter(name="dimension") 			int dim,
-			@Parameter(name="distribution sample size") int distSampleSize,
-			@Parameter(name="consider variance")	boolean considerVariance
+			@Parameter(name="data") 				
+				List<Point> data, 
+			@Parameter(name="depth") 				
+				int depth, 
+			@Parameter(name="generations") 			
+				int generations,
+			@Parameter(name="number of components")
+				int components, 
+			@Parameter(name="dimension") 			
+				int dim,
+			@Parameter(name="distribution sample size") 
+				int distSampleSize,
+			@Parameter(name="consider variance")	
+				boolean considerVariance,
+			@Parameter(name="beam width", description="Beam width to use when searching for codes")
+				int beamWidth
 			)
 	{
 		this.data = data;
@@ -80,6 +90,7 @@ public class FractalEM extends AbstractExperiment
 		this.dim = dim;
 		this.distSampleSize = distSampleSize;
 		this.considerVariance = considerVariance;
+		this.beamWidth = beamWidth;
 		
 	}
 	
@@ -91,7 +102,7 @@ public class FractalEM extends AbstractExperiment
 		{
 			currentGeneration++;
 
-			em.distributePoints(distSampleSize);
+			em.distributePoints(distSampleSize, beamWidth);
 			
 //			EM.Maps maps = em.findMaps();
 //			System.out.println(maps);
@@ -149,7 +160,7 @@ public class FractalEM extends AbstractExperiment
 		}
 		
 		em = new EM(components, dim, depth, data, VAR, considerVariance);
-		em.distributePoints(distSampleSize);
+		em.distributePoints(distSampleSize, beamWidth);
 	}
 	
 	@Result(name = "Scores", description="The scores over successive generations.")
