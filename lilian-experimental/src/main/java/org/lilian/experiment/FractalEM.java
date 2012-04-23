@@ -52,6 +52,7 @@ public class FractalEM extends AbstractExperiment
 	protected int distSampleSize;
 	protected boolean considerVariance;
 	protected int beamWidth;
+	protected boolean deepening;
 	
 	/**
 	 * State information
@@ -80,7 +81,9 @@ public class FractalEM extends AbstractExperiment
 			@Parameter(name="consider variance")	
 				boolean considerVariance,
 			@Parameter(name="beam width", description="Beam width to use when searching for codes")
-				int beamWidth
+				int beamWidth,
+			@Parameter(name="gradual deepening", description="If true, the depth is gradually increased from 1 to the value under depth")
+				boolean deepening
 			)
 	{
 		this.data = data;
@@ -91,7 +94,18 @@ public class FractalEM extends AbstractExperiment
 		this.distSampleSize = distSampleSize;
 		this.considerVariance = considerVariance;
 		this.beamWidth = beamWidth;
+		this.deepening = deepening;
 		
+	}
+	
+	private int depth()
+	{
+		if(!deepening)
+			return depth;
+		
+		double v = currentGeneration/(double)generations;
+		int vint = (int)(Math.floor(v) + 1.0);
+		return vint <= depth ?	vint : depth;			
 	}
 	
 	@Override
@@ -102,7 +116,7 @@ public class FractalEM extends AbstractExperiment
 		{
 			currentGeneration++;
 
-			em.distributePoints(distSampleSize, beamWidth);
+			em.distributePoints(distSampleSize, depth(), beamWidth);
 			
 //			EM.Maps maps = em.findMaps();
 //			System.out.println(maps);
@@ -159,8 +173,8 @@ public class FractalEM extends AbstractExperiment
 			throw new RuntimeException(e);
 		}
 		
-		em = new EM(components, dim, depth, data, VAR, considerVariance);
-		em.distributePoints(distSampleSize, beamWidth);
+		em = new EM(components, dim, data, VAR, considerVariance);
+		em.distributePoints(distSampleSize, depth(), beamWidth);
 	}
 	
 	@Result(name = "Scores", description="The scores over successive generations.")

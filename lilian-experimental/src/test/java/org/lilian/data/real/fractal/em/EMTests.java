@@ -147,8 +147,8 @@ public class EMTests
 		
 		int num = 2;
 		int dim = data.get(0).dimensionality();
-		EM em = new EM(num, dim, 6, data, 0.2, true);
-		em.distributePoints(SAMPLE_SIZE, -1);
+		EM em = new EM(num, dim, data, 0.2, true);
+		em.distributePoints(SAMPLE_SIZE, 6, -1);
 		
 		for(int i : Series.series(100))
 		{
@@ -172,7 +172,7 @@ public class EMTests
 //				System.out.println();
 //			}
 			
-			em.distributePoints(SAMPLE_SIZE, -1);
+			em.distributePoints(SAMPLE_SIZE, 6, -1);
 			
 			System.out.print("Step "+i+" completed in " + Functions.toc() + "seconds.");
 		}

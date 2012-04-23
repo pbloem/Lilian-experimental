@@ -59,7 +59,6 @@ public class EM implements Serializable {
 		
 	private int num;
 	private int dim;
-	private int depth;
 	
 	// * The root of a backwards trie of codes 
 	private Node root;
@@ -74,12 +73,11 @@ public class EM implements Serializable {
 	 * @param depth
 	 * @param data
 	 */
-	public EM(int numComponents, int dimension, int depth, List<Point> data, double dev, boolean considerVariance)
+	public EM(int numComponents, int dimension, List<Point> data, double dev, boolean considerVariance)
 	{
 		this.num = numComponents;
 		this.dim = dimension;
 		this.data = data;
-		this.depth = depth;
 		this.considerVariance = considerVariance;
 		
 		if(dimension != data.get(0).dimensionality())
@@ -104,32 +102,30 @@ public class EM implements Serializable {
 		root = new Node(-1, null);
 	}
 	
-	public EM(int numComponents, int dimension, int depth, List<Point> data, boolean considerVariance)
+	public EM(int numComponents, int initialDepth, int dimension, List<Point> data, boolean considerVariance)
 	{
 		this.num = numComponents;
 		this.dim = dimension;
 		this.data = data;
-		this.depth = depth;
 		this.considerVariance = considerVariance;
 
 		root = new Node(-1, null);
 		
 		for(Point point : data)
 		{
-			List<Integer> code = new ArrayList<Integer>(depth);
-			for(int i : Series.series(depth))
+			List<Integer> code = new ArrayList<Integer>(initialDepth);
+			for(int i : Series.series(initialDepth))
 				code.add(Global.random.nextInt(numComponents));
 			
 			root.show(code, point);
 		}
 	}
 	
-	public EM(IFS<Similitude> initial, int depth, List<Point> data, boolean considerVariance)
+	public EM(IFS<Similitude> initial, List<Point> data, boolean considerVariance)
 	{
 		this.num = initial.size();
 		this.dim = initial.dimension();
 		this.data = data;
-		this.depth = depth;
 		this.considerVariance = considerVariance;
 
 		
@@ -163,9 +159,9 @@ public class EM implements Serializable {
 		root.print(out, 0);
 	}
 	
-	public void step(int sampleSize, int beamWidth)
+	public void step(int sampleSize, int depth, int beamWidth)
 	{
-		distributePoints(sampleSize, beamWidth);
+		distributePoints(sampleSize, depth, beamWidth);
 		findIFS();
 	}
 	
@@ -177,7 +173,7 @@ public class EM implements Serializable {
 	 * @param model
 	 * @return
 	 */
-	public void distributePoints(int sampleSize, int beamWidth)
+	public void distributePoints(int sampleSize, int depth, int beamWidth)
 	{
 		List<Point> sample =  
 			sampleSize	== -1 ? data : Datasets.sample(data, sampleSize);

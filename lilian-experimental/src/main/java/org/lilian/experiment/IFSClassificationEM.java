@@ -116,7 +116,7 @@ public class IFSClassificationEM extends AbstractExperiment
 			// * Iterate the EM's
 			for(EM em : ems)
 			{
-				em.distributePoints(distSampleSize, beamWidth);
+				em.distributePoints(distSampleSize, depth, beamWidth);
 				em.findIFS();
 			}
 			
@@ -181,8 +181,8 @@ public class IFSClassificationEM extends AbstractExperiment
 		ems = new ArrayList<EM>(trainingData.numClasses());
 		for(int i : series(trainingData.numClasses()))
 		{
-			EM em = new EM(components, dim, depth, trainingData.points(i), initialVar, true);
-			em.distributePoints(distSampleSize, beamWidth);
+			EM em = new EM(components, dim, trainingData.points(i), initialVar, true);
+			em.distributePoints(distSampleSize, depth, beamWidth);
 			ems.add(em);
 		}
 	}
