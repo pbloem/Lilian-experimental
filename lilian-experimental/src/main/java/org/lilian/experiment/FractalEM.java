@@ -56,6 +56,7 @@ public class FractalEM extends AbstractExperiment
 	protected boolean greedy;
 	protected int sampleSize;
 	protected double threshold;	
+	protected boolean highQuality;
 	
 	/**
 	 * State information
@@ -92,7 +93,9 @@ public class FractalEM extends AbstractExperiment
 			@Parameter(name="test sample size", description="The sample size for evaluating the model")
 				int sampleSize,
 			@Parameter(name="deepening threshold", description="The model will increse depth if successive generations don't improve by this rate")
-				double threshold
+				double threshold,
+			@Parameter(name="high quality", description="true: full HD 10E7, iterations, false: 1/16th HD, 10E4 iterations")
+				boolean highQuality
 			)
 	{
 		this.data = data;
@@ -108,6 +111,8 @@ public class FractalEM extends AbstractExperiment
 		this.greedy = greedy;
 		this.sampleSize = sampleSize;
 		this.threshold = threshold;
+		
+		this.highQuality = highQuality;
 		
 	}
 	
@@ -208,12 +213,15 @@ public class FractalEM extends AbstractExperiment
 	 * @param dir
 	 * @param name
 	 */
-	private static <M extends Map & Parametrizable> void write(IFS<M> ifs, File dir, String name)
+	private <M extends Map & Parametrizable> void write(IFS<M> ifs, File dir, String name)
 	{
 		double[] xrange = new double[]{-2.1333, 2.1333};
 		double[] yrange = new double[]{-1.2, 1.2};
 		
-		BufferedImage image = Draw.draw(ifs.generator(), 10000000, xrange, yrange, 1920, 1080, true);
+		int div = highQuality ? 1 : 16;
+		int its = highQuality ? (int)10E7 : 10000;
+		
+		BufferedImage image = Draw.draw(ifs.generator(), its, xrange, yrange, 1920/div, 1080/div, true);
 		try
 		{
 			ImageIO.write(image, "PNG", new File(dir, name + ".png") );
