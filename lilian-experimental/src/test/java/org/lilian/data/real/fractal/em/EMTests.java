@@ -110,19 +110,19 @@ public class EMTests
 	public void drawCodes() throws IOException
 	{
 		Global.random = new Random();
-		File dir = new File("/Users/peter/Documents/PhD/output/codes5/");
+		File dir = new File("/home/peter/Documents/PhD/output/codesSearch3/");
 		dir.mkdirs();
 		
-		IFS<AffineMap> ifs = IFSs.cantorA();
+		IFS<AffineMap> ifs = IFSs.sierpinski();
 		BufferedImage im = 
 				Draw.draw(ifs.generator(), 10000000, 1000, true);
 		ImageIO.write(im, "PNG", new File(dir, "model.png"));
 		
-		for(int depth : Series.series(8, 11))
+		for(int depth : Series.series(1, 16))
 		{
 			im = Draw.drawCodes(ifs, 
 							new double[]{-1.0, 1.0}, new double[]{-1.0, 1.0}, 
-							150, depth);
+							300, depth, 1);
 			ImageIO.write(im, "PNG", new File(dir, "out"+depth+".png"));
 			System.out.println(".");
 		}
@@ -148,7 +148,7 @@ public class EMTests
 		int num = 2;
 		int dim = data.get(0).dimensionality();
 		EM em = new EM(num, dim, 6, data, 0.2, true);
-		em.distributePoints(SAMPLE_SIZE);
+		em.distributePoints(SAMPLE_SIZE, -1);
 		
 		for(int i : Series.series(100))
 		{
@@ -172,7 +172,7 @@ public class EMTests
 //				System.out.println();
 //			}
 			
-			em.distributePoints(SAMPLE_SIZE);
+			em.distributePoints(SAMPLE_SIZE, -1);
 			
 			System.out.print("Step "+i+" completed in " + Functions.toc() + "seconds.");
 		}
