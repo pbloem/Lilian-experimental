@@ -206,6 +206,12 @@ public class FractalEM extends AbstractExperiment
 	{
 		return bestDistance;
 	}
+	
+	@Result (name ="Below 0.05", description="1 if the best score is below 0.05, 0 otherwise")
+	public double below()
+	{
+		return bestDistance < 0.05 ? 1 : 0;
+	}
 
 	/**
 	 * Print out the current best approximation at full HD resolution.
