@@ -285,7 +285,8 @@ public class EM implements Serializable
 		for(int i = 1; i < num; i++)
 			model.addMap(trans.get(i), weights.get(i));
 		
-		modelPerformance = target.score(model);
+		if(target != null)
+			modelPerformance = target.score(model);
 
 		if(target != null && lastPerformance > modelPerformance)
 		{
