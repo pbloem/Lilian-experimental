@@ -53,6 +53,9 @@ public class FractalEM extends AbstractExperiment
 	protected boolean considerVariance;
 	protected int beamWidth;
 	protected boolean deepening;
+	protected boolean greedy;
+	protected int sampleSize;
+	protected double threshold;	
 	
 	/**
 	 * State information
@@ -82,8 +85,14 @@ public class FractalEM extends AbstractExperiment
 				boolean considerVariance,
 			@Parameter(name="beam width", description="Beam width to use when searching for codes")
 				int beamWidth,
-			@Parameter(name="gradual deepening", description="If true, the depth is gradually increased from 1 to the value under depth")
-				boolean deepening
+			@Parameter(name="gradual deepening", description="If true, depth is increased if quality stalls")
+				boolean deepening,
+			@Parameter(name="greedy", description="If true, the algorithm only moves to the next model if it has lower training error")
+				boolean greedy,
+			@Parameter(name="test sample size", description="The sample size for evaluating the model")
+				int sampleSize,
+			@Parameter(name="deepening threshold", description="The model will increse depth if successive generations don't improve by this rate")
+				double threshold
 			)
 	{
 		this.data = data;
@@ -94,7 +103,11 @@ public class FractalEM extends AbstractExperiment
 		this.distSampleSize = distSampleSize;
 		this.considerVariance = considerVariance;
 		this.beamWidth = beamWidth;
+		
 		this.deepening = deepening;
+		this.greedy = greedy;
+		this.sampleSize = sampleSize;
+		this.threshold = threshold;
 		
 	}
 	
@@ -173,7 +186,7 @@ public class FractalEM extends AbstractExperiment
 			throw new RuntimeException(e);
 		}
 		
-		em = new EM(components, dim, data, VAR, considerVariance);
+		em = new EM(components, dim, data, VAR, considerVariance, greedy ? new IFSTarget<Similitude>(sampleSize, data) : null);
 		em.distributePoints(distSampleSize, depth(), beamWidth);
 	}
 	

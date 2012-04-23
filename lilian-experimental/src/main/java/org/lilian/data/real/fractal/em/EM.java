@@ -15,11 +15,13 @@ import org.lilian.data.real.MVN;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
 import org.lilian.data.real.fractal.IFS;
+import org.lilian.data.real.fractal.IFSTarget;
 import org.lilian.data.real.fractal.IFSs;
 import org.lilian.data.real.fractal.Tools;
 import org.lilian.models.BasicFrequencyModel;
 import org.lilian.models.FrequencyModel;
 import org.lilian.search.Parameters;
+import org.lilian.search.evo.Target;
 import org.lilian.util.MatrixTools;
 import org.lilian.util.Series;
 
@@ -29,13 +31,14 @@ import org.lilian.util.Series;
  * @author Peter
  *
  */
-public class EM implements Serializable {
+public class EM implements Serializable
+{
 	
 	public static enum ProbMode {NONE, OLD, NEW} // How to determine the component priors
 												 // NEW is better
 	public static final ProbMode probMode = ProbMode.NEW;
 	
-	
+	public Target<IFS<Similitude>> target;
 	
 	private static final double DEV = 0.8;
 	private static final double PERTURB_VAR = 0.001;
@@ -50,8 +53,10 @@ public class EM implements Serializable {
 	private List<List<Integer>> codes;	
 	private List<Similitude> transformations;
 	private List<Double> probabilities;
-	public  IFS<Similitude> model;	
 	
+	public  IFS<Similitude> model;	
+	public double modelPerformance;
+		
 	// * If true, we do not just consider the means of the points with matching codes
 	//   but also the variance (by mapping a small amount of random points to 
 	//   both of the matching codes)
@@ -72,12 +77,15 @@ public class EM implements Serializable {
 	 * @param dimension
 	 * @param depth
 	 * @param data
+	 * @param target If not null, then the EM algorithm will only update it's 
+	 * model if the new model has a score equal to or 
 	 */
-	public EM(int numComponents, int dimension, List<Point> data, double dev, boolean considerVariance)
+	public EM(int numComponents, int dimension, List<Point> data, double dev, boolean considerVariance, Target<IFS<Similitude>> target)
 	{
 		this.num = numComponents;
 		this.dim = dimension;
 		this.data = data;
+		this.target = target;
 		this.considerVariance = considerVariance;
 		
 		if(dimension != data.get(0).dimensionality())
@@ -97,42 +105,45 @@ public class EM implements Serializable {
 			for(int j = 0; j < np; j++)
 				parameters.add(Global.random.nextGaussian() * DEV);
 			model.addMap(new Similitude(parameters), 1.0);
-		}
-		
-		root = new Node(-1, null);
-	}
-	
-	public EM(int numComponents, int initialDepth, int dimension, List<Point> data, boolean considerVariance)
-	{
-		this.num = numComponents;
-		this.dim = dimension;
-		this.data = data;
-		this.considerVariance = considerVariance;
-
-		root = new Node(-1, null);
-		
-		for(Point point : data)
-		{
-			List<Integer> code = new ArrayList<Integer>(initialDepth);
-			for(int i : Series.series(initialDepth))
-				code.add(Global.random.nextInt(numComponents));
 			
-			root.show(code, point);
+			if(target != null)
+				modelPerformance = target.score(model);
 		}
-	}
-	
-	public EM(IFS<Similitude> initial, List<Point> data, boolean considerVariance)
-	{
-		this.num = initial.size();
-		this.dim = initial.dimension();
-		this.data = data;
-		this.considerVariance = considerVariance;
-
 		
-		this.model = initial;
-
 		root = new Node(-1, null);
-	}	
+	}
+//	
+//	public EM(int numComponents, int initialDepth, int dimension, List<Point> data, boolean considerVariance)
+//	{
+//		this.num = numComponents;
+//		this.dim = dimension;
+//		this.data = data;
+//		this.considerVariance = considerVariance;
+//
+//		root = new Node(-1, null);
+//		
+//		for(Point point : data)
+//		{
+//			List<Integer> code = new ArrayList<Integer>(initialDepth);
+//			for(int i : Series.series(initialDepth))
+//				code.add(Global.random.nextInt(numComponents));
+//			
+//			root.show(code, point);
+//		}
+//	}
+////	
+//	public EM(IFS<Similitude> initial, List<Point> data, boolean considerVariance)
+//	{
+//		this.num = initial.size();
+//		this.dim = initial.dimension();
+//		this.data = data;
+//		this.considerVariance = considerVariance;
+//
+//		
+//		this.model = initial;
+//
+//		root = new Node(-1, null);
+//	}	
 	
 	public IFS<Similitude> model()
 	{
@@ -206,6 +217,8 @@ public class EM implements Serializable {
 		priors = new BasicFrequencyModel<Integer>();
 		root.count(priors);
 		
+		IFS<Similitude> lastModel = model;
+		double lastPerformance = modelPerformance;
 		model = null;
 		
 		List<Similitude> trans = new ArrayList<Similitude>(num);
@@ -272,6 +285,15 @@ public class EM implements Serializable {
 		for(int i = 1; i < num; i++)
 			model.addMap(trans.get(i), weights.get(i));
 		
+		modelPerformance = target.score(model);
+
+		if(target != null && lastPerformance > modelPerformance)
+		{
+			// * new model is no better than last, don't change
+			model = lastModel;
+			// ** but recompute score so that we don't get stuck on "lucky" models
+			modelPerformance = target.score(model); 
+		}
 	}
 	
 	

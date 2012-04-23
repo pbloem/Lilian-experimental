@@ -130,53 +130,53 @@ public class EMTests
 	
 	private static final int SAMPLE_SIZE = 10000;
 	
-	@Test
-	public void testEM() throws IOException
-	{
-		Global.random = new Random(42);
-		File dir = new File("/Users/peter/Documents/PhD/output/em_test_AM/");
-		dir.mkdirs();
-		
-		// IFS<AffineMap> ifs = IFS.makeAffine(IFSs.koch2Sim());
-		
-		List<Point> data = Datasets.ball(32).generate(500000);
-		// List<Point> data = ifs.generator().generate(100000);
-//		BufferedImage im = 
-//				Draw.draw(data, 1000, true);
-//		ImageIO.write(im, "PNG", new File(dir, "data.png"));
-		
-		int num = 2;
-		int dim = data.get(0).dimensionality();
-		EM em = new EM(num, dim, data, 0.2, true);
-		em.distributePoints(SAMPLE_SIZE, 6, -1);
-		
-		for(int i : Series.series(100))
-		{
-			Functions.tic();
-//			EM.Maps maps = em.findMaps();
-//			System.out.println(maps);
-//			for(int j : Series.series(num))
-//			{
-//				System.out.println(j);
-//				im = drawMap(maps.from(j), maps.to(j));
-//				ImageIO.write(im, "PNG", new File(dir, String.format("map%d.%02d.png", j, i)));			
-//			}
-			
-			em.findIFS();
-			
-//			if(i % 1 == 0)
-//			{
-//				im = Draw.draw(em.model().generator(), 10000000, 1000, true);
-//				ImageIO.write(im, "PNG", new File(dir, String.format("gen%04d.png", i)));
-//				
-//				System.out.println();
-//			}
-			
-			em.distributePoints(SAMPLE_SIZE, 6, -1);
-			
-			System.out.print("Step "+i+" completed in " + Functions.toc() + "seconds.");
-		}
-	}
+//	@Test
+//	public void testEM() throws IOException
+//	{
+//		Global.random = new Random(42);
+//		File dir = new File("/Users/peter/Documents/PhD/output/em_test_AM/");
+//		dir.mkdirs();
+//		
+//		// IFS<AffineMap> ifs = IFS.makeAffine(IFSs.koch2Sim());
+//		
+//		List<Point> data = Datasets.ball(32).generate(500000);
+//		// List<Point> data = ifs.generator().generate(100000);
+////		BufferedImage im = 
+////				Draw.draw(data, 1000, true);
+////		ImageIO.write(im, "PNG", new File(dir, "data.png"));
+//		
+//		int num = 2;
+//		int dim = data.get(0).dimensionality();
+//		EM em = new EM(num, dim, data, 0.2, true, null);
+//		em.distributePoints(SAMPLE_SIZE, 6, -1);
+//		
+//		for(int i : Series.series(100))
+//		{
+//			Functions.tic();
+////			EM.Maps maps = em.findMaps();
+////			System.out.println(maps);
+////			for(int j : Series.series(num))
+////			{
+////				System.out.println(j);
+////				im = drawMap(maps.from(j), maps.to(j));
+////				ImageIO.write(im, "PNG", new File(dir, String.format("map%d.%02d.png", j, i)));			
+////			}
+//			
+//			em.findIFS();
+//			
+////			if(i % 1 == 0)
+////			{
+////				im = Draw.draw(em.model().generator(), 10000000, 1000, true);
+////				ImageIO.write(im, "PNG", new File(dir, String.format("gen%04d.png", i)));
+////				
+////				System.out.println();
+////			}
+//			
+//			em.distributePoints(SAMPLE_SIZE, 6, -1);
+//			
+//			System.out.print("Step "+i+" completed in " + Functions.toc() + "seconds.");
+//		}
+//	}
 	
 	public BufferedImage drawMap(List<Point> from, List<Point> to)
 	{
