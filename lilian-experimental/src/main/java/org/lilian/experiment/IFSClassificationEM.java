@@ -178,13 +178,14 @@ public class IFSClassificationEM extends AbstractExperiment
 		
 		scores = new ArrayList<Double>(generations);
 		
-		ems = new ArrayList<EM>(trainingData.numClasses());
-		for(int i : series(trainingData.numClasses()))
-		{
-			EM em = new EM(components, dim, trainingData.points(i), initialVar, true, null);
-			em.distributePoints(distSampleSize, depth, beamWidth);
-			ems.add(em);
-		}
+// TODO		
+//		ems = new ArrayList<EM>(trainingData.numClasses());
+//		for(int i : series(trainingData.numClasses()))
+//		{
+//			EM em = new EM(components, dim, trainingData.points(i), initialVar, true, null);
+//			em.distributePoints(distSampleSize, depth, beamWidth);
+//			ems.add(em);
+//		}
 	}
 	
 	@Result(name = "Scores")

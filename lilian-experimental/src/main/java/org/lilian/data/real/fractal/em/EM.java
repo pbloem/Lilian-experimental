@@ -20,7 +20,10 @@ import org.lilian.data.real.fractal.IFSs;
 import org.lilian.data.real.fractal.Tools;
 import org.lilian.models.BasicFrequencyModel;
 import org.lilian.models.FrequencyModel;
+import org.lilian.search.Builder;
 import org.lilian.search.Parameters;
+import org.lilian.search.Parametrizable;
+import org.lilian.search.evo.ES;
 import org.lilian.search.evo.Target;
 import org.lilian.util.MatrixTools;
 import org.lilian.util.Series;
@@ -80,35 +83,21 @@ public class EM implements Serializable
 	 * @param target If not null, then the EM algorithm will only update it's 
 	 * model if the new model has a score equal to or 
 	 */
-	public EM(int numComponents, int dimension, List<Point> data, double dev, boolean considerVariance, Target<IFS<Similitude>> target)
+	public EM(IFS<Similitude> initial, List<Point> data, boolean considerVariance, Target<IFS<Similitude>> target)
 	{
-		this.num = numComponents;
-		this.dim = dimension;
+		this.num = initial.size();
+		this.dim = initial.dimension();
 		this.data = data;
 		this.target = target;
 		this.considerVariance = considerVariance;
 		
-		if(dimension != data.get(0).dimensionality())
-			throw new IllegalArgumentException("Data dimension ("+data.get(0).dimensionality()+") must match dimension argument ("+dimension+")");
-			
-		// Create random Similitudes
-		int np = Similitude.similitudeBuilder(dimension).numParameters();
-
-		List<Double> parameters = new ArrayList<Double>();
-		for(int i = 0; i < np; i++)
-			parameters.add(Global.random.nextGaussian() * dev);
+		if(dim != data.get(0).dimensionality())
+			throw new IllegalArgumentException("Data dimension ("+data.get(0).dimensionality()+") must match initial model argument ("+dim+")");
 		
-		model = new IFS<Similitude>(new Similitude(parameters), 1.0);
-		for(int i = 1; i < num; i++)
-		{
-			parameters.clear();
-			for(int j = 0; j < np; j++)
-				parameters.add(Global.random.nextGaussian() * DEV);
-			model.addMap(new Similitude(parameters), 1.0);
-			
-			if(target != null)
-				modelPerformance = target.score(model);
-		}
+		model = initial;
+		
+		if(target != null)
+			modelPerformance = target.score(model);
 		
 		root = new Node(-1, null);
 	}
@@ -617,6 +606,212 @@ public class EM implements Serializable
 			}
 			
 			return out;
+		}
+	}
+	
+	/**
+	 * Produces a simple initial model from a a set of random double variables.
+	 * 
+	 * @param dim
+	 * @param comp
+	 * @param var
+	 * @return
+	 */
+	public static IFS<Similitude> initialRandom(int dim, int comp, double var)
+	{
+		// Create random Similitudes
+		int np = Similitude.similitudeBuilder(dim).numParameters();
+
+
+		List<Double> parameters = new ArrayList<Double>();
+		for(int i = 0; i < np; i++)
+			parameters.add(Global.random.nextGaussian() * var);	
+		
+		IFS<Similitude> model = new IFS<Similitude>(new Similitude(parameters), 1.0);
+		for(int i = 1; i < comp; i++)
+		{
+			parameters.clear();
+			for(int j = 0; j < np; j++)
+				parameters.add(Global.random.nextGaussian() * DEV);
+			model.addMap(new Similitude(parameters), 1.0);
+		}
+		
+		return model;
+	}
+
+	/**
+	 * Produces an initial model such that the given points are the fixed points 
+	 * of each component. The components do not rotate and have the given scaling parameter
+	 * 
+	 * @param comp
+	 * @param points
+	 * @return
+	 */
+	public static IFS<Similitude> initialPoints(double scale, List<Point> points)
+	{
+		int dim = points.get(0).dimensionality();
+		IFS<Similitude> model = null;
+		double prior = 1.0/points.size();
+		
+		for(Point point : points)
+		{
+			RealVector translation = point.getVector().mapMultiply(1.0 - scale);
+			Similitude map = new Similitude(scale, new Point(translation), (List<Double>)new Point((dim * 2 - dim)/2));
+			
+			if(model == null)
+				model = new IFS<Similitude>(map, prior);
+			else
+				model.addMap(map, prior);
+		}
+		
+		return model;
+		
+	}
+	
+	/**
+	 * Produces an initial model such that the given points are the fixed points 
+	 * of each component. The components do not rotate and have the given scaling parameter
+	 * 
+	 * @param comp
+	 * @param points
+	 * @return
+	 */
+	public static IFS<Similitude> initialSphere(int dim, int comp, double radius, double scale)
+	{
+		List<Point> points = Datasets.sphere(dim, radius).generate(comp);
+		return initialPoints(scale, points);
+	}	
+	
+	/**
+	 * Produces an initial model with fixed points all at a fixed distance from 
+	 * the origin and a maximal angle between any two fixed points.
+	 * 
+	 * This method uses a search rather than an analytical approach.
+	 * 
+	 * @param dim
+	 * @param comp
+	 * @return
+	 */
+	public static IFS<Similitude> initialSpread(int dim, int comp, double radius, double scale)
+	{
+		Builder<PointList> b = new PointListBuilder(dim, comp);
+		ES<PointList> es = new ES<PointList>(
+				b, new SpreadTarget(radius), ES.initial(100, b.numParameters(), 0.6));
+		
+		for(int i : Series.series(100))
+			es.breed();
+		
+		PointList list = es.best().instance();
+		List<Point> points = new ArrayList<Point>(list.size());
+		for(Point point : list)
+		{
+			RealVector v = point.getVector();
+			v.unitize();
+			v.mapMultiplyToSelf(radius);
+			Point nw = new Point(v);
+			points.add(nw);
+		}
+		
+		return initialPoints(scale, points);
+	}
+	
+	private static class SpreadTarget implements Target<List<Point>>
+	{
+		double radius;
+		
+		public SpreadTarget(double radius)
+		{
+			this.radius = radius;
+		}
+
+		@Override
+		public double score(List<Point> points)
+		{
+//			double penSum = 0.0;
+//			
+//			for(Point p : points)
+//			{
+//				double pen = Math.abs(radius - p.getVector().getNorm());
+//				penSum += pen;
+//			}
+			
+			double min = Double.POSITIVE_INFINITY;
+			
+			for(int i = 0; i < points.size(); i++)
+				for(int j = i + 1; j < points.size(); j++)
+				{
+					RealVector a = points.get(i).getVector(),
+					           b = points.get(j).getVector();
+					
+					double dot = a.dotProduct(b);
+					double prd = a.getNorm() * b.getNorm();
+					
+					double angle = Math.acos(dot/prd);
+					
+					min = Math.min(min, angle);
+				}
+					
+			return min;
+		}
+	}
+	
+	private static class PointList extends AbstractList<Point> implements Parametrizable
+	{
+		public List<Point> master;
+		
+		public PointList(List<Point> master)
+		{
+			this.master = master;
+		}
+
+		@Override
+		public List<Double> parameters()
+		{
+			List<Double> parameters = new ArrayList<Double>();
+			for(Point p : master)
+				parameters.addAll(p);
+			
+			return parameters;
+		}
+
+		@Override
+		public Point get(int index)
+		{
+			return master.get(index);
+		}
+
+		@Override
+		public int size()
+		{
+			return master.size();
+		}
+	}
+	
+	private static class PointListBuilder implements Builder<PointList>
+	{
+		private int num;
+		private int dim;
+		
+		public PointListBuilder(int dim, int num)
+		{
+			this.num = num;
+			this.dim = dim;
+		}
+
+		@Override
+		public PointList build(List<Double> parameters)
+		{
+			List<Point> points = new ArrayList<Point>();
+			for(int i = 0; i < num*dim; i += dim)
+				points.add(new Point(parameters.subList(i, i + dim)));
+				
+			return new PointList(points);
+		}
+
+		@Override
+		public int numParameters()
+		{
+			return num * dim;
 		}
 	}
 }

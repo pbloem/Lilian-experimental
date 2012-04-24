@@ -262,4 +262,43 @@ public class EMTests
 		assertEquals(EM.findScalar(x, y), 2.0, 0.1);
 	
 	}
+	
+	@Test
+	public void testEMInitial() throws IOException	
+	{
+		int num = 20;
+		double[] xrange = new double[]{-2.1333, 2.1333};
+		double[] yrange = new double[]{-1.2, 1.2};
+		
+		Global.random = new Random(42);
+		File dir = new File("/Users/peter/Documents/PhD/output/emInital/");
+		dir.mkdirs();
+		
+		int dim = 2;
+		int comp = 3;
+		
+		BufferedImage image;
+		
+//		for(int i : Series.series(num))
+//		{
+//			IFS<Similitude> model = EM.initialRandom(dim, comp, 0.6);
+//			image = Draw.draw(model.generator(), 10000000, xrange, yrange, 1920, 1080, true);
+//			ImageIO.write(image, "PNG", new File(dir, String.format("random.%04d.png", i)));
+//		}
+//		
+//		for(int i : Series.series(num))
+//		{
+//			IFS<Similitude> model = EM.initialSphere(dim, comp, 0.7, 0.5);
+//			image = Draw.draw(model.generator(), 10000000, xrange, yrange, 1920, 1080, true);
+//			ImageIO.write(image, "PNG", new File(dir, String.format("sphere.%04d.png", i)));
+//		}
+		
+		for(int i : Series.series(num))
+		{
+			IFS<Similitude> model = EM.initialSpread(dim, comp, 1.0, 0.5);
+			// image = Draw.draw(model.generator(), 10000000, xrange, yrange, 1920, 1080, true);
+			image = Draw.draw(model.generator(), 10000000, 1000, true);
+			ImageIO.write(image, "PNG", new File(dir, String.format("spread.%04d.png", i)));
+		}		
+	}
 }

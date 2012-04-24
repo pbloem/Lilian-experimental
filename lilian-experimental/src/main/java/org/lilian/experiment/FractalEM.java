@@ -43,6 +43,12 @@ public class FractalEM extends AbstractExperiment
 	
 	@Reportable
 	private static final int SAMPLE_SIZE_TEST = 1000;
+
+	@Reportable
+	private static final double RADIUS = 0.7;
+
+	@Reportable
+	private static final double SCALE = 0.5;
 	
 	protected List<Point> data;
 	protected int depth;
@@ -57,6 +63,7 @@ public class FractalEM extends AbstractExperiment
 	protected int sampleSize;
 	protected double threshold;	
 	protected boolean highQuality;
+	protected String initStrategy;
 	
 	/**
 	 * State information
@@ -95,7 +102,9 @@ public class FractalEM extends AbstractExperiment
 			@Parameter(name="deepening threshold", description="The model will increse depth if successive generations don't improve by this rate")
 				double threshold,
 			@Parameter(name="high quality", description="true: full HD 10E7, iterations, false: 1/16th HD, 10E4 iterations")
-				boolean highQuality
+				boolean highQuality,
+			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm")
+				String initStrategy
 			)
 	{
 		this.data = data;
@@ -113,7 +122,7 @@ public class FractalEM extends AbstractExperiment
 		this.threshold = threshold;
 		
 		this.highQuality = highQuality;
-		
+		this.initStrategy = initStrategy;
 	}
 	
 	private int depth()
@@ -132,6 +141,24 @@ public class FractalEM extends AbstractExperiment
 		Functions.tic();		
 		while(currentGeneration < generations)
 		{
+			
+			double d = distance.distance(
+					Datasets.sample(data, SAMPLE_SIZE_TEST),
+					em.model().generator().generate(SAMPLE_SIZE_TEST));
+			scores.add(d);
+			bestDistance = Math.min(bestDistance, d);
+
+			if(true)
+			{
+				write(em.model, dir, String.format("generation%04d", currentGeneration));
+				logger.info("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
+				Functions.tic();				
+				save();
+			}	
+			
+			logger.info("Scores (" + currentGeneration + ") : " + scores());
+			logger.info("Best   (" + currentGeneration + ") : " + bestScore());
+			
 			currentGeneration++;
 
 			em.distributePoints(distSampleSize, depth(), beamWidth);
@@ -152,23 +179,6 @@ public class FractalEM extends AbstractExperiment
 //			}			
 			
 			em.findIFS();
-			
-			double d = distance.distance(
-					Datasets.sample(data, SAMPLE_SIZE_TEST),
-					em.model().generator().generate(SAMPLE_SIZE_TEST));
-			scores.add(d);
-			bestDistance = Math.min(bestDistance, d);
-
-			if(true)
-			{
-				write(em.model, dir, String.format("generation%04d", currentGeneration));
-				logger.info("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
-				Functions.tic();				
-				save();
-			}	
-			
-			logger.info("Scores (" + currentGeneration + ") : " + scores());
-			logger.info("Best   (" + currentGeneration + ") : " + bestScore());
 		}
 		
 
@@ -182,16 +192,29 @@ public class FractalEM extends AbstractExperiment
 		
 		logger.info("Data size: " + data.size());
 		
-		BufferedImage im = Draw.draw(data, 300, true);
+		BufferedImage im = Draw.draw(data, 500, true);
 		try
 		{
-			ImageIO.write(im, "png", new File(dir, "data.png"));
+			ImageIO.write(im, "PNG", new File(dir, "data.png"));
 		} catch (IOException e)
 		{
 			throw new RuntimeException(e);
 		}
 		
-		em = new EM(components, dim, data, VAR, considerVariance, greedy ? new IFSTarget<Similitude>(sampleSize, data) : null);
+		IFS<Similitude> model = null;
+		if(initStrategy.toLowerCase().equals("random"))
+			model = EM.initialRandom(dim, components, VAR);
+		else if(initStrategy.toLowerCase().equals("sphere"))
+			model = EM.initialSphere(dim, components, RADIUS, SCALE);
+		else if(initStrategy.toLowerCase().equals("spread"))
+			model = EM.initialSpread(dim, components, RADIUS, SCALE);
+		else if(initStrategy.toLowerCase().equals("points"))
+			model = EM.initialPoints(SCALE, Datasets.sample(data, components));
+		
+		if(model == null)
+			throw new IllegalArgumentException("Initialization strategy \""+initStrategy+"\" not recognized.");
+		
+		em = new EM(model, data, considerVariance, greedy ? new IFSTarget<Similitude>(sampleSize, data) : null);
 		em.distributePoints(distSampleSize, depth(), beamWidth);
 	}
 	
