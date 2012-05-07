@@ -250,7 +250,7 @@ public class FractalEM extends AbstractExperiment
 		int div = highQuality ? 1 : 16;
 		int its = highQuality ? (int)10E7 : 10000;
 		
-		BufferedImage image = Draw.draw(ifs.generator(), its, xrange, yrange, 1920/div, 1080/div, true);
+		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true);
 		try
 		{
 			ImageIO.write(image, "PNG", new File(dir, name + ".png") );
@@ -305,9 +305,7 @@ public class FractalEM extends AbstractExperiment
 		{
 			Point pointFrom = from.get(i);
 			Point pointTo = to.get(i);
-			
-//			System.out.println(pointFrom + " " + pointTo);
-			
+						
 			int xf = toPixel(pointFrom.get(0), xRes, xrange[0], xrange[1]); 
 			int yf = toPixel(pointFrom.get(1), yRes, yrange[0], yrange[1]);
 
