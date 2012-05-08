@@ -218,12 +218,6 @@ public class FractalEM extends AbstractExperiment
 		em.distributePoints(distSampleSize, depth(), beamWidth);
 	}
 	
-	@Result(name = "Scores", description="The scores over successive generations.")
-	public List<Double> scores()
-	{
-		return scores;
-	}
-
 	@Result(name = "Best score", description="The best (lowest) score over all generations.")
 	public double bestScore()
 	{
@@ -234,6 +228,12 @@ public class FractalEM extends AbstractExperiment
 	public double below()
 	{
 		return bestDistance < 0.05 ? 1 : 0;
+	}
+
+	@Result(name = "Scores", description="The scores over successive generations.")
+	public List<Double> scores()
+	{
+		return scores;
 	}
 
 	/**
