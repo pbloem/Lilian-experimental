@@ -656,7 +656,7 @@ public class EM implements Serializable
 		for(Point point : points)
 		{
 			RealVector translation = point.getVector().mapMultiply(1.0 - scale);
-			Similitude map = new Similitude(scale, new Point(translation), (List<Double>)new Point((dim * 2 - dim)/2));
+			Similitude map = new Similitude(scale, new Point(translation), (List<Double>)new Point((dim * dim - dim)/2));
 			
 			if(model == null)
 				model = new IFS<Similitude>(map, prior);
