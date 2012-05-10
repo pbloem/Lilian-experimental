@@ -150,7 +150,8 @@ public class FractalEM extends AbstractExperiment
 
 			if(true)
 			{
-				write(em.model, dir, String.format("generation%04d", currentGeneration));
+				if(dim == 2)
+					write(em.model, dir, String.format("generation%04d", currentGeneration));
 				logger.info("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
 				Functions.tic();				
 				save();
