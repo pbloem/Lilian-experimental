@@ -202,7 +202,7 @@ public class FractalEM extends AbstractExperiment
 		if(model == null)
 			throw new IllegalArgumentException("Initialization strategy \""+initStrategy+"\" not recognized.");
 		
-		em = new EM(model, data, considerVariance, new IFSTarget<Similitude>(sampleSize, data));
+		em = new EM(model, data, considerVariance, greedy ? new IFSTarget<Similitude>(sampleSize, data) : null);
 		em.distributePoints(distSampleSize, depth(), beamWidth);
 	}
 	
