@@ -40,15 +40,15 @@ public class FractalEM extends AbstractExperiment
 {
 	@Reportable
 	private static final double VAR = 0.6;
-	
-	@Reportable
-	private static final int SAMPLE_SIZE_TEST = 1000;
 
 	@Reportable
 	private static final double RADIUS = 0.7;
 
 	@Reportable
 	private static final double SCALE = 0.5;
+
+	@Reportable
+	private static final double IDENTITY_INIT_VAR = 0.1;
 	
 	protected List<Point> data;
 	protected int depth;
@@ -103,7 +103,7 @@ public class FractalEM extends AbstractExperiment
 				double threshold,
 			@Parameter(name="high quality", description="true: full HD 10E7, iterations, false: 1/16th HD, 10E4 iterations")
 				boolean highQuality,
-			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm")
+			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
 				String initStrategy
 			)
 	{
@@ -143,8 +143,8 @@ public class FractalEM extends AbstractExperiment
 		{
 			
 			double d = distance.distance(
-					Datasets.sample(data, SAMPLE_SIZE_TEST),
-					em.model().generator().generate(SAMPLE_SIZE_TEST));
+					Datasets.sample(data, sampleSize),
+					em.model().generator().generate(sampleSize));
 			scores.add(d);
 			bestDistance = Math.min(bestDistance, d);
 
@@ -163,23 +163,8 @@ public class FractalEM extends AbstractExperiment
 			currentGeneration++;
 
 			em.distributePoints(distSampleSize, depth(), beamWidth);
-			
-//			EM.Maps maps = em.findMaps();
-//			System.out.println(maps);
-//			for(int j : Series.series(components))
-//			{
-//				System.out.println(j);
-//				BufferedImage im = drawMap(maps.from(j), maps.to(j));
-//				try
-//				{
-//					ImageIO.write(im, "PNG", new File(dir, String.format("map%d.%02d.png", j, currentGeneration)));
-//				} catch (IOException e)
-//				{
-//					throw new RuntimeException(e);
-//				}			
-//			}			
-			
-			em.findIFS();
+			em.findIFS(greedy);
+
 		}
 		
 
@@ -211,11 +196,13 @@ public class FractalEM extends AbstractExperiment
 			model = EM.initialSpread(dim, components, RADIUS, SCALE);
 		else if(initStrategy.toLowerCase().equals("points"))
 			model = EM.initialPoints(SCALE, Datasets.sample(data, components));
+		else if(initStrategy.toLowerCase().equals("identity"))
+			model = EM.initialIdentity(dim, components, IDENTITY_INIT_VAR);
 		
 		if(model == null)
 			throw new IllegalArgumentException("Initialization strategy \""+initStrategy+"\" not recognized.");
 		
-		em = new EM(model, data, considerVariance, greedy ? new IFSTarget<Similitude>(sampleSize, data) : null);
+		em = new EM(model, data, considerVariance, new IFSTarget<Similitude>(sampleSize, data));
 		em.distributePoints(distSampleSize, depth(), beamWidth);
 	}
 	
@@ -236,6 +223,17 @@ public class FractalEM extends AbstractExperiment
 	{
 		return scores;
 	}
+	
+	@Result(name = "Scores", description="Ratio of the current score divided by the last score")
+	public List<Double> scoreRatios()
+	{
+		List<Double> ratios = new ArrayList<Double>(scores().size());
+		
+		for(int i = 1; i < scores().size(); i++)
+			ratios.add(scores().get(i) / scores.get(i-1));
+		
+		return ratios;
+	}
 
 	/**
 	 * Print out the current best approximation at full HD resolution.
@@ -249,7 +247,7 @@ public class FractalEM extends AbstractExperiment
 		double[] yrange = new double[]{-1.2, 1.2};
 		
 		int div = highQuality ? 1 : 16;
-		int its = highQuality ? (int)10E7 : 10000;
+		int its = highQuality ? (int)10E5 : 10000;
 		
 		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true);
 		try

@@ -18,6 +18,7 @@ import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSTarget;
 import org.lilian.data.real.fractal.IFSs;
 import org.lilian.data.real.fractal.Tools;
+import org.lilian.experiment.Reportable;
 import org.lilian.models.BasicFrequencyModel;
 import org.lilian.models.FrequencyModel;
 import org.lilian.search.Builder;
@@ -39,12 +40,22 @@ public class EM implements Serializable
 	
 	public static enum ProbMode {NONE, OLD, NEW} // How to determine the component priors
 												 // NEW is better
+	
+	@Reportable
 	public static final ProbMode probMode = ProbMode.NEW;
+	@Reportable
+	// * Invert the similitudes if they are not contractive
+	//   TODO: NOT SURE IF ture IS BSET. MAKE EXP. PARAM AND TEST
+	public static final boolean INVERT_IF_NOT_CONTRACTIVE = false;
+	// * If the relative frequency of a component among the code drops below this,
+	//   we drop it, and distribute its symbol over the symbols of the most 
+	//   frequent component
+	public static final double DROP_PROBABILITY = 0.02;
 	
 	public Target<IFS<Similitude>> target;
 	
 	private static final double DEV = 0.8;
-	private static final double PERTURB_VAR = 0.001;
+	private static final double PERTURB_VAR = 0.1;
 	private static final double THRESHOLD = 0.00000000001;
 	private static final int PAIR_SAMPLE_SIZE = 20;
 	private static final double PAIR_SAMPLE_VAR  = 0.01;
@@ -54,8 +65,6 @@ public class EM implements Serializable
 	// private HashMap<List<Integer>, List<Point>> distribution;
 
 	private List<List<Integer>> codes;	
-	private List<Similitude> transformations;
-	private List<Double> probabilities;
 	
 	public  IFS<Similitude> model;	
 	public double modelPerformance;
@@ -67,7 +76,7 @@ public class EM implements Serializable
 		
 	private int num;
 	private int dim;
-	
+
 	// * The root of a backwards trie of codes 
 	private Node root;
 	
@@ -144,27 +153,12 @@ public class EM implements Serializable
 		return codes;
 	}
 	
-	public List<Similitude> transformations()
-	{
-		return transformations;
-	}
-
-	public List<Double> probabilities()
-	{
-		return probabilities;
-	}
 	
 	public void print(PrintStream out)
 	{
 		root.print(out, 0);
 	}
-	
-	public void step(int sampleSize, int depth, int beamWidth)
-	{
-		distributePoints(sampleSize, depth, beamWidth);
-		findIFS();
-	}
-	
+
 	/**
 	 * Assigns each each point to the leaf-distribution of the current IFS that
 	 * is most likely to have generated it.  
@@ -177,7 +171,7 @@ public class EM implements Serializable
 	{
 		List<Point> sample =  
 			sampleSize	== -1 ? data : Datasets.sample(data, sampleSize);
-		
+
 		root = new Node(-1, null); // Challenging for the GC, but should be fine...
 				
 		for(Point point : sample)
@@ -185,22 +179,19 @@ public class EM implements Serializable
 			List<Integer> code = null; 
 			if(beamWidth == -1)
 				code = IFS.code(model, point, depth);
-			else
-			{
+			else	
 				code = Tools.search(point, model, depth, beamWidth);
-				List code2 = IFS.code(model, point, depth);
-				if(!code2.equals(code))
-					System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + code + " " + code2);
-				else
-					System.out.print("+");
-			}
-			
 			root.show(code, point);
 		}
 	}
 	
 	public void findIFS()
 	{
+		findIFS(false);
+	}
+	
+	public void findIFS(boolean greedy)
+	{	
 		Maps maps = findMaps();
 		
 		priors = new BasicFrequencyModel<Integer>();
@@ -233,12 +224,17 @@ public class EM implements Serializable
 				
 				double det = MatrixTools.getDeterminant(
 						map.getTransformation());
-				if(Double.isNaN(det))
-					System.out.println(map);
 				
+				
+				if(Double.isNaN(det))
+					Global.log().warning("Map with NaN determinant" + map);
+				
+				// * If the map contracts too much, we perturb it slightly
 				if(Math.abs(det) < THRESHOLD || Double.isNaN(det))
 					map = Parameters.perturb(map, Similitude.similitudeBuilder(dim), PERTURB_VAR);
 			
+				if(INVERT_IF_NOT_CONTRACTIVE && map.scalar() > 1.0)
+					map = map.inverse();
 				
 				trans.set(i, map);
 				if(probMode == ProbMode.OLD) 
@@ -261,13 +257,27 @@ public class EM implements Serializable
 		 */
 		for(int i : unassigned)
 		{
+			System.out.println("-------"+i);
+			
 			int j = assigned.get(Global.random.nextInt(assigned.size()));
+			
 			Similitude source = trans.get(j);
-			Similitude perturbed = 
+			Similitude perturbed0 = 
 					Parameters.perturb(source,
 						Similitude.similitudeBuilder(dim), 
 						PERTURB_VAR);
-			trans.set(i, perturbed);
+
+			Similitude perturbed1 = 
+					Parameters.perturb(source,
+						Similitude.similitudeBuilder(dim), 
+						PERTURB_VAR);
+			
+			perturbed0 = perturbed0.scalar() > 1.0 ? perturbed0.inverse() : perturbed0;
+			perturbed1 = perturbed1.scalar() > 1.0 ? perturbed1.inverse() : perturbed1;
+			
+			
+			trans.set(i, perturbed0);
+			trans.set(j, perturbed1);
 		}
 		
 		model = new IFS<Similitude>(trans.get(0), weights.get(0));
@@ -277,7 +287,7 @@ public class EM implements Serializable
 		if(target != null)
 			modelPerformance = target.score(model);
 
-		if(target != null && lastPerformance > modelPerformance)
+		if(greedy && lastPerformance > modelPerformance)
 		{
 			// * new model is no better than last, don't change
 			model = lastModel;
@@ -713,6 +723,35 @@ public class EM implements Serializable
 		}
 		
 		return initialPoints(scale, points);
+	}
+	
+	/**
+	 * Provides an initial IFS that is n slightly perturbed variants of the 
+	 * identity transform.
+	 * 
+	 * @return
+	 */
+	public static IFS<Similitude> initialIdentity(int dim, int num, double var)
+	{
+		Similitude source = Similitude.identity(dim);
+				
+		IFS<Similitude> ifs = null;
+		for(int i : Series.series(num))
+		{
+			Similitude perturbed = 
+					Parameters.perturb(source,
+							Similitude.similitudeBuilder(dim), 
+							PERTURB_VAR);
+			if(perturbed.scalar() > 1.0)
+				perturbed = perturbed.inverse();
+			
+			if(ifs == null)
+				ifs = new IFS<Similitude>(perturbed, 1.0);
+			else
+				ifs.addMap(perturbed, 1.0);
+		}
+		
+		return ifs;
 	}
 	
 	private static class SpreadTarget implements Target<List<Point>>
