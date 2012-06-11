@@ -224,7 +224,7 @@ public class FractalEM extends AbstractExperiment
 		return scores;
 	}
 	
-	@Result(name = "Scores", description="Ratio of the current score divided by the last score")
+	@Result(name = "Ratios", description="Ratio of the current score divided by the last score")
 	public List<Double> scoreRatios()
 	{
 		List<Double> ratios = new ArrayList<Double>(scores().size());
