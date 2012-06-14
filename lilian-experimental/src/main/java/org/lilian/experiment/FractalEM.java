@@ -38,6 +38,10 @@ import org.lilian.util.distance.SquaredEuclideanDistance;
 
 public class FractalEM extends AbstractExperiment
 {
+	
+	private static double[] xrange = new double[]{-2.1333, 2.1333};
+	private static double[] yrange = new double[]{-1.2, 1.2};	
+	
 	@Reportable
 	private static final double VAR = 0.6;
 
@@ -64,6 +68,7 @@ public class FractalEM extends AbstractExperiment
 	protected double threshold;	
 	protected boolean highQuality;
 	protected String initStrategy;
+
 	
 	/**
 	 * State information
@@ -107,6 +112,7 @@ public class FractalEM extends AbstractExperiment
 				String initStrategy
 			)
 	{
+	
 		this.data = data;
 		this.depth = depth;
 		this.generations = generations;
@@ -160,6 +166,7 @@ public class FractalEM extends AbstractExperiment
 			logger.info("Scores (" + currentGeneration + ") : " + scores());
 			logger.info("Best   (" + currentGeneration + ") : " + bestScore());
 			
+			logger.info("Parameters   (" + currentGeneration + ") : " + em.model().parameters());			
 			currentGeneration++;
 
 			em.distributePoints(distSampleSize, depth(), beamWidth);
@@ -178,10 +185,11 @@ public class FractalEM extends AbstractExperiment
 		
 		logger.info("Data size: " + data.size());
 		
-		BufferedImage im = Draw.draw(data, 500, true);
+		BufferedImage image = Draw.draw(data, xrange, yrange, 1920, 1080, true, false);
+
 		try
 		{
-			ImageIO.write(im, "PNG", new File(dir, "data.png"));
+			ImageIO.write(image, "PNG", new File(dir, "data.png"));
 		} catch (IOException e)
 		{
 			throw new RuntimeException(e);
@@ -242,10 +250,7 @@ public class FractalEM extends AbstractExperiment
 	 * @param name
 	 */
 	private <M extends Map & Parametrizable> void write(IFS<M> ifs, File dir, String name)
-	{
-		double[] xrange = new double[]{-2.1333, 2.1333};
-		double[] yrange = new double[]{-1.2, 1.2};
-		
+	{		
 		int div = highQuality ? 1 : 16;
 		int its = highQuality ? (int)10E5 : 10000;
 		
