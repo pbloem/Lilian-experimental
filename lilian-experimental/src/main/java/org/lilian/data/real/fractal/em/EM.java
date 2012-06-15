@@ -53,6 +53,7 @@ public class EM implements Serializable
 	public static final double DROP_PROBABILITY = 0.02;
 	
 	public Target<IFS<Similitude>> target;
+	public Builder<IFS<Similitude>> builder;
 	
 	private static final double DEV = 0.8;
 	private static final double PERTURB_VAR = 0.1;
@@ -109,6 +110,9 @@ public class EM implements Serializable
 			modelPerformance = target.score(model);
 		
 		root = new Node(-1, null);
+		
+		Builder<Similitude> sb = Similitude.similitudeBuilder(dim);
+		builder = IFS.builder(num, sb);
 	}
 //	
 //	public EM(int numComponents, int initialDepth, int dimension, List<Point> data, boolean considerVariance)
@@ -187,10 +191,10 @@ public class EM implements Serializable
 	
 	public void findIFS()
 	{
-		findIFS(false);
+		findIFS(false, 0.0);
 	}
 	
-	public void findIFS(boolean greedy)
+	public void findIFS(boolean greedy, double noise)
 	{	
 		Maps maps = findMaps();
 		
@@ -246,6 +250,7 @@ public class EM implements Serializable
 			} else {
 				unassigned.add(i);
 			}
+			
 		}
 		
 		if(assigned.isEmpty())
@@ -294,6 +299,9 @@ public class EM implements Serializable
 			// ** but recompute score so that we don't get stuck on "lucky" models
 			modelPerformance = target.score(model); 
 		}
+		
+		if(noise > 0.0)
+			model = IFSs.perturb(model, builder, noise);
 	}
 	
 	

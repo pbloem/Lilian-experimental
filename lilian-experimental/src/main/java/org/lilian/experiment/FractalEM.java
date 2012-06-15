@@ -68,6 +68,7 @@ public class FractalEM extends AbstractExperiment
 	protected double threshold;	
 	protected boolean highQuality;
 	protected String initStrategy;
+	protected double noise;
 
 	
 	/**
@@ -109,7 +110,9 @@ public class FractalEM extends AbstractExperiment
 			@Parameter(name="high quality", description="true: full HD 10E7, iterations, false: 1/16th HD, 10E4 iterations")
 				boolean highQuality,
 			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
-				String initStrategy
+				String initStrategy,
+			@Parameter(name="noise", description="Gaussian noise added to the model after each iteration.")
+				double noise
 			)
 	{
 	
@@ -129,6 +132,8 @@ public class FractalEM extends AbstractExperiment
 		
 		this.highQuality = highQuality;
 		this.initStrategy = initStrategy;
+		
+		this.noise = noise;
 	}
 	
 	private int depth()
@@ -170,15 +175,14 @@ public class FractalEM extends AbstractExperiment
 			currentGeneration++;
 
 			em.distributePoints(distSampleSize, depth(), beamWidth);
-			em.findIFS(greedy);
-
+			em.findIFS(greedy, noise);
 		}
 		
 
 	}
 	
 	public void setup()
-	{
+	{		
 		currentGeneration = 0;
 		
 		scores = new ArrayList<Double>(generations);
