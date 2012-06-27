@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -22,9 +23,12 @@ import org.lilian.util.graphs.jung.Measures;
 import org.openrdf.rio.RDFFormat;
 
 import edu.uci.ics.jung.algorithms.cluster.WeakComponentClusterer;
+import edu.uci.ics.jung.algorithms.shortestpath.Distance;
 import edu.uci.ics.jung.algorithms.shortestpath.DistanceStatistics;
+import edu.uci.ics.jung.algorithms.shortestpath.UnweightedShortestPath;
 import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.graph.Hypergraph;
 import edu.uci.ics.jung.graph.UndirectedGraph;
 
 /**
@@ -196,12 +200,14 @@ public class GraphMeasures<V, E> extends AbstractExperiment
 
 		double variance = varSum/(graph.getVertexCount() - 1);
 		stdDegree = Math.sqrt(variance);	
-		
-		logger.info("Calculating diameter");
-		
+				
 		if(!large) 
-		{		
+		{
+			logger.info("Calculating diameter");
+		
 			diameter = DistanceStatistics.diameter(graph);
+			
+			logger.info("diameter " +  diameter);
 
 			// * Collect degrees 
 			for(V node : graph.getVertices())
@@ -238,19 +244,17 @@ public class GraphMeasures<V, E> extends AbstractExperiment
 			logger.info("Rendering visualization.");
 			image = org.data2semantics.tools.graphs.Graphs.image(graph, 800, 494);		
 			
-			
-			// * Calculate the size of the largest component
-			WeakComponentClusterer<V, E> clust = 
-					new WeakComponentClusterer<V, E>();
-			
-			Set<Set<V>> clusters = clust.transform(graph);
-			
-			largestComponentSize = Double.NEGATIVE_INFINITY;
-			for(Set<V> set : clusters)
-				largestComponentSize = Math.max(largestComponentSize, set.size());
-			
-			
 		}
+		
+		// * Calculate the size of the largest component
+		WeakComponentClusterer<V, E> clust = 
+				new WeakComponentClusterer<V, E>();
+		
+		Set<Set<V>> clusters = clust.transform(graph);
+		
+		largestComponentSize = Double.NEGATIVE_INFINITY;
+		for(Set<V> set : clusters)
+			largestComponentSize = Math.max(largestComponentSize, set.size());
 				
 		// * Calculate assortivity
 		directed = graph instanceof DirectedGraph<?, ?>;
@@ -454,4 +458,41 @@ public class GraphMeasures<V, E> extends AbstractExperiment
 			return 2;
 		}
 	}
+	
+	/**
+	 * Local copy of DistanceStatistics.diameter()
+	 * @param g
+	 * @param d
+	 * @param use_max
+	 * @return
+	 */
+//    public static <V, E> double diameter(Hypergraph<V,E> g)
+//    {
+//        return diameter(g, new UnweightedShortestPath<V,E>(g), false);
+//    }	
+//	
+//    public static <V, E> double diameter(Hypergraph<V,E> g, Distance<V> d, boolean use_max)
+//    {
+//        double diameter = 0;
+//        Collection<V> vertices = g.getVertices();
+//        for(V v : vertices) 
+//        {
+//            for(V w : vertices) 
+//            {
+//                if (v.equals(w) == false) // don't include self-distances
+//                {
+//                    Number dist = d.getDistance(v, w);
+//                    System.out.println(dist);
+//                    if (dist == null)
+//                    {
+//                        if (!use_max)
+//                            return Double.POSITIVE_INFINITY;
+//                    }
+//                    else
+//                        diameter = Math.max(diameter, dist.doubleValue());
+//                }
+//            }
+//        }
+//        return diameter;
+//    }
 }
