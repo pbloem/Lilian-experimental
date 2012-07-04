@@ -147,7 +147,7 @@ public class IFSClassificationEM extends AbstractExperiment
 			FractalEM em = new FractalEM(
 					trainingData.points(i),
 					depth, generations, components, dim, distSampleSize,
-					true, -1, false, false, testSampleSize, 0.0, true, "sphere", 
+					true, -1, false, false, testSampleSize, 0.0, false, "sphere", 
 					0.0, true);
 			
 			emExperiments.add(em);
