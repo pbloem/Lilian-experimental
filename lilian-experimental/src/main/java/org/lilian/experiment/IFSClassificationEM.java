@@ -11,6 +11,7 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import org.lilian.data.real.AffineMap;
 import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
 import org.lilian.data.real.Map;
@@ -47,22 +48,18 @@ public class IFSClassificationEM extends AbstractExperiment
 	protected int classes;
 	protected int depth;
 	protected double initialVar;
-	protected int trainingSample;
-	protected int testingSample;
 	protected int resolution;
 	protected int distSampleSize;
+	protected int testSampleSize;
 	protected int beamWidth;
 	protected boolean print;
 	
 	/**
 	 * State information
 	 */
-	public @State int currentGeneration;
-	public @State List<EM> ems;
-	public @State List<Double> scores;
+	public @State List<FractalEM> emExperiments;
+	public @State double score;
 	
-	private Distance<List<Point>> distance = new HausdorffDistance<Point>(new SquaredEuclideanDistance());
-
 	private double bestDistance = Double.MAX_VALUE;
 	
 	public IFSClassificationEM(
@@ -76,16 +73,12 @@ public class IFSClassificationEM extends AbstractExperiment
 				int components,
 			@Parameter(name="depth")				
 				int depth,
-			@Parameter(name="initial variance", description="Parameter variance for the initial population")
-				double initialVar,
-			@Parameter(name="test sample size", description="How much of the data to use in testing (random sample)")
-				int testingSample,
 			@Parameter(name="resolution")
 				int resolution,
 			@Parameter(name="distribution sample size")
 				int distSampleSize,
-			@Parameter(name="beam width")
-				int beamWidth,
+			@Parameter(name="test sample size")
+				int testSampleSize,
 			@Parameter(name="print classifier")
 				boolean print
 	)
@@ -96,10 +89,9 @@ public class IFSClassificationEM extends AbstractExperiment
 		this.components = components;
 		this.dim = trainingData.get(0).dimensionality();
 		this.depth = depth;
-		this.initialVar = initialVar;
 		this.resolution = resolution;
 		this.distSampleSize = distSampleSize;
-		this.beamWidth = beamWidth;
+		this.testSampleSize = testSampleSize;
 		this.print = print;
 		
 		this.classes = trainingData.numClasses();
@@ -108,58 +100,31 @@ public class IFSClassificationEM extends AbstractExperiment
 	@Override
 	protected void body()
 	{
-		Functions.tic();		
-		while(currentGeneration < generations)
-		{
-			currentGeneration++;
-			
-			// * Iterate the EM's
-			for(EM em : ems)
-			{
-				em.distributePoints(distSampleSize, depth, beamWidth);
-				em.findIFS();
-			}
-			
-			// * Construct a model
-			IFSClassifier ic = null;
-			for(int i : series(trainingData.numClasses()))
-			{
-				double prior = trainingData.points(i).size() / (double)trainingData.size();
-				IFS<Similitude> ifs = ems.get(i).model();
-				if(ic == null)
-					ic = new IFSClassifier(ifs, prior, depth);
-				else
-					ic.add(ifs, prior);
-			}
-			
-			write(ic, dir, String.format("generation%04d", currentGeneration));
-			
-			double d = Classification.symmetricError(
-					ic,
-					Classification.sample(testData, testingSample)
-					);
+		for(FractalEM em : emExperiments)
+			Environment.current().child(em);
 
-			scores.add(d);
-			bestDistance = Math.min(bestDistance, d);
-			
-			logger.info("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
-			Functions.tic();				
-			save();
+		// * Construct a model
+		IFSClassifier ic = null;
+		for(int i : series(trainingData.numClasses()))
+		{
+			double prior = trainingData.points(i).size() / (double)trainingData.size();
+			IFS<Similitude> ifs = emExperiments.get(i).bestModel();
+			AffineMap map = emExperiments.get(i).map();
+			if(ic == null)
+				ic = new IFSClassifier(ifs, prior, map, depth);
+			else
+				ic.add(ifs, prior, map);
 		}
+		
+		write(ic, dir, "classifier");
+		
+		logger.info("Calculating score");
+		
+		score = Classification.symmetricError(ic, testData);
 	}
 	
 	public void setup()
-	{
-		currentGeneration = 0;
-		
-		ClassifierTarget target = new ClassifierTarget(trainingData); 
-		
-		Builder<IFSClassifier> builder = 
-			IFSClassifier.builder(classes, depth,
-				IFS.builder(components, 
-						Similitude.similitudeBuilder(dim)));
-		List<List<Double>> initial = ES.initial(populationSize, builder.numParameters(), initialVar);
-		
+	{		
 		// * Draw the dataset
 		BufferedImage image;
 		
@@ -175,23 +140,24 @@ public class IFSClassificationEM extends AbstractExperiment
 		{
 			logger.warning("Failed to write dataset. " + e.toString() + " " + Arrays.toString(e.getStackTrace()));
 		}	
-		
-		scores = new ArrayList<Double>(generations);
-		
-// TODO		
-//		ems = new ArrayList<EM>(trainingData.numClasses());
-//		for(int i : series(trainingData.numClasses()))
-//		{
-//			EM em = new EM(components, dim, trainingData.points(i), initialVar, true, null);
-//			em.distributePoints(distSampleSize, depth, beamWidth);
-//			ems.add(em);
-//		}
+	
+		emExperiments = new ArrayList<FractalEM>(trainingData.numClasses());
+		for(int i : series(trainingData.numClasses()))
+		{
+			FractalEM em = new FractalEM(
+					trainingData.points(i),
+					depth, generations, components, dim, distSampleSize,
+					true, -1, false, false, testSampleSize, 0.0, true, "sphere", 
+					0.0, true);
+			
+			emExperiments.add(em);
+		}
 	}
 	
 	@Result(name = "Scores")
-	public List<Double> scores()
+	public double scores()
 	{
-		return scores;
+		return score;
 	}
 
 	@Result(name = "Best score")
@@ -221,7 +187,7 @@ public class IFSClassificationEM extends AbstractExperiment
 			
 			long tt0 = System.currentTimeMillis();
 			
-			int r = print || currentGeneration == generations - 1 ? resolution : 50;
+			int r = resolution;
 			image = Classifiers.draw(ifs, r);
 			logger.info("Writing classifier at resolution of " + r + " took " +  (System.currentTimeMillis()-tt0)/1000.0 + " seconds.");
 	

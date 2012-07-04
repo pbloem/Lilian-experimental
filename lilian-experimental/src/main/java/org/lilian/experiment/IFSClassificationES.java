@@ -9,6 +9,7 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import org.lilian.data.real.AffineMap;
 import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
 import org.lilian.data.real.Map;
@@ -131,7 +132,8 @@ public class IFSClassificationES extends AbstractExperiment
 		Builder<IFSClassifier> builder = 
 			IFSClassifier.builder(classes, depth,
 				IFS.builder(components, 
-						Similitude.similitudeBuilder(dim)));
+						Similitude.similitudeBuilder(dim)),
+						AffineMap.affineMapBuilder(dim));
 		List<List<Double>> initial = ES.initial(populationSize, builder.numParameters(), initialVar);
 		
 		// * Draw the dataset

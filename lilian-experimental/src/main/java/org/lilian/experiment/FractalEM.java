@@ -20,6 +20,8 @@ import org.lilian.data.real.AffineMap;
 import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
 import org.lilian.data.real.Map;
+import org.lilian.data.real.MappedList;
+import org.lilian.data.real.Maps;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
 import org.lilian.data.real.fractal.IFS;
@@ -69,7 +71,7 @@ public class FractalEM extends AbstractExperiment
 	protected boolean highQuality;
 	protected String initStrategy;
 	protected double noise;
-
+	protected boolean centerData;
 	
 	/**
 	 * State information
@@ -77,6 +79,8 @@ public class FractalEM extends AbstractExperiment
 	public @State int currentGeneration;
 	public @State EM em;
 	public @State List<Double> scores;
+	public @State IFS<Similitude> bestModel;
+	public @State AffineMap map;
 	
 	private Distance<List<Point>> distance = new HausdorffDistance<Point>(new SquaredEuclideanDistance());
 
@@ -112,7 +116,9 @@ public class FractalEM extends AbstractExperiment
 			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
 				String initStrategy,
 			@Parameter(name="noise", description="Gaussian noise added to the model after each iteration.")
-				double noise
+				double noise,
+			@Parameter(name="center data")
+				boolean centerData
 			)
 	{
 	
@@ -134,6 +140,7 @@ public class FractalEM extends AbstractExperiment
 		this.initStrategy = initStrategy;
 		
 		this.noise = noise;
+		this.centerData = centerData;
 	}
 	
 	private int depth()
@@ -141,7 +148,7 @@ public class FractalEM extends AbstractExperiment
 		if(!deepening)
 			return depth;
 		
-		double v = currentGeneration/(double)generations;
+		double v = currentGeneration / (double) generations;
 		int vint = (int)(Math.floor(v) + 1.0);
 		return vint <= depth ?	vint : depth;			
 	}
@@ -157,7 +164,11 @@ public class FractalEM extends AbstractExperiment
 					Datasets.sample(data, sampleSize),
 					em.model().generator().generate(sampleSize));
 			scores.add(d);
-			bestDistance = Math.min(bestDistance, d);
+			if(bestDistance > d)
+			{
+				bestDistance = d;
+				bestModel = em.model();
+			}
 
 			if(true)
 			{
@@ -187,6 +198,13 @@ public class FractalEM extends AbstractExperiment
 		
 		scores = new ArrayList<Double>(generations);
 		
+		if(centerData)
+		{
+			map = Maps.centered(data);
+			data = new MappedList(data, map);
+		}
+			
+		
 		logger.info("Data size: " + data.size());
 		
 		BufferedImage image = Draw.draw(data, xrange, yrange, 1920, 1080, true, false);
@@ -213,7 +231,7 @@ public class FractalEM extends AbstractExperiment
 		
 		if(model == null)
 			throw new IllegalArgumentException("Initialization strategy \""+initStrategy+"\" not recognized.");
-		
+				
 		em = new EM(model, data, considerVariance, greedy ? new IFSTarget<Similitude>(sampleSize, data) : null);
 		em.distributePoints(distSampleSize, depth(), beamWidth);
 	}
@@ -334,6 +352,24 @@ public class FractalEM extends AbstractExperiment
 		g.dispose();
 		
 		return image;
-	}	
+	}
+
+	public IFS<Similitude> model()
+	{
+		return em.model();
+	}
+
+	public IFS<Similitude> bestModel()
+	{
+		return bestModel;
+	}
 	
+	/**
+	 * The map that centers the data
+	 * @return
+	 */
+	public AffineMap map()
+	{
+		return map;
+	}
 }
