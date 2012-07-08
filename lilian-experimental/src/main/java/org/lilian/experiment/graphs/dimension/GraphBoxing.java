@@ -1,4 +1,4 @@
-package org.lilian.experiment;
+package org.lilian.experiment.graphs.dimension;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -9,16 +9,22 @@ import java.util.Set;
 
 import org.data2semantics.tools.graphs.Edge;
 import org.data2semantics.tools.graphs.Vertex;
+import org.lilian.experiment.AbstractExperiment;
+import org.lilian.experiment.Environment;
+import org.lilian.experiment.Factory;
+import org.lilian.experiment.Parameter;
+import org.lilian.experiment.Result;
+import org.lilian.experiment.State;
 import org.lilian.experiment.graphs.GraphMeasures;
 import org.lilian.util.graphs.jung.Boxing;
-import org.lilian.util.graphs.jung.CPPBoxer;
+import org.lilian.util.graphs.jung.CBBBoxer;
 import org.openrdf.rio.RDFFormat;
 
 import edu.uci.ics.jung.graph.Graph;
 
-public class GraphDimension<V, E> extends AbstractExperiment
+public class GraphBoxing<V, E> extends AbstractExperiment
 {
-	private CPPBoxer<V, E> boxer;
+	private CBBBoxer<V, E> boxer;
 	
 	private Graph<V, E> graph;
 	private Graph<Integer, Integer> post;
@@ -34,29 +40,7 @@ public class GraphDimension<V, E> extends AbstractExperiment
 	public @State GraphMeasures<V, E> e0;
 	public @State GraphMeasures<Integer, Integer> e1, e2, e3, e4; 
 	
-	@Factory
-	public static GraphDimension<Vertex<String>, Edge<String>> fromFile(
-			@Parameter(name="data") File file,
-			@Parameter(name="format", description="one of: rdf, txt") 
-				String format,
-			@Parameter(name="edge whitelist", description="only used if format is RDF") 
-				List<String> edgeWhiteList,
-			@Parameter(name="lb")
-				int lb	) 
-					throws IOException
-			
-	{
-		if(format.trim().toLowerCase().equals("rdf"))
-			return new GraphDimension<Vertex<String>, Edge<String>>(
-					org.data2semantics.tools.graphs.Graphs
-					.graphFromRDF(file, RDFFormat.RDFXML, null, edgeWhiteList), lb);
-		
-		return new GraphDimension<Vertex<String>, Edge<String>>(
-				org.data2semantics.tools.graphs.Graphs
-					.graphFromTSV(file), lb);
-	}	
-	
-	public GraphDimension(
+	public GraphBoxing(
 			@Parameter(name="graph") 
 				Graph<V, E> graph,
 			@Parameter(name="lb")
@@ -69,7 +53,7 @@ public class GraphDimension<V, E> extends AbstractExperiment
 	@Override
 	protected void setup()
 	{
-		boxer = new CPPBoxer<V, E>(graph);
+		boxer = new CBBBoxer<V, E>(graph);
 		boxSizes = new ArrayList<Integer>();
 	}
 
@@ -104,19 +88,19 @@ public class GraphDimension<V, E> extends AbstractExperiment
 		e1 = new GraphMeasures<Integer, Integer>(post, "small");
 		Environment.current().child(e1);
 
-		Boxing<Integer, Integer> iBoxing = new CPPBoxer<Integer, Integer>(post).box(lb);
+		Boxing<Integer, Integer> iBoxing = new CBBBoxer<Integer, Integer>(post).box(lb);
 		Graph<Integer, Integer> post2 = iBoxing.postGraph();
 		
 		e2 = new GraphMeasures<Integer, Integer>(post2, "small");
 		Environment.current().child(e2);
 		
-		iBoxing = new CPPBoxer<Integer, Integer>(post2).box(lb);
+		iBoxing = new CBBBoxer<Integer, Integer>(post2).box(lb);
 		Graph<Integer, Integer> post3 = iBoxing.postGraph();
 		
 		e3 = new GraphMeasures<Integer, Integer>(post3, "small");
 		Environment.current().child(e3);		
 		
-		iBoxing = new CPPBoxer<Integer, Integer>(post3).box(lb);
+		iBoxing = new CBBBoxer<Integer, Integer>(post3).box(lb);
 		Graph<Integer, Integer> post4 = iBoxing.postGraph();
 		
 		e4 = new GraphMeasures<Integer, Integer>(post4, "small");

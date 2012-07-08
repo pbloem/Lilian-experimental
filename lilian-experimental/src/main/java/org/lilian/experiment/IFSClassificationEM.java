@@ -154,13 +154,13 @@ public class IFSClassificationEM extends AbstractExperiment
 		}
 	}
 	
-	@Result(name = "Scores")
+	@Result(name = "Symmetric error")
 	public double scores()
 	{
 		return score;
 	}
 
-	@Result(name = "Best score")
+	@Result(name = "Best distance")
 	public double bestScore()
 	{
 		return bestDistance;
