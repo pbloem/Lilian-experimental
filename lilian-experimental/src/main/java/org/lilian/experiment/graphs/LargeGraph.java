@@ -6,13 +6,17 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.collections15.Transformer;
+import org.data2semantics.tools.graphs.Graphs;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
 import org.lilian.models.BasicFrequencyModel;
 
 import edu.uci.ics.jung.algorithms.cluster.WeakComponentClusterer;
+import edu.uci.ics.jung.algorithms.metrics.Metrics;
 import edu.uci.ics.jung.algorithms.shortestpath.DistanceStatistics;
 import edu.uci.ics.jung.graph.Graph;
 
@@ -30,12 +34,17 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 	
 	public @State double diameter = Double.NaN;	
 	public @State double largestComponentSize = Double.NaN;
+	public @State double meanDistance = Double.NaN;
+	public @State double meanLocalClusteringCoefficient;
+
 	
 	public @State List<Pair> pairs;  
 	public @State List<Integer> degrees;
 
 	public @State List<Pair> vertexLabelFrequencies;
 	public @State List<Pair> edgeLabelFrequencies;	
+	
+	public @State Graph<V, E> largestComponent;
 
 	public LargeGraph(Graph<V, E> graph)
 	{
@@ -56,9 +65,6 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 	{
 		super.body();
 		
-		logger.info("Calculating diameter");
-		diameter = DistanceStatistics.diameter(graph);
-		
 		logger.info("Calculating size of the largest component");
 		WeakComponentClusterer<V, E> clust = 
 				new WeakComponentClusterer<V, E>();
@@ -66,9 +72,34 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 		Set<Set<V>> clusters = clust.transform(graph);
 		
 		largestComponentSize = Double.NEGATIVE_INFINITY;
+		Set<V> largest = null;
+
 		for(Set<V> set : clusters)
-			largestComponentSize = Math.max(largestComponentSize, set.size());
+			if(set.size() > largestComponentSize)
+			{
+				largestComponentSize = set.size();
+				largest = set;
+			}
 		
+		largestComponent = Graphs.undirectedSubgraph(graph, largest);
+		
+		logger.info("Calculating diameter");
+		diameter = DistanceStatistics.diameter(largestComponent);	
+		
+		logger.info("Calculating mean distance");
+		Transformer<V, Double> trans = DistanceStatistics.averageDistances(largestComponent);
+		meanDistance = 0.0;
+		for(V vertex : largestComponent.getVertices())
+			meanDistance += trans.transform(vertex);
+		meanDistance /= (double) largestComponentSize;
+
+		logger.info("Calculating mean local clustering coefficient");
+		Map<V, Double> map = Metrics.clusteringCoefficients(graph);
+		meanLocalClusteringCoefficient = 0.0;
+		for(V vertex : graph.getVertices())
+			meanLocalClusteringCoefficient += map.get(vertex);
+		meanLocalClusteringCoefficient /= (double) graph.getVertexCount();
+				
 		
 		// * Collect degrees 
 		for(V node : graph.getVertices())
@@ -104,12 +135,23 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 		
 	}
 	
-	@Result(name="diameter", description="Longest shortest path")
+	@Result(name="diameter", description="Longest shortest path (in the largest component)")
 	public double diameter()
 	{
 		return diameter;
 	}
 	
+	@Result(name="mean distance", description="Mean distance between nodes (in the largest component)")
+	public double meanDistance()
+	{
+		return meanDistance;
+	}
+	
+	@Result(name="Mean local clustering coefficient")
+	public double meanLocalClusteringCoefficient()
+	{
+		return meanLocalClusteringCoefficient;
+	}
 	
 	@Result(name="Assortivity")
 	public double assortivity()
