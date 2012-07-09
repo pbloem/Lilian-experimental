@@ -52,6 +52,8 @@ public class Compression<V, E> extends AbstractExperiment
 		
 		for(int i : Series.series(runs))
 		{
+//			if(i%(runs/10) == 0)
+//				logger.info("run " + i);
 			Collections.shuffle(list, Global.random);
 			bitString = Graphs.toBits(graph, list);
 			double c = comp.ratio(bitString);

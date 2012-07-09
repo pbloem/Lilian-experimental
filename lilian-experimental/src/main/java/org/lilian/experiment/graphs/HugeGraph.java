@@ -1,10 +1,13 @@
 package org.lilian.experiment.graphs;
 
+import java.util.Map;
+
 import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
 import org.lilian.util.graphs.jung.Measures;
 
+import edu.uci.ics.jung.algorithms.metrics.Metrics;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.UndirectedGraph;
 
@@ -23,6 +26,7 @@ public class HugeGraph<V, E> extends AbstractExperiment
 	public @State double stdDegree;
 	
 	public @State double assortativity = Double.NaN;
+	public @State double meanLocalClusteringCoefficient;
 	
 	public HugeGraph(Graph<V, E> graph)
 	{
@@ -58,6 +62,13 @@ public class HugeGraph<V, E> extends AbstractExperiment
 		stdDegree = Math.sqrt(variance);
 		
 		assortativity = Measures.assortativity(graph);
+		
+		logger.info("Calculating mean local clustering coefficient");
+		Map<V, Double> map = Metrics.clusteringCoefficients(graph);
+		meanLocalClusteringCoefficient = 0.0;
+		for(V vertex : graph.getVertices())
+			meanLocalClusteringCoefficient += map.get(vertex);
+		meanLocalClusteringCoefficient /= (double) graph.getVertexCount();
 	}
 	
 	@Result(name="Mean degree")
@@ -84,5 +95,9 @@ public class HugeGraph<V, E> extends AbstractExperiment
 		return graph.getEdgeCount();
 	}
 	
-	
+	@Result(name="Mean local clustering coefficient")
+	public double meanLocalClusteringCoefficient()
+	{
+		return meanLocalClusteringCoefficient;
+	}
 }

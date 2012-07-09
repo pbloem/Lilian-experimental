@@ -14,6 +14,8 @@ import org.data2semantics.tools.graphs.Graphs;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
 import org.lilian.models.BasicFrequencyModel;
+import org.lilian.util.Series;
+import org.lilian.util.graphs.jung.FloydWarshall;
 
 import edu.uci.ics.jung.algorithms.cluster.WeakComponentClusterer;
 import edu.uci.ics.jung.algorithms.metrics.Metrics;
@@ -35,8 +37,6 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 	public @State double diameter = Double.NaN;	
 	public @State double largestComponentSize = Double.NaN;
 	public @State double meanDistance = Double.NaN;
-	public @State double meanLocalClusteringCoefficient;
-
 	
 	public @State List<Pair> pairs;  
 	public @State List<Integer> degrees;
@@ -87,20 +87,18 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 		diameter = DistanceStatistics.diameter(largestComponent);	
 		
 		logger.info("Calculating mean distance");
-		Transformer<V, Double> trans = DistanceStatistics.averageDistances(largestComponent);
+		FloydWarshall<V, E> fw = new FloydWarshall<V, E>(largestComponent);
 		meanDistance = 0.0;
-		for(V vertex : largestComponent.getVertices())
-			meanDistance += trans.transform(vertex);
-		meanDistance /= (double) largestComponentSize;
-
-		logger.info("Calculating mean local clustering coefficient");
-		Map<V, Double> map = Metrics.clusteringCoefficients(graph);
-		meanLocalClusteringCoefficient = 0.0;
-		for(V vertex : graph.getVertices())
-			meanLocalClusteringCoefficient += map.get(vertex);
-		meanLocalClusteringCoefficient /= (double) graph.getVertexCount();
-				
+		int num = 0;
+		for(V vi : graph.getVertices())
+			for(V vj : graph.getVertices())
+			{
+				meanDistance += fw.distance(vi, vj);
+				num++;
+			}
 		
+		meanDistance /= (double) num;
+				
 		// * Collect degrees 
 		for(V node : graph.getVertices())
 		{
@@ -145,12 +143,6 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 	public double meanDistance()
 	{
 		return meanDistance;
-	}
-	
-	@Result(name="Mean local clustering coefficient")
-	public double meanLocalClusteringCoefficient()
-	{
-		return meanLocalClusteringCoefficient;
 	}
 	
 	@Result(name="Assortivity")
