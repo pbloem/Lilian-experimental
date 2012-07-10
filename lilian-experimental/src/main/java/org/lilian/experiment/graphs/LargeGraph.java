@@ -138,17 +138,11 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 	{
 		return diameter;
 	}
-	
+	  
 	@Result(name="mean distance", description="Mean distance between nodes (in the largest component)")
 	public double meanDistance()
 	{
 		return meanDistance;
-	}
-	
-	@Result(name="Assortivity")
-	public double assortivity()
-	{
-		return assortativity;
 	}
 	
 	@Result(name="Size of the largest component")

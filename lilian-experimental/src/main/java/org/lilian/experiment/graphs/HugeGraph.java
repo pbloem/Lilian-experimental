@@ -95,6 +95,12 @@ public class HugeGraph<V, E> extends AbstractExperiment
 		return graph.getEdgeCount();
 	}
 	
+	@Result(name="Assortivity")
+	public double assortivity()
+	{
+		return assortativity;
+	}
+	
 	@Result(name="Mean local clustering coefficient")
 	public double meanLocalClusteringCoefficient()
 	{
