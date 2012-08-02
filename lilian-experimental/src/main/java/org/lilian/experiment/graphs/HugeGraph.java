@@ -26,7 +26,7 @@ public class HugeGraph<V, E> extends AbstractExperiment
 	public @State double stdDegree;
 	
 	public @State double assortativity = Double.NaN;
-	public @State double meanLocalClusteringCoefficient;
+	public @State double meanLocalClusteringCoefficient = Double.NaN;
 	
 	public HugeGraph(Graph<V, E> graph)
 	{
@@ -63,12 +63,12 @@ public class HugeGraph<V, E> extends AbstractExperiment
 		
 		assortativity = Measures.assortativity(graph);
 		
-		logger.info("Calculating mean local clustering coefficient");
-		Map<V, Double> map = Metrics.clusteringCoefficients(graph);
-		meanLocalClusteringCoefficient = 0.0;
-		for(V vertex : graph.getVertices())
-			meanLocalClusteringCoefficient += map.get(vertex);
-		meanLocalClusteringCoefficient /= (double) graph.getVertexCount();
+//		logger.info("Calculating mean local clustering coefficient");
+//		Map<V, Double> map = Metrics.clusteringCoefficients(graph);
+//		meanLocalClusteringCoefficient = 0.0;
+//		for(V vertex : graph.getVertices())
+//			meanLocalClusteringCoefficient += map.get(vertex);
+//		meanLocalClusteringCoefficient /= (double) graph.getVertexCount();
 	}
 	
 	@Result(name="Mean degree")
