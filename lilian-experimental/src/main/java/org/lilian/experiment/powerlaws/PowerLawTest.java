@@ -1,10 +1,17 @@
-package org.lilian.experiment;
+package org.lilian.experiment.powerlaws;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.lilian.util.statistics.ContinuousPowerLaw;
+import nl.peterbloem.powerlaws.Continuous;
+import nl.peterbloem.powerlaws.Discrete;
+import nl.peterbloem.util.Generator;
+
+import org.lilian.experiment.AbstractExperiment;
+import org.lilian.experiment.Parameter;
+import org.lilian.experiment.Result;
+import org.lilian.experiment.State;
 
 public class PowerLawTest extends AbstractExperiment
 {
@@ -13,8 +20,8 @@ public class PowerLawTest extends AbstractExperiment
 	private double cutoff;
 	private int size;
 	
-	public @State ContinuousPowerLaw generator;
-	public @State List<Double> values, sorted;
+	public @State Generator<Integer> generator;
+	public @State List<Integer> values, sorted;
 	
 	
 	public PowerLawTest(
@@ -26,7 +33,7 @@ public class PowerLawTest extends AbstractExperiment
 		this.cutoff = cutoff;
 		this.size = size;
 		
-		generator = new ContinuousPowerLaw(cutoff, exponent);
+		generator = new Discrete((int)cutoff, exponent);
 	}
 
 	@Override
@@ -38,18 +45,18 @@ public class PowerLawTest extends AbstractExperiment
 	protected void body()
 	{
 		values = generator.generate(size);
-		sorted = new ArrayList<Double>(values);
+		sorted = new ArrayList<Integer>(values);
 		Collections.sort(sorted, Collections.reverseOrder());
 	}
 	
 	@Result(name="values")
-	public List<Double> values()
+	public List<Integer> values()
 	{
 		return values;
 	}
 
 	@Result(name="sorted values")
-	public List<Double> sorted()
+	public List<Integer> sorted()
 	{
 		return sorted;
 	}
