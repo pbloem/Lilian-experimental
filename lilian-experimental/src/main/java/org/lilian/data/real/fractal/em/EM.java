@@ -185,6 +185,10 @@ public class EM implements Serializable
 				code = IFS.code(model, point, depth);
 			else	
 				code = Tools.search(point, model, depth, beamWidth);
+			
+			if(code == null)
+				throw new RuntimeException("Could not find a code for the point ("+point+").");
+				
 			root.show(code, point);
 		}
 	}
@@ -399,7 +403,7 @@ public class EM implements Serializable
 		{
 			// pointSum = pointSum.add(point.getVector());
 			points.add(point);
-			mvn = null; // signal that the mvn need to be recomputed
+			mvn = null; // signal that the mvn needs to be recomputed
 			
 			if(code.size() == 0)
 			{
