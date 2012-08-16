@@ -29,6 +29,9 @@ public class Dimension extends AbstractExperiment
 	public @State Takens.Fit fit;
 	public @State Takens takens;
 	
+	
+	public @State int instances;
+	public @State int embeddingDimension;
 	public @State List<Double> distances;
 	public @State List<Double> generated;
 	public @State double significance;
@@ -38,7 +41,7 @@ public class Dimension extends AbstractExperiment
 				List<Point> data,
 			@Parameter(name="samples", description="The number of times to sample for maxDistance values (use -1 to use all values)")
 				int samples,
-			@Parameter(name="epsilon")
+			@Parameter(name="epsilon", description="The accuracy required in the significance calculation.")
 				double epsilon)
 	{
 		this.data = data;
@@ -54,6 +57,11 @@ public class Dimension extends AbstractExperiment
 	@Override
 	protected void body()
 	{
+		instances = data.size();
+		embeddingDimension = data.get(0).dimensionality();
+		
+		logger.info(instances + " instances of " + embeddingDimension + " features.");
+		
 		fit = Takens.fit(data, new EuclideanDistance());
 		takens = 
 				samples == -1 ? 
@@ -62,9 +70,10 @@ public class Dimension extends AbstractExperiment
 						
 		Global.log().info("Finished fitting model.");				
 						
-		distances = new ArrayList<Double>(samples);
+		int gSamples = samples == -1 ? data.size() : samples;
+		distances = new ArrayList<Double>(gSamples);
 		Distance<List<Double>> metric = new EuclideanDistance();
-		for(int i : series(samples))
+		for(int i : series(gSamples))
 		{
 			Point a = data.get(Global.random.nextInt(data.size())),
 			      b = data.get(Global.random.nextInt(data.size()));
@@ -79,7 +88,7 @@ public class Dimension extends AbstractExperiment
 		
 		Global.log().info("Calculating significance.");				
 		
-		significance = takens.significance(Takens.distances(data, metric), epsilon, samples);
+		// significance = takens.significance(Takens.distances(data, metric), epsilon, samples);
 	}
 
 	@Result(name="dimension")
@@ -106,10 +115,22 @@ public class Dimension extends AbstractExperiment
 		return significance;
 	}
 	
-	@Result(name="generated distances", description="Distances generated form the induced distribution.")
+	@Result(name="generated distances", description="Distances generated from the induced distribution.")
 	public List<Double> generated()
 	{
 		return generated;
+	}
+	
+	@Result(name="instances")
+	public int instances()
+	{
+		return instances;
+	}
+	
+	@Result(name="embedding dimension")
+	public int embeddingDimension()
+	{
+		return embeddingDimension;
 	}
 	
 //	@Result(name="KS values")
