@@ -3,6 +3,7 @@ package org.lilian.experiment.vms;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
@@ -19,6 +20,9 @@ import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Parameter;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
+import org.lilian.experiment.Tools;
+import org.lilian.models.BasicFrequencyModel;
+import org.lilian.util.Series;
 
 public class FindSpaces extends AbstractExperiment 
 {
@@ -28,6 +32,8 @@ public class FindSpaces extends AbstractExperiment
 	private List<Double> alphas;
 	private double mu;
 	private boolean context;
+	
+	private BasicFrequencyModel<String> original, reconstructed;
 	
 	public @State List<Double> errors = new ArrayList<Double>();
 	
@@ -77,6 +83,7 @@ public class FindSpaces extends AbstractExperiment
 			else
 				gold = new WesternCorpus(data, false, true);
 			
+			original = new BasicFrequencyModel<String>(gold);
 			
 			SequenceCorpus<String> corpus = 
 					Characters.wrap(gold);
@@ -120,6 +127,9 @@ public class FindSpaces extends AbstractExperiment
 					errors.add( n / (double)denom );
 				}	
 			}
+			
+			reconstructed = new BasicFrequencyModel<String>(graph.stringCorpus());
+			
 		} catch(IOException e)
 		{
 			throw new RuntimeException(e);
@@ -132,4 +142,32 @@ public class FindSpaces extends AbstractExperiment
 		return errors;
 	}
 
+	@Result(name = "best")
+	public double best()
+	{
+		return Tools.min(errors);
+	}
+	
+	@Result(name = "tokens original")
+	public List<List<Object>> tokensOriginal()
+	{
+		return top(original);
+	}		
+
+	@Result(name = "tokens reconstructed")
+	public List<List<Object>> tokensReconstructed()
+	{
+		return top(reconstructed);
+	}			
+	
+	public List<List<Object>> top(BasicFrequencyModel<String> model)
+	{
+		int n = 40;
+		List<List<Object>> result = new ArrayList<List<Object>>(n);
+		List<String> sorted = original.sorted();
+		for(int i : Series.series(n))
+			result.add(Arrays.asList((Object)sorted.get(i), (Object)model.frequency(sorted.get(i))));
+		
+		return result;
+	}	
 }
