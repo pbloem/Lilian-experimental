@@ -45,20 +45,27 @@ public class EM implements Serializable
 	public static final ProbMode probMode = ProbMode.NEW;
 	@Reportable
 	// * Invert the similitudes if they are not contractive
-	//   TODO: NOT SURE IF ture IS BSET. MAKE EXP. PARAM AND TEST
+	//   TODO: NOT SURE which setting is best. MAKE EXP. PARAM AND TEST
 	public static final boolean INVERT_IF_NOT_CONTRACTIVE = false;
 	// * If the relative frequency of a component among the code drops below this,
 	//   we drop it, and distribute its symbol over the symbols of the most 
 	//   frequent component
-	public static final double DROP_PROBABILITY = 0.02;
+	public static final double DROP_PROBABILITY = 0.002;
 	
 	public Target<IFS<Similitude>> target;
 	public Builder<IFS<Similitude>> builder;
 	
 	private static final double DEV = 0.8;
-	private static final double PERTURB_VAR = 0.1;
+	private static final double PERTURB_VAR = 0.3;
 	private static final double THRESHOLD = 0.00000000001;
 	private static final int PAIR_SAMPLE_SIZE = 20;
+	
+	// Covariance is considered for code pairs with more that this number of points
+	private static final int COVARIANCE_THRESHOLD = 3; 
+	
+	// This makes the algorithm a true MoG EM at depth=1 but may make it less 
+	// good at finding rotations.
+	private static final boolean USE_SPHERICAL_MVN = true; 
 	private static final double PAIR_SAMPLE_VAR  = 0.01;
 	
 	private List<Point> data;
@@ -185,6 +192,7 @@ public class EM implements Serializable
 				code = IFS.code(model, point, depth);
 			else	
 				code = Tools.search(point, model, depth, beamWidth);
+			
 			root.show(code, point);
 		}
 	}
@@ -429,10 +437,22 @@ public class EM implements Serializable
 			return isLeaf;
 		}
 		
+		/**
+		 * Note: returns null of the points for this code form a deficient mvn 
+		 * model.
+		 * 
+		 * @return
+		 */
 		public MVN mvn()
 		{
 			if(mvn == null)
-				mvn = MVN.find(points);
+				try {
+					mvn = USE_SPHERICAL_MVN ? MVN.findSpherical(points) : MVN.find(points);
+				} catch(RuntimeException e)
+				{
+					// Could not find proper MVN model
+					return null;
+				}
 			
 			return mvn;
 		}
@@ -498,25 +518,42 @@ public class EM implements Serializable
 
 					
 					MVN from = nodeFrom.mvn(), to = mvn();
-//					Global.log().info(considerVariance + " ");
 					
-					if(m < 3 || ! considerVariance) // not enough points to consider covariance
+					if(from != null & to != null)
 					{
-						maps.add(t, from.mean(), to.mean());
-					} else
-					{
-						// Consider the covariance by taking not just the means, 
-						// but points close to zero mapped to both distributions
-						
-						for(int i = 0; i < PAIR_SAMPLE_SIZE; i++)
+						if(m < COVARIANCE_THRESHOLD || ! considerVariance) // not enough points to consider covariance
 						{
-							Point p = Point.random(dim, PAIR_SAMPLE_VAR); //normal.generate();
+							maps.add(t, from.mean(), to.mean());
+						} else
+						{
+							// Consider the covariance by taking not just the means, 
+							// but points close to zero mapped to both distributions
 							
-							Point pf = from.map().map(p);
-							Point pt = to.map().map(p);
+							// We generate as many points as are in to to node.
+							// (for depth one a handful would suffice, but for higher 
+							//  values the amount of points generated gives a sort 
+							//  of weight to this match in the codes among the other 
+							//  points)
+							List<Point> points = new MVN(dim).generate(points().size());
 							
-							maps.add(t, pf, pt);
-						}
+							List<Point> pf = from.map().map(points);
+							List<Point> pt = to.map().map(points);
+							
+							for(int i = 0; i < points.size(); i++)
+								maps.add(t, pf.get(i), pt.get(i));
+							
+	//						for(int i = 0; i < PAIR_SAMPLE_SIZE; i++)
+	//						{
+	//							Point p = Point.random(dim, PAIR_SAMPLE_VAR); //normal.generate();
+	//							
+	//							Point pf = from.map().map(p);
+	//							Point pt = to.map().map(p);
+	//							
+	//							maps.add(t, pf, pt);
+	//						}
+						} 
+					} else {
+						Global.log().info("Points for code " + code + " formed deficient MVN. No points added to pairs.");
 					}
 					
 					// Register the drop in frequency as the symbol t gets added to the code
@@ -628,7 +665,7 @@ public class EM implements Serializable
 	}
 	
 	/**
-	 * Produces a simple initial model from a a set of random double variables.
+	 * Produces a simple initial model from a set of random double variables.
 	 * 
 	 * @param dim
 	 * @param comp

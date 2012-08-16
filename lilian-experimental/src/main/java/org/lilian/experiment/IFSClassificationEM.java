@@ -14,6 +14,8 @@ import javax.imageio.ImageIO;
 import org.lilian.data.real.AffineMap;
 import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
+import org.lilian.data.real.Generator;
+import org.lilian.data.real.MVN;
 import org.lilian.data.real.Map;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
@@ -23,6 +25,7 @@ import org.lilian.data.real.classification.ClassifierTarget;
 import org.lilian.data.real.classification.Classifiers;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSClassifier;
+import org.lilian.data.real.fractal.IFSClassifierBasic;
 import org.lilian.data.real.fractal.IFSTarget;
 import org.lilian.data.real.fractal.IFSs;
 import org.lilian.data.real.fractal.em.EM;
@@ -47,6 +50,7 @@ public class IFSClassificationEM extends AbstractExperiment
 	protected int dim;
 	protected int classes;
 	protected int depth;
+	protected boolean useLikelihood;
 	protected double initialVar;
 	protected int resolution;
 	protected int distSampleSize;
@@ -59,6 +63,7 @@ public class IFSClassificationEM extends AbstractExperiment
 	 */
 	public @State List<FractalEM> emExperiments;
 	public @State double score;
+	public @State List<Generator<Point>> bases = new ArrayList<Generator<Point>>();
 	
 	private double bestDistance = Double.MAX_VALUE;
 	
@@ -73,6 +78,8 @@ public class IFSClassificationEM extends AbstractExperiment
 				int components,
 			@Parameter(name="depth")				
 				int depth,
+			@Parameter(name="use likelihood")
+				boolean useLikelihood,
 			@Parameter(name="resolution")
 				int resolution,
 			@Parameter(name="distribution sample size")
@@ -89,6 +96,7 @@ public class IFSClassificationEM extends AbstractExperiment
 		this.components = components;
 		this.dim = trainingData.get(0).dimensionality();
 		this.depth = depth;
+		this.useLikelihood = useLikelihood; 
 		this.resolution = resolution;
 		this.distSampleSize = distSampleSize;
 		this.testSampleSize = testSampleSize;
@@ -104,16 +112,19 @@ public class IFSClassificationEM extends AbstractExperiment
 			Environment.current().child(em);
 
 		// * Construct a model
-		IFSClassifier ic = null;
+		IFSClassifierBasic ic = null;
 		for(int i : series(trainingData.numClasses()))
 		{
-			double prior = trainingData.points(i).size() / (double)trainingData.size();
-			IFS<Similitude> ifs = emExperiments.get(i).bestModel();
+			double prior = trainingData.points(i).size() / (double) trainingData.size();
+			IFS<Similitude> ifs =  useLikelihood ? emExperiments.get(i).bestLikelihoodModel() : emExperiments.get(i).bestModel();
 			AffineMap map = emExperiments.get(i).map();
+			
 			if(ic == null)
-				ic = new IFSClassifier(ifs, prior, map, depth);
+				ic = new IFSClassifierBasic(ifs, prior, map, emExperiments.get(i).basis(), depth);
 			else
-				ic.add(ifs, prior, map);
+				ic.add(ifs, prior, map, emExperiments.get(i).basis());
+			
+			bases.add(emExperiments.get(i).basis());
 		}
 		
 		write(ic, dir, "classifier");
@@ -172,26 +183,37 @@ public class IFSClassificationEM extends AbstractExperiment
 	 * @param dir
 	 * @param name
 	 */
-	private void write(IFSClassifier ifs, File dir, String name)
+	private void write(IFSClassifierBasic ifs, File dir, String name)
 	{
 		double[] xrange = new double[]{-1, 1};
 		double[] yrange = new double[]{-1, 1};
 		try
-		{		
+		{		 
 			BufferedImage image; 
 			for(int i : Series.series(ifs.size()))
 			{
-				image = Draw.draw(ifs.model(i).generator(), 1000000, xrange, yrange, resolution, resolution, true);
+				image = Draw.draw(ifs.model(i).generator(depth, bases.get(i)), 1000000, xrange, yrange, resolution, resolution, true, ifs.preMap(i));
 				ImageIO.write(image, "PNG", new File(dir, name + "." + i + ".png") );
 			}
 			
 			long tt0 = System.currentTimeMillis();
 			
-			int r = resolution;
-			image = Classifiers.draw(ifs, r);
-			logger.info("Writing classifier at resolution of " + r + " took " +  (System.currentTimeMillis()-tt0)/1000.0 + " seconds.");
+			image = Classifiers.draw(ifs, xrange, yrange, resolution);
+			logger.info("Writing classifier at resolution of " + resolution + " took " +  (System.currentTimeMillis()-tt0)/1000.0 + " seconds.");
 	
 			ImageIO.write(image, "PNG", new File(dir, name + ".png") );
+			
+			List<Point> points = new ArrayList<Point>();
+			for(int i : Series.series(ifs.size()))
+				points.addAll(
+					ifs.preMap(i).inverse().map(
+						ifs.model(i).generator(depth, bases.get(i)).generate(1000000)
+					)
+				);
+
+			image = Draw.draw(points, 1000, true);
+	
+			ImageIO.write(image, "PNG", new File(dir, name + ".points.png") );			
 		} catch (IOException e)
 		{
 			e.printStackTrace();

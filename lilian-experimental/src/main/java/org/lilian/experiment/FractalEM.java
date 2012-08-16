@@ -19,6 +19,8 @@ import org.lilian.Global;
 import org.lilian.data.real.AffineMap;
 import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
+import org.lilian.data.real.Generator;
+import org.lilian.data.real.MVN;
 import org.lilian.data.real.Map;
 import org.lilian.data.real.MappedList;
 import org.lilian.data.real.Maps;
@@ -80,12 +82,15 @@ public class FractalEM extends AbstractExperiment
 	public @State EM em;
 	public @State List<Double> scores;
 	public @State IFS<Similitude> bestModel;
+	public @State IFS<Similitude> bestLikelihoodModel;
 	public @State AffineMap map;
+	public @State MVN basis; 
 	
 	private Distance<List<Point>> distance = new HausdorffDistance<Point>(new SquaredEuclideanDistance());
 
-	private double bestDistance = Double.MAX_VALUE;
-	
+	private double bestDistance = Double.POSITIVE_INFINITY;
+	private double bestLikelihood = Double.NEGATIVE_INFINITY;
+
 	public FractalEM(
 			@Parameter(name="data") 				
 				List<Point> data, 
@@ -162,12 +167,25 @@ public class FractalEM extends AbstractExperiment
 			
 			double d = distance.distance(
 					Datasets.sample(data, sampleSize),
-					em.model().generator().generate(sampleSize));
+					em.model().generator(depth, basis).generate(sampleSize));
 			scores.add(d);
 			if(bestDistance > d)
 			{
 				bestDistance = d;
 				bestModel = em.model();
+			}
+			
+			double ll = 0.0;
+			
+			for(Point p : Datasets.sample(data, sampleSize))
+			{
+				ll += Math.log(IFS.density(em.model(), p, depth));
+			}
+				
+			if(bestLikelihood < ll)
+			{
+				bestLikelihood = ll;
+				bestLikelihoodModel = em.model();
 			}
 
 			if(true)
@@ -180,7 +198,9 @@ public class FractalEM extends AbstractExperiment
 			}	
 			
 			logger.info("Scores (" + currentGeneration + ") : " + scores());
-			logger.info("Best   (" + currentGeneration + ") : " + bestScore());
+			logger.info("Best HD (" + currentGeneration + ") : " + bestScore());
+			logger.info("Best LL (" + currentGeneration + ") : " + bestLikelihood());
+
 			
 			logger.info("Parameters   (" + currentGeneration + ") : " + em.model().parameters());			
 			currentGeneration++;
@@ -198,17 +218,16 @@ public class FractalEM extends AbstractExperiment
 		
 		scores = new ArrayList<Double>(generations);
 		
-		if(centerData)
-		{
-			map = Maps.centered(data);
-			data = new MappedList(data, map);
-		}
-			
+		map = centerData ? Maps.centered(data) : AffineMap.identity(dim);
+		data = new MappedList(data, map);	
 		
 		logger.info("Data size: " + data.size());
 		
 		BufferedImage image = Draw.draw(data, xrange, yrange, 1920, 1080, true, false);
 
+		basis = MVN.findSpherical(data);
+		logger.info("basis: " + basis);
+		
 		try
 		{
 			ImageIO.write(image, "PNG", new File(dir, "data.png"));
@@ -236,10 +255,16 @@ public class FractalEM extends AbstractExperiment
 		em.distributePoints(distSampleSize, depth(), beamWidth);
 	}
 	
-	@Result(name = "Best score", description="The best (lowest) score over all generations.")
+	@Result(name = "Best score", description="The best (lowest) score (hausdorff) over all generations.")
 	public double bestScore()
 	{
 		return bestDistance;
+	}
+	
+	@Result(name = "Best likelihood", description="The best (highet) likelihood over all generations.")
+	public double bestLikelihood()
+	{
+		return bestLikelihood;
 	}
 	
 	@Result (name ="Below 0.05", description="1 if the best score is below 0.05, 0 otherwise")
@@ -274,9 +299,9 @@ public class FractalEM extends AbstractExperiment
 	private <M extends Map & Parametrizable> void write(IFS<M> ifs, File dir, String name)
 	{		
 		int div = highQuality ? 1 : 16;
-		int its = highQuality ? (int)10E5 : 10000;
+		int its = highQuality ? (int)100000 : 1000;
 		
-		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true);
+		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true, depth, basis);
 		try
 		{
 			ImageIO.write(image, "PNG", new File(dir, name + ".png") );
@@ -362,6 +387,16 @@ public class FractalEM extends AbstractExperiment
 	public IFS<Similitude> bestModel()
 	{
 		return bestModel;
+	}
+	
+	public IFS<Similitude> bestLikelihoodModel()
+	{
+		return bestLikelihoodModel;
+	}
+	
+	public MVN basis()
+	{
+		return basis;
 	}
 	
 	/**
