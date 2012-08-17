@@ -91,8 +91,7 @@ public class IFSClassificationEM extends AbstractExperiment
 			@Parameter(name="print classifier")
 				boolean print
 	)
-	{
-		
+	{	
 		Pair<Classified<Point>, Classified<Point>> split = Classification.split(data, testRatio);
 		this.trainingData = split.second();
 		this.testData = split.first();
@@ -161,7 +160,7 @@ public class IFSClassificationEM extends AbstractExperiment
 		for(int i : series(trainingData.numClasses()))
 		{
 			List<Point> points = trainingData.points(i);
-			System.out.println(points.size() + " - " + i);
+			logger.info("Dataset size for class " + i + ": " + points.size());
 			
 			FractalEM em = new FractalEM(
 					points, 0.0,

@@ -2,6 +2,7 @@ package org.lilian.experiment.powerlaws;
 
 import static org.lilian.util.Series.series;
 
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,6 +12,7 @@ import nl.peterbloem.powerlaws.Functions;
 
 import org.lilian.Global;
 import org.lilian.data.dimension.Takens;
+import org.lilian.data.real.Draw;
 import org.lilian.data.real.Point;
 import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Parameter;
@@ -35,6 +37,7 @@ public class Dimension extends AbstractExperiment
 	public @State List<Double> distances;
 	public @State List<Double> generated;
 	public @State double significance;
+	public @State BufferedImage plot;
 
 	public Dimension(
 			@Parameter(name="data") 
@@ -52,6 +55,7 @@ public class Dimension extends AbstractExperiment
 	@Override
 	protected void setup()
 	{
+		plot = Draw.draw(data, 500, true);
 	}
 
 	@Override
@@ -89,6 +93,12 @@ public class Dimension extends AbstractExperiment
 		Global.log().info("Calculating significance.");				
 		
 		// significance = takens.significance(Takens.distances(data, metric), epsilon, samples);
+	}
+	
+	@Result(name="data plot")
+	public BufferedImage plot()
+	{
+		return plot;
 	}
 
 	@Result(name="dimension")
