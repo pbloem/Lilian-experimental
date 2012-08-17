@@ -199,7 +199,7 @@ public class FractalEM extends AbstractExperiment
 			}
 			
 			double ll = 0.0;
-			for(Point p : Datasets.sample(testData, sampleSize))
+			for(Point p : (sampleSize == -1 ? trainingData : Datasets.sample(trainingData, sampleSize)) )
 				ll += Math.log(IFS.density(em.model(), p, depth));
 				
 			if(bestLikelihood < ll)

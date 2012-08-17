@@ -35,6 +35,7 @@ import org.lilian.search.Parametrizable;
 import org.lilian.search.evo.ES;
 import org.lilian.search.evo.Target;
 import org.lilian.util.Functions;
+import org.lilian.util.Pair;
 import org.lilian.util.Series;
 import org.lilian.util.distance.Distance;
 import org.lilian.util.distance.HausdorffDistance;
@@ -92,28 +93,10 @@ public class IFSClassificationEM extends AbstractExperiment
 	)
 	{
 		
-		Classified<Point> dataCopy = Classification.empty();
-		int max = data.numClasses();
-		
-		for(int i : series(data.size()))
-			dataCopy.add(data.get(i), data.cls(i));
-		
-		this.trainingData = Classification.empty();
-		this.testData = Classification.empty();
-		
-		for(int i : series((int)(data.size() * testRatio)))
-		{
-			int draw = Global.random.nextInt(dataCopy.size());
-			testData.add(dataCopy.get(draw), dataCopy.cls(draw));
-			dataCopy.remove(draw);
-		}
-		
-		for(int i : series(dataCopy.size()))
-			trainingData.add(dataCopy.get(i), dataCopy.cls(i));
-		
-		testData.setMaxClass(max - 1);
-		trainingData.setMaxClass(max - 1);
-		
+		Pair<Classified<Point>, Classified<Point>> split = Classification.split(data, testRatio);
+		this.trainingData = split.second();
+		this.testData = split.first();
+	
 		this.generations = generations;
 		this.components = components;
 		this.dim = trainingData.get(0).dimensionality();
@@ -181,7 +164,7 @@ public class IFSClassificationEM extends AbstractExperiment
 			System.out.println(points.size() + " - " + i);
 			
 			FractalEM em = new FractalEM(
-					points, 0.25,
+					points, 0.0,
 					depth, generations, components, dim, distSampleSize,
 					true, -1, false, false, testSampleSize, 0.0, false, "sphere", 
 					0.0, true);

@@ -83,7 +83,7 @@ public class Dimension extends AbstractExperiment
 		}
 		Collections.sort(distances);
 		
-		generated = takens.generate(samples);
+		generated = takens.generate(gSamples);
 		Collections.sort(generated);
 		
 		Global.log().info("Calculating significance.");				
