@@ -1,6 +1,7 @@
 package org.lilian.experiment;
 
 import static org.lilian.data.real.Draw.toPixel;
+import static org.lilian.util.Series.series;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -26,6 +27,8 @@ import org.lilian.data.real.MappedList;
 import org.lilian.data.real.Maps;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
+import org.lilian.data.real.classification.Classification;
+import org.lilian.data.real.classification.Classified;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSTarget;
 import org.lilian.data.real.fractal.IFSs;
@@ -57,8 +60,9 @@ public class FractalEM extends AbstractExperiment
 
 	@Reportable
 	private static final double IDENTITY_INIT_VAR = 0.1;
-	
-	protected List<Point> data;
+
+	protected List<Point> trainingData;
+	protected List<Point> testData;		
 	protected int depth;
 	protected int generations;
 	protected int components;
@@ -94,6 +98,8 @@ public class FractalEM extends AbstractExperiment
 	public FractalEM(
 			@Parameter(name="data") 				
 				List<Point> data, 
+			@Parameter(name="test ratio", description="What percentage of the data to use for testing")
+				double testRatio,				
 			@Parameter(name="depth") 				
 				int depth, 
 			@Parameter(name="generations") 			
@@ -127,7 +133,19 @@ public class FractalEM extends AbstractExperiment
 			)
 	{
 	
-		this.data = data;
+		List<Point> dataCopy = new ArrayList<Point>(data);
+		
+		this.trainingData = new ArrayList<Point>(data.size());
+		this.testData = new ArrayList<Point>(data.size());
+		
+		for(int i : series((int)(data.size() * testRatio)))
+		{
+			int draw = Global.random.nextInt(dataCopy.size());
+			testData.add(dataCopy.remove(draw));
+		}
+		
+		trainingData.addAll(dataCopy);
+
 		this.depth = depth;
 		this.generations = generations;
 		this.components = components;
@@ -164,10 +182,15 @@ public class FractalEM extends AbstractExperiment
 		Functions.tic();		
 		while(currentGeneration < generations)
 		{
+			double d;
 			
-			double d = distance.distance(
-					Datasets.sample(data, sampleSize),
+			if(sampleSize != -1)
+				d = distance.distance(
+					Datasets.sample(trainingData, sampleSize),
 					em.model().generator(depth, basis).generate(sampleSize));
+			else
+				d = distance.distance(trainingData, em.model().generator().generate(trainingData.size()));
+				
 			scores.add(d);
 			if(bestDistance > d)
 			{
@@ -176,11 +199,8 @@ public class FractalEM extends AbstractExperiment
 			}
 			
 			double ll = 0.0;
-			
-			for(Point p : Datasets.sample(data, sampleSize))
-			{
+			for(Point p : Datasets.sample(testData, sampleSize))
 				ll += Math.log(IFS.density(em.model(), p, depth));
-			}
 				
 			if(bestLikelihood < ll)
 			{
@@ -218,14 +238,14 @@ public class FractalEM extends AbstractExperiment
 		
 		scores = new ArrayList<Double>(generations);
 		
-		map = centerData ? Maps.centered(data) : AffineMap.identity(dim);
-		data = new MappedList(data, map);	
+		map = centerData ? Maps.centered(trainingData) : AffineMap.identity(dim);
+		trainingData = new MappedList(trainingData, map);	
 		
-		logger.info("Data size: " + data.size());
+		logger.info("Data size: " + trainingData.size());
 		
-		BufferedImage image = Draw.draw(data, xrange, yrange, 1920, 1080, true, false);
+		BufferedImage image = Draw.draw(trainingData, xrange, yrange, 1920, 1080, true, false);
 
-		basis = MVN.findSpherical(data);
+		basis = MVN.findSpherical(trainingData);
 		logger.info("basis: " + basis);
 		
 		try
@@ -244,22 +264,37 @@ public class FractalEM extends AbstractExperiment
 		else if(initStrategy.toLowerCase().equals("spread"))
 			model = EM.initialSpread(dim, components, RADIUS, SCALE);
 		else if(initStrategy.toLowerCase().equals("points"))
-			model = EM.initialPoints(SCALE, Datasets.sample(data, components));
+			model = EM.initialPoints(SCALE, Datasets.sample(trainingData, components));
 		else if(initStrategy.toLowerCase().equals("identity"))
 			model = EM.initialIdentity(dim, components, IDENTITY_INIT_VAR);
 		
 		if(model == null)
 			throw new IllegalArgumentException("Initialization strategy \""+initStrategy+"\" not recognized.");
 				
-		em = new EM(model, data, considerVariance, greedy ? new IFSTarget<Similitude>(sampleSize, data) : null);
+		em = new EM(model, trainingData, considerVariance, greedy ? new IFSTarget<Similitude>(sampleSize, trainingData) : null);
 		em.distributePoints(distSampleSize, depth(), beamWidth);
 	}
 	
-	@Result(name = "Best score", description="The best (lowest) score (hausdorff) over all generations.")
+	@Result(name = "Best training score", description="The best (lowest) training score over all generations.")
 	public double bestScore()
 	{
 		return bestDistance;
 	}
+	
+	@Result(name = "Test score", description="The score on the test data for the model with the lowest training score.")
+	public double testScore()
+	{
+		double d;
+		if(sampleSize != -1)
+			d = distance.distance(
+				Datasets.sample(testData, sampleSize),
+				em.model().generator().generate(sampleSize));
+		else
+			d = distance.distance(testData, em.model().generator().generate(testData.size()));
+		
+		return d;
+	}
+	
 	
 	@Result(name = "Best likelihood", description="The best (highet) likelihood over all generations.")
 	public double bestLikelihood()

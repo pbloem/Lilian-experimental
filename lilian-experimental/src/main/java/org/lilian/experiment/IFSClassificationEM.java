@@ -11,6 +11,7 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import org.lilian.Global;
 import org.lilian.data.real.AffineMap;
 import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
@@ -68,10 +69,10 @@ public class IFSClassificationEM extends AbstractExperiment
 	private double bestDistance = Double.MAX_VALUE;
 	
 	public IFSClassificationEM(
-			@Parameter(name="training data") 		
-				Classified<Point> trainingData,
-			@Parameter(name="test data") 			
-				Classified<Point> testData,
+			@Parameter(name="data") 		
+				Classified<Point> data,
+			@Parameter(name="test ratio", description="What percentage of the data to use for testing")
+				double testRatio,
 			@Parameter(name="generations") 			
 				int generations,
 			@Parameter(name="number of components") 
@@ -90,8 +91,29 @@ public class IFSClassificationEM extends AbstractExperiment
 				boolean print
 	)
 	{
-		this.trainingData = trainingData;
-		this.testData = testData;
+		
+		Classified<Point> dataCopy = Classification.empty();
+		int max = data.numClasses();
+		
+		for(int i : series(data.size()))
+			dataCopy.add(data.get(i), data.cls(i));
+		
+		this.trainingData = Classification.empty();
+		this.testData = Classification.empty();
+		
+		for(int i : series((int)(data.size() * testRatio)))
+		{
+			int draw = Global.random.nextInt(dataCopy.size());
+			testData.add(dataCopy.get(draw), dataCopy.cls(draw));
+			dataCopy.remove(draw);
+		}
+		
+		for(int i : series(dataCopy.size()))
+			trainingData.add(dataCopy.get(i), dataCopy.cls(i));
+		
+		testData.setMaxClass(max - 1);
+		trainingData.setMaxClass(max - 1);
+		
 		this.generations = generations;
 		this.components = components;
 		this.dim = trainingData.get(0).dimensionality();
@@ -155,8 +177,11 @@ public class IFSClassificationEM extends AbstractExperiment
 		emExperiments = new ArrayList<FractalEM>(trainingData.numClasses());
 		for(int i : series(trainingData.numClasses()))
 		{
+			List<Point> points = trainingData.points(i);
+			System.out.println(points.size() + " - " + i);
+			
 			FractalEM em = new FractalEM(
-					trainingData.points(i),
+					points, 0.25,
 					depth, generations, components, dim, distSampleSize,
 					true, -1, false, false, testSampleSize, 0.0, false, "sphere", 
 					0.0, true);
@@ -197,11 +222,13 @@ public class IFSClassificationEM extends AbstractExperiment
 			}
 			
 			long tt0 = System.currentTimeMillis();
-			
-			image = Classifiers.draw(ifs, xrange, yrange, resolution);
-			logger.info("Writing classifier at resolution of " + resolution + " took " +  (System.currentTimeMillis()-tt0)/1000.0 + " seconds.");
+			if(ifs.dimension() == 2)
+			{
+				image = Classifiers.draw(ifs, xrange, yrange, resolution);
+				logger.info("Writing classifier at resolution of " + resolution + " took " +  (System.currentTimeMillis()-tt0)/1000.0 + " seconds.");
 	
-			ImageIO.write(image, "PNG", new File(dir, name + ".png") );
+				ImageIO.write(image, "PNG", new File(dir, name + ".png") );
+			}
 			
 			List<Point> points = new ArrayList<Point>();
 			for(int i : Series.series(ifs.size()))
