@@ -12,8 +12,8 @@ import nl.peterbloem.powerlaws.Functions;
 
 import org.lilian.Global;
 import org.lilian.data.dimension.CorrelationIntegral;
+import org.lilian.data.dimension.MultiTakens;
 import org.lilian.data.dimension.Takens;
-import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
 import org.lilian.data.real.Point;
 import org.lilian.experiment.AbstractExperiment;
@@ -25,48 +25,49 @@ import org.lilian.util.Series;
 import org.lilian.util.distance.Distance;
 import org.lilian.util.distance.EuclideanDistance;
 
-public class Dimension extends AbstractExperiment
+public class MultiDimension extends AbstractExperiment
 {
-	public static final int PLOT_SAMPLES = 5000;
-	
 	private List<Point> data;
-	private int numCandidates, samplesPerCandidate;
-	private double epsilon;
-	private double stepSize;
-	private boolean calculateSignificance;
+	private int samples, plotSamples, maxDepth;
+	private double epsilon, sigThreshold;
+	private double stepSize; 
 	
-	public @State Takens.Fit fit;
-	public @State Takens takens;
+	public @State List<MultiTakens> fits;
 	
 	public @State int instances;
 	public @State int embeddingDimension;
-	public @State List<Double> distances, sampled, generated;
+	public @State List<Double> genDistances;
+	public @State List<Double> distances;
+	public @State List<Double> generated;
 	public @State double significance;
 	public @State BufferedImage plot;
 	
 	public @State CorrelationIntegral cint;
 
-	public Dimension(
+	public MultiDimension(
 			@Parameter(name="data") 
 				List<Point> data,
-			@Parameter(name="candidates", description="The number of candidates to generate for the maxDistance parameter (-1 to use all data)")
-				int numCandidates,
-			@Parameter(name="samples per candidate", description="The number of times to sample for maxDistance values")
-				int samplesPerCandidate,
+			@Parameter(name="samples", description="The number of times to sample for maxDistance values (use -1 to use all values)")
+				int samples,
 			@Parameter(name="epsilon", description="The accuracy required in the significance calculation.")
 				double epsilon,
+			@Parameter(name="significance threshold")
+				double sigThreshold,
 			@Parameter(name="ci step size", description="Stepsize for the correlation integral.")
 				double stepSize,
-			@Parameter(name="significance")
-				boolean calculateSignificance)
+			@Parameter(name="plot samples", description="How many points to generate/sample for the plots of distances")
+				int plotSamples,
+			@Parameter(name="max depth", description="maximum recursion depth")
+				int maxDepth)
 	
 	{
 		this.data = data;
-		this.numCandidates = numCandidates;
-		this.samplesPerCandidate = samplesPerCandidate;
+		this.samples = samples;
 		this.epsilon = epsilon;
+		this.sigThreshold = sigThreshold;
 		this.stepSize = stepSize;
-		this.calculateSignificance = calculateSignificance;
+		this.plotSamples = plotSamples;
+		this.maxDepth = maxDepth;
 	}
 
 	@Override
@@ -77,35 +78,38 @@ public class Dimension extends AbstractExperiment
 
 	@Override
 	protected void body()
-	{
-		instances = data.size();
-		embeddingDimension = data.get(0).dimensionality();
+	{		
 		Distance<Point> metric = new EuclideanDistance();
 
-		distances = Takens.distances(data, metric);
+		distances = MultiTakens.distances(data, metric);
 		double max = distances.get(distances.size() - 1);
+		
+		instances = data.size();
+		embeddingDimension = data.get(0).dimensionality();
 		
 		logger.info(instances + " instances of " + embeddingDimension + " features.");
 		
-		fit = Takens.fit(distances, true);
-		takens = 
-				numCandidates == -1 ? 
-						fit.fit() :
-						fit.fit(numCandidates, samplesPerCandidate);
-						
+		fits = MultiTakens.multifit(distances, true, maxDepth, epsilon, sigThreshold);
+
 		Global.log().info("Finished fitting model.");				
-					
-		sampled = Datasets.sample(distances, PLOT_SAMPLES);
-		Collections.sort(sampled);
-		
-		generated = takens.generate(distances, PLOT_SAMPLES);
-		Collections.sort(generated);
-		
-		if(calculateSignificance)
+						
+		int gSamples = plotSamples == -1 ? distances.size() : plotSamples;
+		genDistances = new ArrayList<Double>(gSamples);
+		for(int i : series(gSamples))
 		{
-			Global.log().info("Calculating significance.");				
-			significance = takens.significance(distances, epsilon, numCandidates, samplesPerCandidate);
+			Point a = data.get(Global.random.nextInt(data.size())),
+			      b = data.get(Global.random.nextInt(data.size()));
+			
+			double distance = metric.distance(a, b);
+			genDistances.add(distance);
 		}
+		
+		Collections.sort(genDistances);
+		
+		generated = MultiTakens.generate(fits, genDistances, genDistances.size());
+		
+		Global.log().info("Calculating significance.");				
+		// significance = takens.significance(Takens.distances(data, metric), epsilon, samples);
 		
 		Global.log().info("Correlation integral");
 		cint = CorrelationIntegral.fromDataset(data, stepSize, max, metric);
@@ -117,22 +121,32 @@ public class Dimension extends AbstractExperiment
 		return plot;
 	}
 
-	@Result(name="dimension")
-	public double dimension()
+	@Result(name="fitted distributions")
+	public List<List<Object>> fittedDistributions()
 	{
-		return takens.dimension();
-	}
-	
-	@Result(name="max distance")
-	public double maxDistance()
-	{
-		return takens.maxDistance();
+		List<List<Object>> results = new ArrayList<List<Object>>(fits.size());
+		
+		for(MultiTakens distribution: fits)
+		{
+			List<Object> row = new ArrayList<Object>();
+			row.add(distribution.minDistance());
+			row.add(distribution.maxDistance());
+			row.add(distribution.dimension());
+			
+			row.add(distribution.captures(distances));
+			row.add(distribution.ksTest(distances, true));
+			row.add(distribution.significance(distances, epsilon));
+			
+			results.add(row);
+		}
+		
+		return results;
 	}
 	
 	@Result(name="distances", description="Some distances sampled from the data.")
 	public List<Double> distances()
 	{
-		return sampled;
+		return genDistances;
 	}
 	
 	@Result(name="significance")
@@ -151,6 +165,14 @@ public class Dimension extends AbstractExperiment
 	public int instances()
 	{
 		return instances;
+	}
+	
+	@Result(name="specific")
+	public double specific()
+	{
+		MultiTakens multi = MultiTakens.fit(data, new EuclideanDistance()).fit(0.004, 0.328);
+		
+		return multi.dimension();
 	}
 	
 	@Result(name="embedding dimension")

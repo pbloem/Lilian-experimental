@@ -19,7 +19,7 @@ import org.lilian.util.distance.EuclideanDistance;
 public class Dimension extends AbstractExperiment {
 
 	private List<Point> data;
-	private Distance<List<Double>> metric = new EuclideanDistance();
+	private Distance<Point> metric = new EuclideanDistance();
 
 	public @State Continuous distribution;
 	

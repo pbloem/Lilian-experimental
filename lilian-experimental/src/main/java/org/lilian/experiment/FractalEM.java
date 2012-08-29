@@ -106,8 +106,6 @@ public class FractalEM extends AbstractExperiment
 				int generations,
 			@Parameter(name="number of components")
 				int components, 
-			@Parameter(name="dimension") 			
-				int dim,
 			@Parameter(name="distribution sample size") 
 				int distSampleSize,
 			@Parameter(name="consider variance")	
@@ -149,7 +147,7 @@ public class FractalEM extends AbstractExperiment
 		this.depth = depth;
 		this.generations = generations;
 		this.components = components;
-		this.dim = dim;
+		this.dim = data.get(0).dimensionality();
 		this.distSampleSize = distSampleSize;
 		this.considerVariance = considerVariance;
 		this.beamWidth = beamWidth;
@@ -245,7 +243,8 @@ public class FractalEM extends AbstractExperiment
 		
 		BufferedImage image = Draw.draw(trainingData, xrange, yrange, 1920, 1080, true, false);
 
-		basis = MVN.findSpherical(trainingData);
+		basis = new MVN(dim);
+		// basis = MVN.findSpherical(trainingData);
 		logger.info("basis: " + basis);
 		
 		try

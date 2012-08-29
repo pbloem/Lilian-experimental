@@ -20,7 +20,7 @@ import org.lilian.util.distance.EuclideanDistance;
 
 public class DistancesKS extends AbstractExperiment
 {
-	private Distance<List<Double>> distance = new EuclideanDistance();
+	private Distance<Point> distance = new EuclideanDistance();
 	private List<Point> data;
 	private double dimension;
 	
