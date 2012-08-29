@@ -1,4 +1,4 @@
-package org.lilian.experiment.powerlaws;
+package org.lilian.experiment.dimension;
 
 import static org.lilian.util.Series.series;
 

@@ -1,4 +1,4 @@
-package org.lilian.experiment.powerlaws;
+package org.lilian.experiment.dimension;
 
 import java.util.ArrayList;
 import java.util.Arrays;
