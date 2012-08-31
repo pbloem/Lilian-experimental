@@ -4,17 +4,22 @@ import static java.lang.Math.exp;
 import static java.lang.Math.log;
 import static java.lang.Math.pow;
 import static org.lilian.experiment.Tools.combine;
+import static org.lilian.util.Series.series;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.lilian.Global;
 import org.lilian.data.dimension.BiTakens;
+import org.lilian.data.dimension.CorrelationIntegral;
 import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Parameter;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
 import org.lilian.experiment.Tools;
+import org.lilian.experiment.Result.Plot;
 import org.lilian.util.Series;
 
 public class PlotBiTakens extends AbstractExperiment
@@ -24,6 +29,7 @@ public class PlotBiTakens extends AbstractExperiment
 	private List<Double> xs, p, cdf, gen;
 	
 	public @State BiTakens bi;
+	public @State CorrelationIntegral cint;
 	
 	public PlotBiTakens(
 			@Parameter(name="d1") double d1, 
@@ -60,6 +66,9 @@ public class PlotBiTakens extends AbstractExperiment
 		gen =  bi.generate(xs.size());
 		Collections.sort(gen);
 		
+		Global.log().info("Correlation integral");
+		cint = CorrelationIntegral.fromDistances(bi.generate(1000000), 0.001, Tools.max(gen));
+		
 	}
 	
 	@Result(name="left prior")
@@ -90,6 +99,16 @@ public class PlotBiTakens extends AbstractExperiment
 	public List<List<Double>> cdf()
 	{
 		return combine(xs, cdf);
+	}
+	
+	@Result(name="Correlation Integral", plot = Plot.SCATTER)
+	public List<List<Double>> ci()
+	{
+		List<List<Double>> table = new ArrayList<List<Double>>();
+		for(int i : series(cint.counts().size()))
+			table.add(Arrays.asList(cint.distances().get(i), cint.counts().get(i)));
+	
+		return table;
 	}
 	
 	@Result(name="generated")
