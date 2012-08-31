@@ -140,7 +140,7 @@ public class MultiDimension extends AbstractExperiment
 		
 		Collections.sort(smpDistances);
 		
-		generated = MultiTakens.generate(fits, smpDistances, smpDistances.size());
+		generated = MultiTakens.generate(fits, distances, distances.size());
 		
 		Global.log().info("Calculating significance.");				
 		// significance = takens.significance(Takens.distances(data, metric), epsilon, samples);
