@@ -239,7 +239,7 @@ public class MogEM extends AbstractExperiment
 	 * @param dir
 	 * @param name
 	 */
-	private <M extends Map & Parametrizable> void write(MOG current, File dir, String name)
+	private void write(MOG current, File dir, String name)
 	{		
 		int div = highQuality ? 4 : 16;
 		int its = highQuality ? (int)10000000 : 1000;
