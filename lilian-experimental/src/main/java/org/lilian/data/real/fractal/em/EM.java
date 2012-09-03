@@ -318,7 +318,10 @@ public class EM implements Serializable
 	
 	
 	/**
-	 * Findst the optimal scalar c so that sum (x - c * y)^2 is minimized.
+	 * Find the optimal scalar c so that sum (y - c * x)^2 is minimized.
+	 * 
+	 * For finding IFS weights we have |from| * w = |to| so that y should be 
+	 * the list of sizes of 'from' nodes.
 	 * 
 	 * @param x
 	 * @param y
@@ -326,16 +329,16 @@ public class EM implements Serializable
 	 */
 	public static double findScalar(List<Double> x, List<Double> y)
 	{
-		double sumYY = 0.0;
+		double sumXX = 0.0;
 		double sumYX = 0.0;
 		
 		for(int i = 0; i < x.size(); i++)
 		{
-			sumYY += y.get(i) * y.get(i);
+			sumXX += x.get(i) * x.get(i);
 			sumYX += y.get(i) * x.get(i);
 		}
 		
-		return sumYX / sumYY;
+		return sumYX / sumXX;
 	}
 	
 	/**

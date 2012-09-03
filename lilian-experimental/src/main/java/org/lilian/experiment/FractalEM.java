@@ -295,7 +295,7 @@ public class FractalEM extends AbstractExperiment
 	}
 	
 	
-	@Result(name = "Best likelihood", description="The best (highet) likelihood over all generations.")
+	@Result(name = "Best likelihood", description="The best (highest) likelihood over all generations.")
 	public double bestLikelihood()
 	{
 		return bestLikelihood;
@@ -335,7 +335,11 @@ public class FractalEM extends AbstractExperiment
 		int div = highQuality ? 1 : 16;
 		int its = highQuality ? (int)100000 : 1000;
 		
-		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true, depth, basis);
+//		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true, depth, basis);
+//		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true);
+		BufferedImage image = Draw.draw(ifs.generator().generate(its), xrange, yrange, 1920, 1080, true, false);
+		
+
 		try
 		{
 			ImageIO.write(image, "PNG", new File(dir, name + ".png") );

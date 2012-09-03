@@ -114,19 +114,19 @@ public class MogEM extends AbstractExperiment
 		{
 			double d;
 			
-			if(sampleSize != -1)
-				d = distance.distance(
-					Datasets.sample(trainingData, sampleSize),
-					current.generate(sampleSize));
-			else
-				d = distance.distance(trainingData, current.generate(trainingData.size()));
-				
-			scores.add(d);
-			if(bestDistance > d)
-			{
-				bestDistance = d;
-				bestModel = current;
-			}
+//			if(sampleSize != -1)
+//				d = distance.distance(
+//					Datasets.sample(trainingData, sampleSize),
+//					current.generate(sampleSize));
+//			else
+//				d = distance.distance(trainingData, current.generate(trainingData.size()));
+//				
+//			scores.add(d);
+//			if(bestDistance > d)
+//			{
+//				bestDistance = d;
+//				bestModel = current;
+//			}
 			
 			double ll = 0.0;
 			for(Point p : (sampleSize == -1 ? trainingData : Datasets.sample(trainingData, sampleSize)) )
