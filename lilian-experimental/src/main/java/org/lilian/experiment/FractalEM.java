@@ -89,6 +89,7 @@ public class FractalEM extends AbstractExperiment
 	public @State IFS<Similitude> bestLikelihoodModel;
 	public @State AffineMap map;
 	public @State MVN basis; 
+	public @State double testScore;
 	
 	private Distance<List<Point>> distance = new HausdorffDistance<Point>(new SquaredEuclideanDistance());
 
@@ -227,7 +228,13 @@ public class FractalEM extends AbstractExperiment
 			em.findIFS(greedy, noise);
 		}
 		
-
+		if(sampleSize != -1)
+			testScore = distance.distance(
+				Datasets.sample(testData, sampleSize),
+				em.model().generator().generate(sampleSize));
+		else
+			testScore = distance.distance(testData, em.model().generator().generate(testData.size()));
+		
 	}
 	
 	public void setup()
@@ -283,15 +290,7 @@ public class FractalEM extends AbstractExperiment
 	@Result(name = "Test score", description="The score on the test data for the model with the lowest training score.")
 	public double testScore()
 	{
-		double d;
-		if(sampleSize != -1)
-			d = distance.distance(
-				Datasets.sample(testData, sampleSize),
-				em.model().generator().generate(sampleSize));
-		else
-			d = distance.distance(testData, em.model().generator().generate(testData.size()));
-		
-		return d;
+		return testScore;
 	}
 	
 	
@@ -415,6 +414,18 @@ public class FractalEM extends AbstractExperiment
 		g.dispose();
 		
 		return image;
+	}
+	
+	
+
+	@Override
+	protected void tearDown()
+	{
+		super.tearDown();
+		
+		trainingData = null;
+		testData = null;
+		em = null;
 	}
 
 	public IFS<Similitude> model()

@@ -226,7 +226,19 @@ public class IFSClassificationEM extends AbstractExperiment
 		} catch (IOException e)
 		{
 			e.printStackTrace();
-		}
+		}	
+	}
+
+	@Override
+	protected void tearDown()
+	{
+		super.tearDown();
+		
+		trainingData = null;
+		testData = null;
+		emExperiments = null;
 	}		
+	
+	
 	
 }
