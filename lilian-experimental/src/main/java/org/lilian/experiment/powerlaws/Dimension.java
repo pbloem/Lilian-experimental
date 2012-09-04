@@ -30,7 +30,7 @@ public class Dimension extends AbstractExperiment
 	public static final int PLOT_SAMPLES = 5000;
 	
 	private List<Point> data;
-	private int numCandidates, samplesPerCandidate;
+	private int numCandidates, samplesPerCandidate, dataSamples;
 	private double epsilon;
 	private double stepSize;
 	private boolean calculateSignificance;
@@ -49,6 +49,8 @@ public class Dimension extends AbstractExperiment
 	public Dimension(
 			@Parameter(name="data") 
 				List<Point> data,
+			@Parameter(name="data samples", description="How many points to sample from the data (before taking candidates).")
+				int dataSamples,
 			@Parameter(name="candidates", description="The number of candidates to generate for the maxDistance parameter (-1 to use all data)")
 				int numCandidates,
 			@Parameter(name="samples per candidate", description="The number of times to sample for maxDistance values")
@@ -59,9 +61,9 @@ public class Dimension extends AbstractExperiment
 				double stepSize,
 			@Parameter(name="significance")
 				boolean calculateSignificance)
-	
 	{
 		this.data = data;
+		this.dataSamples = dataSamples;
 		this.numCandidates = numCandidates;
 		this.samplesPerCandidate = samplesPerCandidate;
 		this.epsilon = epsilon;
@@ -72,6 +74,9 @@ public class Dimension extends AbstractExperiment
 	@Override
 	protected void setup()
 	{
+		if(dataSamples != -1)
+			data = Datasets.sample(data, dataSamples);
+		
 		plot = Draw.draw(data, 500, true);
 	}
 
