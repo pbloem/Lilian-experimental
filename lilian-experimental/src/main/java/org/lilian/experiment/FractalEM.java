@@ -145,8 +145,8 @@ public class FractalEM extends AbstractExperiment
 		
 		trainingData.addAll(dataCopy);
 		
-		logger.info("Training data size " + trainingData.size());		
-		logger.info("Test data size " + testData.size());
+		Global.log().info("Training data size " + trainingData.size());		
+		Global.log().info("Test data size " + testData.size());
 
 		this.depth = depth;
 		this.generations = generations;
