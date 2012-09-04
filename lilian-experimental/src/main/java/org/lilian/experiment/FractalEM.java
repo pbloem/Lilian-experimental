@@ -85,7 +85,7 @@ public class FractalEM extends AbstractExperiment
 	public @State int currentGeneration;
 	public @State EM em;
 	public @State List<Double> scores;
-	public @State IFS<Similitude> bestModel;
+	public @State IFS<Similitude> bestModel, model;
 	public @State IFS<Similitude> bestLikelihoodModel;
 	public @State AffineMap map;
 	public @State MVN basis; 
@@ -184,6 +184,9 @@ public class FractalEM extends AbstractExperiment
 		Functions.tic();		
 		while(currentGeneration < generations)
 		{
+			
+			model = em.model();
+			
 			double d;
 			
 			if(sampleSize != -1)
@@ -436,7 +439,7 @@ public class FractalEM extends AbstractExperiment
 
 	public IFS<Similitude> model()
 	{
-		return em.model();
+		return model;
 	}
 
 	public IFS<Similitude> bestModel()
