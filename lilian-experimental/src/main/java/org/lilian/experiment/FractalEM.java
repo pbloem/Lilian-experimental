@@ -231,12 +231,15 @@ public class FractalEM extends AbstractExperiment
 			em.findIFS(greedy, noise);
 		}
 		
-		if(sampleSize != -1)
-			testScore = distance.distance(
-				Datasets.sample(testData, sampleSize),
-				em.model().generator().generate(sampleSize));
-		else
-			testScore = distance.distance(testData, em.model().generator().generate(testData.size()));
+		if(testData.size() > 0)
+		{
+			if(sampleSize != -1)
+				testScore = distance.distance(
+					Datasets.sample(testData, sampleSize),
+					em.model().generator().generate(sampleSize));
+			else
+				testScore = distance.distance(testData, em.model().generator().generate(testData.size()));
+		}
 		
 	}
 	
