@@ -78,6 +78,7 @@ public class FractalEM extends AbstractExperiment
 	protected String initStrategy;
 	protected double noise;
 	protected boolean centerData;
+	protected boolean dataBasis;
 	
 	/**
 	 * State information
@@ -128,7 +129,9 @@ public class FractalEM extends AbstractExperiment
 			@Parameter(name="noise", description="Gaussian noise added to the model after each iteration.")
 				double noise,
 			@Parameter(name="center data")
-				boolean centerData
+				boolean centerData,
+			@Parameter(name="data basis", description="Whether to use the cov+mean of the data as a basis for the IFS.")
+			    boolean dataBasis
 			)
 	{
 	
@@ -166,6 +169,7 @@ public class FractalEM extends AbstractExperiment
 		
 		this.noise = noise;
 		this.centerData = centerData;
+		this.dataBasis = dataBasis;
 	}
 	
 	private int depth()
@@ -222,12 +226,12 @@ public class FractalEM extends AbstractExperiment
 				save();
 			}	
 			
-			logger.info("Scores (" + currentGeneration + ") : " + scores());
-			logger.info("Best HD (" + currentGeneration + ") : " + bestScore());
-			logger.info("Best LL (" + currentGeneration + ") : " + bestLikelihood());
+			// logger.info("Scores (" + currentGeneration + ") : " + scores());
+			// logger.info("Best HD (" + currentGeneration + ") : " + bestScore());
+			// logger.info("Best LL (" + currentGeneration + ") : " + bestLikelihood());
 
 			
-			logger.info("Parameters   (" + currentGeneration + ") : " + em.model().parameters());			
+			// logger.info("Parameters   (" + currentGeneration + ") : " + em.model().parameters());			
 			currentGeneration++;
 
 			em.distributePoints(distSampleSize, depth(), beamWidth);
@@ -259,9 +263,9 @@ public class FractalEM extends AbstractExperiment
 		
 		BufferedImage image = Draw.draw(trainingData, xrange, yrange, 1920, 1080, true, false);
 
-		basis = new MVN(dim);
-		// basis = MVN.findSpherical(trainingData);
-		logger.info("basis: " + basis);
+		basis = dataBasis ? MVN.findSpherical(trainingData) : new MVN(dim);
+		
+		// logger.info("basis: " + basis);
 		
 		try
 		{

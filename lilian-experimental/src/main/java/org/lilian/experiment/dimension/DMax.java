@@ -44,44 +44,47 @@ public class DMax extends AbstractExperiment
 		sizeColumn = new ArrayList<Double>();
 		targets = new ArrayList<Double>();
 		
-		for(int n : sizes)
-		{			
-			
-			datasets.add(Resources.sierpinski(n));
-			names.add("sierpinski");
-			targets.add(1.58496250072);
-			sizeColumn.add((double)n);
-			
-			datasets.add(Resources.koch(n));
-			names.add("koch");
-			targets.add(1.26185950714);
-			sizeColumn.add((double)n);
-			
-			datasets.add(new MVN(1).generate(n));
-			names.add("mvn1");
-			targets.add(1.0);
-			sizeColumn.add((double)n);
-			
-			datasets.add(new MVN(2).generate(n));
-			names.add("mvn2");
-			targets.add(2.0);
-			sizeColumn.add((double)n);
-			
-			datasets.add(new MVN(3).generate(n));
-			names.add("mvn3");
-			targets.add(3.0);
-			sizeColumn.add((double)n);
-			
-			datasets.add(new MVN(5).generate(n));
-			names.add("mvn5");
-			targets.add(5.0);	
-			sizeColumn.add((double)n);	
-		
-			datasets.add(new MVN(10).generate(n));
-			names.add("mvn10");
-			targets.add(10.0);
-			sizeColumn.add((double)n);
-			
+		for(int r : Series.series(3))
+		{
+			for(int n : sizes)
+			{			
+	//			
+	//			datasets.add(Resources.sierpinski(n));
+	//			names.add("sierpinski");
+	//			targets.add(1.58496250072);
+	//			sizeColumn.add((double)n);
+	//			
+	//			datasets.add(Resources.koch(n));
+	//			names.add("koch");
+	//			targets.add(1.26185950714);
+	//			sizeColumn.add((double)n);
+				
+				datasets.add(new MVN(1).generate(n));
+				names.add("mvn1");
+				targets.add(1.0);
+				sizeColumn.add((double)n);
+	//			
+	//			datasets.add(new MVN(2).generate(n));
+	//			names.add("mvn2");
+	//			targets.add(2.0);
+	//			sizeColumn.add((double)n);
+	//			
+	//			datasets.add(new MVN(3).generate(n));
+	//			names.add("mvn3");
+	//			targets.add(3.0);
+	//			sizeColumn.add((double)n);
+	//			
+	//			datasets.add(new MVN(5).generate(n));
+	//			names.add("mvn5");
+	//			targets.add(5.0);	
+	//			sizeColumn.add((double)n);	
+	//		
+	//			datasets.add(new MVN(10).generate(n));
+	//			names.add("mvn10");
+	//			targets.add(10.0);
+	//			sizeColumn.add((double)n);
+	//			
+			}
 		}
 	}
 
@@ -112,4 +115,8 @@ public class DMax extends AbstractExperiment
 		return names;
 	}
 	
+	public List<String> scripts()
+	{
+		return Arrays.asList("dmax.plot.py");
+	}
 }

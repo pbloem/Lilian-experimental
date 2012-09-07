@@ -59,6 +59,7 @@ public class IFSClassificationEM extends AbstractExperiment
 	protected int testSampleSize;
 	protected int beamWidth;
 	protected boolean print;
+	protected boolean dataBasis;
 	
 	/**
 	 * State information
@@ -89,7 +90,9 @@ public class IFSClassificationEM extends AbstractExperiment
 			@Parameter(name="test sample size")
 				int testSampleSize,
 			@Parameter(name="print classifier")
-				boolean print
+				boolean print,
+			@Parameter(name="data basis")
+				boolean dataBasis
 	)
 	{	
 		Pair<Classified<Point>, Classified<Point>> split = Classification.split(data, testRatio);
@@ -105,6 +108,7 @@ public class IFSClassificationEM extends AbstractExperiment
 		this.distSampleSize = distSampleSize;
 		this.testSampleSize = testSampleSize;
 		this.print = print;
+		this.dataBasis = dataBasis;
 		
 		this.classes = trainingData.numClasses();
 	}
@@ -166,7 +170,7 @@ public class IFSClassificationEM extends AbstractExperiment
 					points, 0.0,
 					depth, generations, components, distSampleSize,
 					true, -1, false, false, testSampleSize, 0.0, false, "sphere", 
-					0.0, true);
+					0.0, true, dataBasis);
 			
 			emExperiments.add(em);
 		}

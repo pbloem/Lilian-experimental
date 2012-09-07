@@ -242,8 +242,8 @@ public class EM implements Serializable
 						map.getTransformation());
 				
 				
-				if(Double.isNaN(det))
-					Global.log().warning("Map with NaN determinant" + map);
+//				if(Double.isNaN(det))
+//					Global.log().warning("Map with NaN determinant" + map);
 				
 				// * If the map contracts too much, we perturb it slightly
 				if(Math.abs(det) < THRESHOLD || Double.isNaN(det))
@@ -274,7 +274,7 @@ public class EM implements Serializable
 		 */
 		for(int i : unassigned)
 		{
-			System.out.println("-------"+i);
+//			System.out.println("-------"+i);
 			
 			int j = assigned.get(Global.random.nextInt(assigned.size()));
 			
@@ -560,7 +560,7 @@ public class EM implements Serializable
 	//						}
 						} 
 					} else {
-						Global.log().info("Points for code " + code + " formed deficient MVN. No points added to pairs.");
+    //					Global.log().info("Points for code " + code + " formed deficient MVN. No points added to pairs.");
 					}
 					
 					// Register the drop in frequency as the symbol t gets added to the code

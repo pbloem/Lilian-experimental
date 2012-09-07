@@ -55,7 +55,7 @@ public class IFSDimension extends AbstractExperiment
 	{	
 		FractalEM em = new FractalEM(
 				data, 0.0, depth, generations, components, distSampleSize, 
-				true, -1, false, false, testSampleSize, 0.0, false, "sphere", 0.0, true);
+				true, -1, false, false, testSampleSize, 0.0, false, "sphere", 0.0, true, true);
 		
 		Environment.current().child(em);
 		
