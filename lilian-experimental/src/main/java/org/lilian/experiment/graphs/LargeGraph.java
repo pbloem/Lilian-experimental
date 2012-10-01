@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import nl.peterbloem.powerlaws.Discrete;
+
 import org.apache.commons.collections15.Transformer;
 import org.data2semantics.tools.graphs.Graphs;
 import org.lilian.experiment.Result;
@@ -33,6 +35,7 @@ import edu.uci.ics.jung.graph.Graph;
  */
 public class LargeGraph<V, E> extends HugeGraph<V, E>
 {
+	public static final double PL_ACCURACY = 0.1;
 	
 	public @State double diameter = Double.NaN;	
 	public @State double largestComponentSize = Double.NaN;
@@ -45,6 +48,10 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 	public @State List<Pair> edgeLabelFrequencies;	
 	
 	public @State Graph<V, E> largestComponent;
+
+	private double plExponent;
+	private int plMin;
+	private double plSignificance;
 
 	public LargeGraph(Graph<V, E> graph)
 	{
@@ -130,6 +137,14 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 		for(String token : tokens)
 			edgeLabelFrequencies.add(new Pair((int)edgeModel.frequency(token), token));	
 		
+		List<Integer> degrees = new ArrayList<Integer>(graph.getVertexCount());
+		for(V vertex : graph.getVertices())
+			degrees.add(graph.degree(vertex));
+		
+		Discrete discrete = Discrete.fit(degrees).fit();
+		plExponent = discrete.exponent();
+		plMin = discrete.xMin();
+		plSignificance = discrete.significance(degrees, PL_ACCURACY);
 		
 	}
 	
@@ -173,6 +188,24 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 	public List<Integer> degrees()
 	{
 		return Collections.unmodifiableList(degrees);
+	}
+	
+	@Result(name="Power law exponent")
+	public double plExponent()
+	{
+		return plExponent;
+	}
+	
+	@Result(name="Power law min")
+	public int plMin()
+	{
+		return plMin;
+	}
+	
+	@Result(name="Power law significance")
+	public double plSignificance()
+	{
+		return plSignificance;
 	}
 	
 	private class Pair extends AbstractList<Object> implements Comparable<Pair>
