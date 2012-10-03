@@ -72,70 +72,70 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 	{
 		super.body();
 		
-		logger.info("Calculating size of the largest component");
-		WeakComponentClusterer<V, E> clust = 
-				new WeakComponentClusterer<V, E>();
-		
-		Set<Set<V>> clusters = clust.transform(graph);
-		
-		largestComponentSize = Double.NEGATIVE_INFINITY;
-		Set<V> largest = null;
-
-		for(Set<V> set : clusters)
-			if(set.size() > largestComponentSize)
-			{
-				largestComponentSize = set.size();
-				largest = set;
-			}
-		
-		largestComponent = Graphs.undirectedSubgraph(graph, largest);
-		
-		logger.info("Calculating diameter");
-		diameter = DistanceStatistics.diameter(largestComponent);	
-		
-		logger.info("Calculating mean distance");
-		FloydWarshall<V, E> fw = new FloydWarshall<V, E>(largestComponent);
-		meanDistance = 0.0;
-		int num = 0;
-		for(V vi : graph.getVertices())
-			for(V vj : graph.getVertices())
-			{
-				meanDistance += fw.distance(vi, vj);
-				num++;
-			}
-		
-		meanDistance /= (double) num;
-				
-		// * Collect degrees 
-		for(V node : graph.getVertices())
-		{
-			degrees.add(graph.degree(node));
-			pairs.add(
-					new Pair(graph.degree(node), node.toString()));
-		}
-		
-		Collections.sort(degrees, reverseOrder());
-		Collections.sort(pairs, reverseOrder());
-		
-		// * Collect vertex labels
-		BasicFrequencyModel<String> vertexModel = new BasicFrequencyModel<String>();
-		for(V vertex : graph.getVertices())
-			vertexModel.add(vertex.toString());
-		
-		List<String> tokens = vertexModel.sorted();
-		vertexLabelFrequencies = new ArrayList<Pair>(tokens.size());
-		for(String token : tokens)
-			vertexLabelFrequencies.add(new Pair((int)vertexModel.frequency(token), token));	
-		
-		// * Collect edge labels
-		BasicFrequencyModel<String> edgeModel = new BasicFrequencyModel<String>();
-		for(E edge : graph.getEdges())
-			edgeModel.add(edge.toString());
-		
-		tokens = edgeModel.sorted();
-		edgeLabelFrequencies = new ArrayList<Pair>(tokens.size());
-		for(String token : tokens)
-			edgeLabelFrequencies.add(new Pair((int)edgeModel.frequency(token), token));	
+//		logger.info("Calculating size of the largest component");
+//		WeakComponentClusterer<V, E> clust = 
+//				new WeakComponentClusterer<V, E>();
+//		
+//		Set<Set<V>> clusters = clust.transform(graph);
+//		
+//		largestComponentSize = Double.NEGATIVE_INFINITY;
+//		Set<V> largest = null;
+//
+//		for(Set<V> set : clusters)
+//			if(set.size() > largestComponentSize)
+//			{
+//				largestComponentSize = set.size();
+//				largest = set;
+//			}
+//		
+//		largestComponent = Graphs.undirectedSubgraph(graph, largest);
+//		
+//		logger.info("Calculating diameter");
+//		diameter = DistanceStatistics.diameter(largestComponent);	
+//		
+//		logger.info("Calculating mean distance");
+//		FloydWarshall<V, E> fw = new FloydWarshall<V, E>(largestComponent);
+//		meanDistance = 0.0;
+//		int num = 0;
+//		for(V vi : graph.getVertices())
+//			for(V vj : graph.getVertices())
+//			{
+//				meanDistance += fw.distance(vi, vj);
+//				num++;
+//			}
+//		
+//		meanDistance /= (double) num;
+//				
+//		// * Collect degrees 
+//		for(V node : graph.getVertices())
+//		{
+//			degrees.add(graph.degree(node));
+//			pairs.add(
+//					new Pair(graph.degree(node), node.toString()));
+//		}
+//		
+//		Collections.sort(degrees, reverseOrder());
+//		Collections.sort(pairs, reverseOrder());
+//		
+//		// * Collect vertex labels
+//		BasicFrequencyModel<String> vertexModel = new BasicFrequencyModel<String>();
+//		for(V vertex : graph.getVertices())
+//			vertexModel.add(vertex.toString());
+//		
+//		List<String> tokens = vertexModel.sorted();
+//		vertexLabelFrequencies = new ArrayList<Pair>(tokens.size());
+//		for(String token : tokens)
+//			vertexLabelFrequencies.add(new Pair((int)vertexModel.frequency(token), token));	
+//		
+//		// * Collect edge labels
+//		BasicFrequencyModel<String> edgeModel = new BasicFrequencyModel<String>();
+//		for(E edge : graph.getEdges())
+//			edgeModel.add(edge.toString());
+//		
+//		tokens = edgeModel.sorted();
+//		edgeLabelFrequencies = new ArrayList<Pair>(tokens.size());
+//		for(String token : tokens)
+//			edgeLabelFrequencies.add(new Pair((int)edgeModel.frequency(token), token));	
 		
 		List<Integer> degrees = new ArrayList<Integer>(graph.getVertexCount());
 		for(V vertex : graph.getVertices())
