@@ -16,6 +16,7 @@ import org.data2semantics.tools.graphs.Graphs;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
 import org.lilian.models.BasicFrequencyModel;
+import org.lilian.util.Functions;
 import org.lilian.util.Series;
 import org.lilian.util.graphs.jung.FloydWarshall;
 
@@ -36,6 +37,7 @@ import edu.uci.ics.jung.graph.Graph;
 public class LargeGraph<V, E> extends HugeGraph<V, E>
 {
 	public static final double PL_ACCURACY = 0.1;
+	public static final int PL_DATASAMPLE = 1000;
 	
 	public @State double diameter = Double.NaN;	
 	public @State double largestComponentSize = Double.NaN;
@@ -106,15 +108,16 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 //		
 //		meanDistance /= (double) num;
 //				
-//		// * Collect degrees 
-//		for(V node : graph.getVertices())
-//		{
-//			degrees.add(graph.degree(node));
+		List<V> verts = new ArrayList<V>(graph.getVertices());
+		// * Collect degrees 
+		for(int i : Series.series(200))
+		{
+			degrees.add(graph.degree(Functions.choose(verts)));
 //			pairs.add(
 //					new Pair(graph.degree(node), node.toString()));
-//		}
-//		
-//		Collections.sort(degrees, reverseOrder());
+		}
+		
+		Collections.sort(degrees, reverseOrder());
 //		Collections.sort(pairs, reverseOrder());
 //		
 //		// * Collect vertex labels
@@ -137,15 +140,14 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 //		for(String token : tokens)
 //			edgeLabelFrequencies.add(new Pair((int)edgeModel.frequency(token), token));	
 		
-		List<Integer> degrees = new ArrayList<Integer>(graph.getVertexCount());
+		List<Integer> degreesPL = new ArrayList<Integer>(graph.getVertexCount());
 		for(V vertex : graph.getVertices())
-			degrees.add(graph.degree(vertex));
+			degreesPL.add(graph.degree(vertex));
 		
-		Discrete discrete = Discrete.fit(degrees).fit();
+		Discrete discrete = Discrete.fit(degreesPL).fit();
 		plExponent = discrete.exponent();
 		plMin = discrete.xMin();
-		plSignificance = discrete.significance(degrees, PL_ACCURACY);
-		
+		plSignificance = discrete.significance(degreesPL, PL_ACCURACY, PL_DATASAMPLE);
 	}
 	
 	@Result(name="diameter", description="Longest shortest path (in the largest component)")
