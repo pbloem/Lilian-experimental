@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import nl.peterbloem.powerlaws.Discrete;
+import nl.peterbloem.powerlaws.DiscreteApproximate;
 
 import org.apache.commons.collections15.Transformer;
 import org.data2semantics.tools.graphs.Graphs;
@@ -144,10 +145,10 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 		for(V vertex : graph.getVertices())
 			degreesPL.add(graph.degree(vertex));
 		
-		Discrete discrete = Discrete.fit(degreesPL).fit();
-		plExponent = discrete.exponent();
-		plMin = discrete.xMin();
-		plSignificance = discrete.significance(degreesPL, PL_ACCURACY, PL_DATASAMPLE);
+		DiscreteApproximate dist = DiscreteApproximate.fit(degreesPL).fit();
+		plExponent = dist.exponent();
+		plMin = dist.xMin();
+		plSignificance = dist.significance(degreesPL, PL_ACCURACY, PL_DATASAMPLE);
 	}
 	
 	@Result(name="diameter", description="Longest shortest path (in the largest component)")
