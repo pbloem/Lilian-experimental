@@ -21,6 +21,7 @@ public class MDLTest<L, N extends Node<L, N>> extends AbstractExperiment
 	public double compressedSize;
 	public double modelSize;
 	public BaseGraph<Subdue.Token> model;
+	public Collection<Subdue<L,N>.Substructure> subs;
 	
 	public static @Factory <L, N extends Node<L, N>> MDLTest<L, N> make(
 			@Parameter(name="data") Graph<L, N> graph, 
@@ -47,7 +48,7 @@ public class MDLTest<L, N extends Node<L, N>> extends AbstractExperiment
 	protected void body()
 	{
 		Subdue<L,N> subdue = new Subdue<L, N>(graph);
-		Collection<Subdue<L,N>.Substructure> subs = subdue.search(iterations, width, width, -1);
+		subs = subdue.search(iterations, width, width, -1);
 		Subdue<L,N>.Substructure sub = subs.iterator().next();
 		
 		for(Subdue<L,N>.Substructure s : subs )
@@ -86,6 +87,12 @@ public class MDLTest<L, N extends Node<L, N>> extends AbstractExperiment
 	public double numEdges()
 	{
 		return graph.numEdges();
+	}
+	
+	@Result(name="substructures")
+	public Collection<Subdue<L, N>.Substructure> substructures()
+	{
+		return subs;
 	}
 
 	@Result(name="density")
