@@ -61,7 +61,9 @@ public class HugeGraph<V, E> extends AbstractExperiment
 		double variance = varSum/(graph.getVertexCount() - 1);
 		stdDegree = Math.sqrt(variance);
 		
-		assortativity = Measures.assortativity(graph);
+		logger.info("Calculating assortativity");
+//		assortativity = Measures.assortativity(graph);
+		logger.info("finished");
 		
 //		logger.info("Calculating mean local clustering coefficient");
 //		Map<V, Double> map = Metrics.clusteringCoefficients(graph);

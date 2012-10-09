@@ -148,7 +148,7 @@ public class LargeGraph<V, E> extends HugeGraph<V, E>
 		DiscreteApproximate dist = DiscreteApproximate.fit(degreesPL).fit();
 		plExponent = dist.exponent();
 		plMin = dist.xMin();
-		plSignificance = dist.significance(degreesPL, PL_ACCURACY, PL_DATASAMPLE);
+		plSignificance = dist.significance(degreesPL, PL_ACCURACY);
 	}
 	
 	@Result(name="diameter", description="Longest shortest path (in the largest component)")
