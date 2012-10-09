@@ -75,5 +75,25 @@ public class MDLTest<L, N extends Node<L, N>> extends AbstractExperiment
 	{
 		return modelSize;
 	}
+	
+	@Result(name="graph size (in nodes)")
+	public double graphSize()
+	{
+		return graph.size();
+	}
+	
+	@Result(name="number of edges")
+	public double numEdges()
+	{
+		return graph.numEdges();
+	}
 
+	@Result(name="density")
+	public double density()
+	{
+		double n = graph.size();
+		double e = graph.numEdges();
+		
+		return e/((n*n - n ) / 2.0);
+	}
 }
