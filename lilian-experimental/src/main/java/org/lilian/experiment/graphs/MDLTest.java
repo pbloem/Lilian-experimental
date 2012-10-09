@@ -1,5 +1,7 @@
 package org.lilian.experiment.graphs;
 
+import java.util.Collection;
+
 import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Factory;
 import org.lilian.experiment.Parameter;
@@ -31,6 +33,7 @@ public class MDLTest<L, N extends Node<L, N>> extends AbstractExperiment
 		mdlTest.iterations = iterations;
 		mdlTest.width = width;
 		
+		
 		return mdlTest;
 	}
 	
@@ -44,7 +47,11 @@ public class MDLTest<L, N extends Node<L, N>> extends AbstractExperiment
 	protected void body()
 	{
 		Subdue<L,N> subdue = new Subdue<L, N>(graph);
-		Subdue<L,N>.Substructure sub = subdue.search(iterations, width, width, -1).iterator().next();
+		Collection<Subdue<L,N>.Substructure> subs = subdue.search(iterations, width, width, -1);
+		Subdue<L,N>.Substructure sub = subs.iterator().next();
+		
+		for(Subdue<L,N>.Substructure s : subs )
+			System.out.println(s);
 		
 		model = sub.subgraph();
 		compressedSize = sub.score();
