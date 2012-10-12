@@ -6,17 +6,18 @@ import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Factory;
 import org.lilian.experiment.Parameter;
 import org.lilian.experiment.Result;
-import org.lilian.util.graphs.BaseGraph;
-import org.lilian.util.graphs.Graph;
-import org.lilian.util.graphs.Node;
-import org.lilian.util.graphs.algorithms.GraphMDL;
-import org.lilian.util.graphs.algorithms.Subdue;
+import org.lilian.util.graphs.old.BaseGraph;
+import org.lilian.util.graphs.old.Graph;
+import org.lilian.util.graphs.old.Node;
+import org.lilian.util.graphs.old.algorithms.GraphMDL;
+import org.lilian.util.graphs.old.algorithms.Subdue;
 
 public class MDLTest<L, N extends Node<L, N>> extends AbstractExperiment
 {
 	private Graph<L, N> graph;
 	private int iterations;
 	private int width;
+	private boolean sparse;
 	
 	public double compressedSize;
 	public double modelSize;
@@ -26,14 +27,15 @@ public class MDLTest<L, N extends Node<L, N>> extends AbstractExperiment
 	public static @Factory <L, N extends Node<L, N>> MDLTest<L, N> make(
 			@Parameter(name="data") Graph<L, N> graph, 
 			@Parameter(name="iterations") int iterations,
-			@Parameter(name="width") int width)
+			@Parameter(name="width") int width,
+			@Parameter(name="sparse") boolean sparse)
 	{
 		MDLTest<L, N> mdlTest = new MDLTest<L, N>();
 		
 		mdlTest.graph = graph;
 		mdlTest.iterations = iterations;
 		mdlTest.width = width;
-		
+		mdlTest.sparse = sparse;
 		
 		return mdlTest;
 	}
@@ -47,7 +49,7 @@ public class MDLTest<L, N extends Node<L, N>> extends AbstractExperiment
 	@Override
 	protected void body()
 	{
-		Subdue<L,N> subdue = new Subdue<L, N>(graph);
+		Subdue<L,N> subdue = new Subdue<L, N>(graph, sparse);
 		subs = subdue.search(iterations, width, width, -1);
 		Subdue<L,N>.Substructure sub = subs.iterator().next();
 		
@@ -63,6 +65,12 @@ public class MDLTest<L, N extends Node<L, N>> extends AbstractExperiment
 	public BaseGraph<Subdue.Token> model()
 	{
 		return model;
+	}
+	
+	@Result(name="graph")
+	public Graph<L, N> graph()
+	{
+		return graph;
 	}
 	
 	@Result(name="compressed size (in bits)")

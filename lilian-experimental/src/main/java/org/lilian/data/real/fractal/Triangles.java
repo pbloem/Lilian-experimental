@@ -29,7 +29,7 @@ import org.lilian.data.real.Point;
 import org.lilian.data.real.Rotation;
 import org.lilian.util.Functions;
 import org.lilian.util.Series;
-import org.lilian.util.graphs.Graph;
+import org.lilian.util.graphs.old.Graph;
 
 public class Triangles
 {
