@@ -27,6 +27,7 @@ public class IFSDimension extends AbstractExperiment
 	private int testSampleSize;
 	private List<Point> data;
 	private int dimensionSample;
+	private int ksSamples;
 	
 	public @State double modelDimension;
 	public @State double dataDimension;
@@ -39,7 +40,8 @@ public class IFSDimension extends AbstractExperiment
 			@Parameter(name="dist sample size", description="") int distSampleSize,
 			@Parameter(name="test sample size", description="") int testSampleSize, 
 			@Parameter(name="data", description="") List<Point> data,
-			@Parameter(name="dimension sample size", description="") int dimensionSample)
+			@Parameter(name="dimension sample size", description="") int dimensionSample,
+			@Parameter(name="ks samples", description="") int ksSamples)
 	{
 		super();
 		this.generations = generations;
@@ -49,11 +51,13 @@ public class IFSDimension extends AbstractExperiment
 		this.testSampleSize = testSampleSize;
 		this.data = data;
 		this.dimensionSample = dimensionSample;
+		this.ksSamples = ksSamples;
 	}
 
 	@Override
 	protected void setup()
 	{
+		logger.info("Data size: " + data.size());
 	}
 
 	@Override
@@ -66,11 +70,13 @@ public class IFSDimension extends AbstractExperiment
 		Environment.current().child(em);
 		
 		IFS<Similitude> model = em.model();
-		List<Point> modelDraw = model.generator(depth).generate(dimensionSample);
-		List<Point> dataDraw = Datasets.sampleWithoutReplacement(data, dimensionSample);
+		List<Point> modelDraw = model.generator(depth).generate(dimensionSample == -1 ? data.size() : dimensionSample);
+		List<Point> dataDraw = dimensionSample == -1 ?
+				data :
+				Datasets.sampleWithoutReplacement(data, dimensionSample);
 		
-		modelDimension = Takens.fit(modelDraw, metric).fit().dimension();
-		dataDimension = Takens.fit(dataDraw, metric).fit().dimension();
+		modelDimension = Takens.bigFit(modelDraw, metric).fit(ksSamples).dimension();
+		dataDimension = Takens.bigFit(dataDraw, metric).fit(ksSamples).dimension();
 	}
 	
 	@Result(name="model dimension")
@@ -83,7 +89,6 @@ public class IFSDimension extends AbstractExperiment
 	public double dataDimension()
 	{
 		return dataDimension;
-	
 	}
 	
 	@Result(name="data size")
