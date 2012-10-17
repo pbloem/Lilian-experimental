@@ -10,6 +10,12 @@ import org.lilian.data.real.fractal.IFS;
 import org.lilian.util.distance.Distance;
 import org.lilian.util.distance.EuclideanDistance;
 
+/**
+ * Test the suggestion that IFS models scale their dimension to that of the
+dataset.
+ * @author Peter
+ *
+ */
 public class IFSDimension extends AbstractExperiment
 {
 	Distance<Point> metric = new EuclideanDistance();
@@ -78,5 +84,17 @@ public class IFSDimension extends AbstractExperiment
 	{
 		return dataDimension;
 	
+	}
+	
+	@Result(name="data size")
+	public double dataSize()
+	{
+		return data.size();
+	}
+	
+	@Result(name="embedding dimension")
+	public double embeddingDim()
+	{
+		return data.get(0).dimensionality();
 	}
 }
