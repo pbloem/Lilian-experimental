@@ -87,7 +87,7 @@ public class Flight extends AbstractExperiment
 	 * @param dir
 	 * @param name
 	 */
-	private <M extends Map & Parametrizable> void write(ThreeLayer nn, String name)
+	private void write(ThreeLayer nn, String name)
 	{		
 		int div = HIGH_QUALITY ? 1 : 16;
 		int its = HIGH_QUALITY ? (int) 10000000 : 100;
