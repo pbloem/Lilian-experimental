@@ -140,7 +140,7 @@ public class Flight extends AbstractExperiment
 			e.printStackTrace();
 		}
 		
-		for(int step : Series.series(1, 25))
+		for(int step : Series.series(1, 3))
 		{
 			List<Point> sequence = NeuralNetworks.orbit(nn, new MVN(DIM).generate(), 5000 * step);
 			int w = 1920, h = 1080;

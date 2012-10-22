@@ -61,6 +61,12 @@
   		<artifactId>powerlaws</artifactId>
   		<version>0.0.1-SNAPSHOT</version>
   	</dependency>
+  	<dependency>
+  	  <groupId>net.sourceforge</groupId>
+      <artifactId>javaml</artifactId>
+      <version>0.1.7</version>
+  	</dependency>
+
   </dependencies>
   <build>
 	  <resources>
@@ -79,4 +85,11 @@
 	    </plugins>
 	  </pluginManagement>
 	</build>
+		
+	<repositories>
+	    <repository>
+          <id>peterbloem.nl</id>
+          <url>http://peterbloem.nl/maven2</url>
+        </repository>  
+	</repositories>	
 </project>
