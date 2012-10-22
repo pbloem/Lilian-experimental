@@ -61,7 +61,7 @@ public class Flight extends AbstractExperiment
 		es = new ES<ThreeLayer>(
 				builder,
 				new FlightTarget(),
-				ES.initial(population, builder.numParameters(), VAR)
+				ES.initial(population, builder.numParameters(), VAR), false
 				);
 	}
 
@@ -72,7 +72,7 @@ public class Flight extends AbstractExperiment
 		{
 			es.breed();
 			
-			if(i % 5 == 0)
+			if(i % 1 == 0)
 			{
 				write(es.best().instance(), String.format("generation%04d", i));
 				logger.info(i + ": " + es.best().parameters());
@@ -112,7 +112,6 @@ public class Flight extends AbstractExperiment
 	
 	private class FlightTarget implements Target<ThreeLayer>
 	{
-
 		private static final long serialVersionUID = 273846960467310845L;
 		MVN mvn = new MVN(2);
 		

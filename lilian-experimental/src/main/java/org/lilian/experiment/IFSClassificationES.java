@@ -184,7 +184,7 @@ public class IFSClassificationES extends AbstractExperiment
 		es = new ES<IFSClassifier>(
 				builder, target, initial, 
 				2, initial.size()*2, 0, 
-				ES.CrossoverMode.UNIFORM);
+				ES.CrossoverMode.UNIFORM, true);
 		
 		logger.info("Created ES object");
 		

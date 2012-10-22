@@ -112,7 +112,7 @@ public class FractalEA extends AbstractExperiment
 		es = new ES<IFS<Similitude>>(
 				builder, target, initial, 
 				2, initial.size()*2, 0, 
-				ES.CrossoverMode.UNIFORM);
+				ES.CrossoverMode.UNIFORM, true);
 				
 	}
 	
