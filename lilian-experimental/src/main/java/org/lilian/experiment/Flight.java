@@ -31,7 +31,6 @@ public class Flight extends AbstractExperiment
 	private static double[] yrange = new double[]{-1.2, 1.2};	
 	
 	private static final int DIM = 2;
-	private static final double VAR = 0.000001;
 	private static final boolean HIGH_QUALITY = false;
 		
 	private int points;
@@ -39,6 +38,7 @@ public class Flight extends AbstractExperiment
 	private int iterations;
 	private int population;
 	private Distance<List<Point>> distance = new HausdorffDistance<Point>(new EuclideanDistance());
+	private double initVar;
 
 	public ES<ThreeLayer> es;
 	
@@ -46,12 +46,15 @@ public class Flight extends AbstractExperiment
 			@Parameter(name="points") int points,
 			@Parameter(name="hidden") int hidden,
 			@Parameter(name="iterations") int iterations,
-			@Parameter(name="population") int population)
+			@Parameter(name="population") int population,
+			@Parameter(name="init var") double initVar)
 	{
 		this.points = points;
 		this.hidden = hidden;
 		this.iterations = iterations;
 		this.population = population;
+		this.initVar = initVar;
+		
 	}
 
 	@Override
@@ -61,7 +64,7 @@ public class Flight extends AbstractExperiment
 		es = new ES<ThreeLayer>(
 				builder,
 				new FlightTarget(),
-				ES.initial(population, builder.numParameters(), VAR), false
+				ES.initial(population, builder.numParameters(), initVar), false
 				);
 	}
 
@@ -72,7 +75,7 @@ public class Flight extends AbstractExperiment
 		{
 			es.breed();
 			
-			if(i % 1 == 0)
+			if(i % 100 == 0)
 			{
 				write(es.best().instance(), String.format("generation%04d", i));
 				logger.info(i + ": " + es.best().parameters());
@@ -90,7 +93,7 @@ public class Flight extends AbstractExperiment
 	private void write(ThreeLayer nn, String name)
 	{		
 		int div = HIGH_QUALITY ? 1 : 16;
-		int its = HIGH_QUALITY ? (int) 10000000 : 100;
+		int its = HIGH_QUALITY ? (int) 10000000 : 10000;
 		
 		File sub = new File(dir, "generations/");
 		sub.mkdirs();
