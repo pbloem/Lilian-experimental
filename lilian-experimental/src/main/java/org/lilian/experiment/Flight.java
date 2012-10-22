@@ -1,5 +1,12 @@
 package org.lilian.experiment;
 
+import static org.lilian.data.real.Draw.toPixel;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +49,7 @@ public class Flight extends AbstractExperiment
 	private Distance<List<Point>> distance = new HausdorffDistance<Point>(new EuclideanDistance());
 	private double initVar;
 	private boolean highQuality;
+	private double distanceWeight;
 
 	public ES<ThreeLayer> es;
 	
@@ -52,7 +60,8 @@ public class Flight extends AbstractExperiment
 			@Parameter(name="iterations") int iterations,
 			@Parameter(name="population") int population,
 			@Parameter(name="init var") double initVar,
-			@Parameter(name="high quality") boolean highQuality)
+			@Parameter(name="high quality") boolean highQuality,
+			@Parameter(name="distance weight") double diastanceWeight)
 	{
 		this.data = data;
 		this.points = points;
@@ -61,6 +70,7 @@ public class Flight extends AbstractExperiment
 		this.population = population;
 		this.initVar = initVar;
 		this.highQuality = highQuality;
+		this.distanceWeight = distanceWeight;
 		
 	}
 
@@ -110,7 +120,7 @@ public class Flight extends AbstractExperiment
 	private void write(ThreeLayer nn, String name)
 	{		
 		int div = highQuality ? 1 : 16;
-		int its = highQuality ? (int) 1000000000 : 100000;
+		int its = highQuality ? (int) 1000000 : 100000;
 		
 		File sub = new File(dir, "generations/");
 		sub.mkdirs();
@@ -128,12 +138,49 @@ public class Flight extends AbstractExperiment
 		{
 			e.printStackTrace();
 		}
+		
+		List<Point> sequence = NeuralNetworks.orbit(nn, new MVN(DIM).generate(), 500);
+		int w = 1920, h = 1080;
+		
+		image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		Graphics2D graphics = image.createGraphics();
+		
+		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+		graphics.setColor(new Color(1.0f, 1.0f, 1.0f, 0.3f));
+		graphics.setStroke(new BasicStroke(0.5f));	
+	
+		Point last = sequence.get(0), current;
+		
+		for(int i : Series.series(1, sequence.size()))
+		{
+			current = sequence.get(i);
+			
+			graphics.drawLine(
+					toPixel(last.get(0), w, -1.0, 1.0),
+					toPixel(last.get(1), h, -1.0, 1.0), 
+					toPixel(current.get(0), w, -1.0, 1.0), 
+					toPixel(current.get(1), h, -1.0, 1.0));
+			
+			last = current;
+		}
+		
+		graphics.dispose();
+		try
+		{
+			ImageIO.write(image, "PNG", new File(sub, name + ".line.png") );
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	private class FlightTarget implements Target<ThreeLayer>
 	{
 		private static final long serialVersionUID = 273846960467310845L;
-		MVN mvn = new MVN(2);
+		private MVN mvn = new MVN(2);
+		private Distance<Point> ed = new EuclideanDistance();
+		
 		
 		@Override
 		public double score(ThreeLayer nn)
@@ -142,7 +189,24 @@ public class Flight extends AbstractExperiment
 			// List<Point> target = mvn.generate(points);
 			List<Point> target = Datasets.sample(data, points); 
 
-			return - distance.distance(orbit, target);
+			// * calculate mean distance between steps
+			double sum = 0.0;
+			Point last = orbit.get(0), current;
+			for(int i : Series.series(1, orbit.size()))
+			{
+				current = orbit.get(i);
+				
+				sum += ed.distance(current, last);
+				
+				last = current;
+			}
+			
+			sum /= orbit.size() - 1.0;
+			
+			return - (
+					(1.0 - distanceWeight) * distance.distance(orbit, target) +
+					distanceWeight * sum
+				);
 		}
 		
 	}
