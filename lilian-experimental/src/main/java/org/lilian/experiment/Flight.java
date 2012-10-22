@@ -14,6 +14,7 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import org.lilian.Global;
 import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
 import org.lilian.data.real.MVN;
@@ -61,7 +62,7 @@ public class Flight extends AbstractExperiment
 			@Parameter(name="population") int population,
 			@Parameter(name="init var") double initVar,
 			@Parameter(name="high quality") boolean highQuality,
-			@Parameter(name="distance weight") double diastanceWeight)
+			@Parameter(name="distance weight") double distanceWeight)
 	{
 		this.data = data;
 		this.points = points;
@@ -139,39 +140,42 @@ public class Flight extends AbstractExperiment
 			e.printStackTrace();
 		}
 		
-		List<Point> sequence = NeuralNetworks.orbit(nn, new MVN(DIM).generate(), 500);
-		int w = 1920, h = 1080;
-		
-		image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-		Graphics2D graphics = image.createGraphics();
-		
-		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-		graphics.setColor(new Color(1.0f, 1.0f, 1.0f, 0.3f));
-		graphics.setStroke(new BasicStroke(0.5f));	
+		for(int step : Series.series(1, 25))
+		{
+			List<Point> sequence = NeuralNetworks.orbit(nn, new MVN(DIM).generate(), 5000 * step);
+			int w = 1920, h = 1080;
+			
+			image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+			Graphics2D graphics = image.createGraphics();
+			
+			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 	
-		Point last = sequence.get(0), current;
+			graphics.setColor(new Color(1.0f, 1.0f, 1.0f, 0.05f));
+			graphics.setStroke(new BasicStroke(0.5f));	
 		
-		for(int i : Series.series(1, sequence.size()))
-		{
-			current = sequence.get(i);
+			Point last = sequence.get(0), current;
 			
-			graphics.drawLine(
-					toPixel(last.get(0), w, -1.0, 1.0),
-					toPixel(last.get(1), h, -1.0, 1.0), 
-					toPixel(current.get(0), w, -1.0, 1.0), 
-					toPixel(current.get(1), h, -1.0, 1.0));
+			for(int i : Series.series(1, step, sequence.size()))
+			{
+				current = sequence.get(i);
+				
+				graphics.drawLine(
+						toPixel(last.get(0), w, -1.0, 1.0),
+						toPixel(last.get(1), h, -1.0, 1.0), 
+						toPixel(current.get(0), w, -1.0, 1.0), 
+						toPixel(current.get(1), h, -1.0, 1.0));
+				
+				last = current;
+			}
 			
-			last = current;
-		}
-		
-		graphics.dispose();
-		try
-		{
-			ImageIO.write(image, "PNG", new File(sub, name + ".line.png") );
-		} catch (IOException e)
-		{
-			e.printStackTrace();
+			graphics.dispose();
+			try
+			{
+				ImageIO.write(image, "PNG", new File(sub, name + "." + step + ".line.png") );
+			} catch (IOException e)
+			{
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -203,8 +207,14 @@ public class Flight extends AbstractExperiment
 			
 			sum /= orbit.size() - 1.0;
 			
+			// Global.log().info("avg distance " + sum);
+			
+			double dist = distance.distance(orbit, target);
+			
+			// Global.log().info("hauss dist " + dist);
+			
 			return - (
-					(1.0 - distanceWeight) * distance.distance(orbit, target) +
+					(1.0 - distanceWeight) * dist +
 					distanceWeight * sum
 				);
 		}
