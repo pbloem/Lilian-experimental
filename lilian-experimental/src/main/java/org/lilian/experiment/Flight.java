@@ -70,6 +70,16 @@ public class Flight extends AbstractExperiment
 				new FlightTarget(),
 				ES.initial(population, builder.numParameters(), initVar), false
 				);
+		
+		BufferedImage image = Draw.draw(data, xrange, yrange, 1920, 1080, true, false);
+		
+		try
+		{
+			ImageIO.write(image, "PNG", new File(dir, "data.png"));
+		} catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
