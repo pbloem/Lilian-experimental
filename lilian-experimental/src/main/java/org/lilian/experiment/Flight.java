@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
 import org.lilian.data.real.MVN;
 import org.lilian.data.real.Map;
@@ -33,6 +34,7 @@ public class Flight extends AbstractExperiment
 	private static final int DIM = 2;
 	private static final boolean HIGH_QUALITY = false;
 		
+	private List<Point> data;
 	private int points;
 	private int hidden;
 	private int iterations;
@@ -43,12 +45,14 @@ public class Flight extends AbstractExperiment
 	public ES<ThreeLayer> es;
 	
 	public Flight(
+			@Parameter(name="data") List<Point> data,
 			@Parameter(name="points") int points,
 			@Parameter(name="hidden") int hidden,
 			@Parameter(name="iterations") int iterations,
 			@Parameter(name="population") int population,
 			@Parameter(name="init var") double initVar)
 	{
+		this.data = data;
 		this.points = points;
 		this.hidden = hidden;
 		this.iterations = iterations;
@@ -93,7 +97,7 @@ public class Flight extends AbstractExperiment
 	private void write(ThreeLayer nn, String name)
 	{		
 		int div = HIGH_QUALITY ? 1 : 16;
-		int its = HIGH_QUALITY ? (int) 10000000 : 10000;
+		int its = HIGH_QUALITY ? (int) 10000000 : 100000;
 		
 		File sub = new File(dir, "generations/");
 		sub.mkdirs();
@@ -102,7 +106,7 @@ public class Flight extends AbstractExperiment
 //		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true);
 		BufferedImage image = Draw.draw(
 				NeuralNetworks.orbit(nn, new MVN(DIM).generate(), its), 
-				xrange, yrange, 1920, 1080, true, false);
+				xrange, yrange, 1920/div, 1080/div, true, false);
 
 		try
 		{
@@ -122,7 +126,8 @@ public class Flight extends AbstractExperiment
 		public double score(ThreeLayer nn)
 		{
 			List<Point> orbit = NeuralNetworks.orbit(nn, mvn.generate(), points);
-			List<Point> target = mvn.generate(points);
+			// List<Point> target = mvn.generate(points);
+			List<Point> target = Datasets.sample(data, points); 
 
 			return - distance.distance(orbit, target);
 		}
