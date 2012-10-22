@@ -110,7 +110,7 @@ public class Flight extends AbstractExperiment
 	private void write(ThreeLayer nn, String name)
 	{		
 		int div = highQuality ? 1 : 16;
-		int its = highQuality ? (int) 10000000 : 100000;
+		int its = highQuality ? (int) 1000000000 : 100000;
 		
 		File sub = new File(dir, "generations/");
 		sub.mkdirs();
