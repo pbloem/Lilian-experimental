@@ -11,8 +11,8 @@ import org.lilian.util.distance.Distance;
 import org.lilian.util.distance.EuclideanDistance;
 
 /**
- * Test the suggestion that IFS models scale their dimension to that of the
-dataset.
+ * Test the hypothesis that IFS models scale their dimension to that of the
+ * dataset.
  * @author Peter
  *
  */
