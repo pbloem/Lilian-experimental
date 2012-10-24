@@ -28,10 +28,12 @@ public class IFSDimension extends AbstractExperiment
 	private List<Point> data;
 	private int dimensionSample;
 	private int ksSamples;
+	private int bootstraps;
 	
 	public @State double modelDimension;
+	public @State double modelDimUncertainty;
 	public @State double dataDimension;
-
+	public @State double dataDimUncertainty;
 	
 	public IFSDimension(
 			@Parameter(name="generations", description="") int generations, 
@@ -41,7 +43,8 @@ public class IFSDimension extends AbstractExperiment
 			@Parameter(name="test sample size", description="") int testSampleSize, 
 			@Parameter(name="data", description="") List<Point> data,
 			@Parameter(name="dimension sample size", description="") int dimensionSample,
-			@Parameter(name="ks samples", description="") int ksSamples)
+			@Parameter(name="ks samples", description="") int ksSamples,
+			@Parameter(name="bootstraps", description="") int bootstraps)
 	{
 		super();
 		this.generations = generations;
@@ -52,6 +55,7 @@ public class IFSDimension extends AbstractExperiment
 		this.data = data;
 		this.dimensionSample = dimensionSample;
 		this.ksSamples = ksSamples;
+		this.bootstraps = bootstraps;
 	}
 
 	@Override
@@ -75,8 +79,16 @@ public class IFSDimension extends AbstractExperiment
 				data :
 				Datasets.sampleWithoutReplacement(data, dimensionSample);
 		
-		modelDimension = Takens.bigFit(modelDraw, metric).fit(ksSamples).dimension();
-		dataDimension = Takens.bigFit(dataDraw, metric).fit(ksSamples).dimension();
+		List<Double> modelDistances = Takens.distances(modelDraw, metric);
+		List<Double> dataDistances = Takens.distances(dataDraw, metric); 
+
+		modelDimension = Takens.fit(modelDistances, true).fit().dimension();
+		dataDimension = Takens.fit(dataDistances, true).fit().dimension();
+		
+		logger.info("Calculating uncertainties.");
+		modelDimUncertainty = Takens.uncertainties(modelDistances, bootstraps).alpha();
+		dataDimUncertainty = Takens.uncertainties(dataDistances, bootstraps).alpha();
+		
 	}
 	
 	@Result(name="model dimension")
@@ -89,6 +101,18 @@ public class IFSDimension extends AbstractExperiment
 	public double dataDimension()
 	{
 		return dataDimension;
+	}
+	
+	@Result(name="model dimension uncertainty")
+	public double modelDimUncertainty()
+	{
+		return modelDimUncertainty;
+	}
+	
+	@Result(name="data dimension uncertainty")
+	public double dataDimUncertainty()
+	{
+		return dataDimUncertainty;
 	}
 	
 	@Result(name="data size")
