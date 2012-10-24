@@ -1,5 +1,6 @@
 package org.lilian.experiment;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.lilian.data.dimension.Takens;
@@ -7,8 +8,10 @@ import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
 import org.lilian.data.real.fractal.IFS;
+import org.lilian.util.Series;
 import org.lilian.util.distance.Distance;
 import org.lilian.util.distance.EuclideanDistance;
+import org.lilian.util.distance.HausdorffDistance;
 
 /**
  * Test the hypothesis that IFS models scale their dimension to that of the
@@ -34,6 +37,8 @@ public class IFSDimension extends AbstractExperiment
 	public @State double modelDimUncertainty;
 	public @State double dataDimension;
 	public @State double dataDimUncertainty;
+	public @State double modelFit;
+	public @State double modelFitUncertainty;
 	
 	public IFSDimension(
 			@Parameter(name="generations", description="") int generations, 
@@ -89,6 +94,20 @@ public class IFSDimension extends AbstractExperiment
 		modelDimUncertainty = Takens.uncertainties(modelDistances, bootstraps).alpha();
 		dataDimUncertainty = Takens.uncertainties(dataDistances, bootstraps).alpha();
 		
+		logger.info("Calculating fit");
+		List<Double> values = new ArrayList<Double>(bootstraps);
+		HausdorffDistance<Point> distance = new HausdorffDistance<Point>(new EuclideanDistance());
+		for(int i : Series.series(bootstraps))
+		{
+			modelDraw = model.generator(depth).generate(testSampleSize);
+			dataDraw = Datasets.sampleWithoutReplacement(data, testSampleSize);
+			
+			values.add(distance.distance(modelDraw, dataDraw));
+		}
+		
+		modelFit = Tools.mean(values);
+		modelFitUncertainty = Tools.standardDeviation(values);
+		
 	}
 	
 	@Result(name="model dimension")
@@ -125,5 +144,17 @@ public class IFSDimension extends AbstractExperiment
 	public double embeddingDim()
 	{
 		return data.get(0).dimensionality();
+	}
+	
+	@Result(name="model fit")
+	public double modelFit()
+	{
+		return modelFit;
+	}
+	
+	@Result(name="model fit uncertainty")
+	public double modelFitUncertainty()
+	{
+		return modelFitUncertainty;
 	}
 }
