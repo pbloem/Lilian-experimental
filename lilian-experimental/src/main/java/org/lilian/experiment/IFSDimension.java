@@ -1,8 +1,11 @@
 package org.lilian.experiment;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.lilian.Global;
 import org.lilian.data.dimension.Takens;
 import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Point;
@@ -51,7 +54,6 @@ public class IFSDimension extends AbstractExperiment
 			@Parameter(name="ks samples", description="") int ksSamples,
 			@Parameter(name="bootstraps", description="") int bootstraps)
 	{
-		super();
 		this.generations = generations;
 		this.depth = depth;
 		this.components = components;
@@ -67,6 +69,10 @@ public class IFSDimension extends AbstractExperiment
 	protected void setup()
 	{
 		logger.info("Data size: " + data.size());
+
+		Set<Point> set = new HashSet<Point>(data);
+		Global.log().info("Uniquification removed " + (data.size()-set.size()) + " points out of " + data.size());
+		data = new ArrayList<Point>(set);
 	}
 
 	@Override

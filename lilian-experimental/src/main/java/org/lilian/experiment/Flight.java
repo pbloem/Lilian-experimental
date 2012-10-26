@@ -72,7 +72,6 @@ public class Flight extends AbstractExperiment
 		this.initVar = initVar;
 		this.highQuality = highQuality;
 		this.distanceWeight = distanceWeight;
-		
 	}
 
 	@Override

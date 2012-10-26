@@ -6,7 +6,9 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import nl.peterbloem.powerlaws.Functions;
 
@@ -34,6 +36,7 @@ public class Dimension extends AbstractExperiment
 	private double epsilon;
 	private double stepSize;
 	private boolean calculateSignificance;
+	private boolean uniquify; 
 	
 	public @State Takens.Fit fit;
 	public @State Takens takens;
@@ -49,7 +52,7 @@ public class Dimension extends AbstractExperiment
 	public Dimension(
 			@Parameter(name="data") 
 				List<Point> data,
-			@Parameter(name="data samples")
+			@Parameter(name="data samples", description="How many points to sample from the data (before taking candidates).")
 				int dataSamples,
 			@Parameter(name="candidates", description="The number of candidates to generate for the maxDistance parameter (-1 to use all data)")
 				int numCandidates,
@@ -60,8 +63,9 @@ public class Dimension extends AbstractExperiment
 			@Parameter(name="ci step size", description="Stepsize for the correlation integral.")
 				double stepSize,
 			@Parameter(name="significance")
-				boolean calculateSignificance)
-	
+				boolean calculateSignificance,
+			@Parameter(name="uniquify")
+				boolean uniquify)
 	{
 		this.data = data;
 		this.dataSamples = dataSamples;
@@ -70,13 +74,22 @@ public class Dimension extends AbstractExperiment
 		this.epsilon = epsilon;
 		this.stepSize = stepSize;
 		this.calculateSignificance = calculateSignificance;
+		this.uniquify = uniquify;
 	}
 
 	@Override
 	protected void setup()
 	{
+		if(uniquify)
+		{
+			Set<Point> set = new HashSet<Point>(data);
+			Global.log().info("Uniquification removed " + (data.size()-set.size()) + " points out of " + data.size());
+			data = new ArrayList<Point>(set);
+		}
+		
 		if(dataSamples != -1)
-			data = Datasets.sampleWithoutReplacement(data, dataSamples);
+			data = Datasets.sample(data, dataSamples);
+		
 		plot = Draw.draw(data, 500, true);
 	}
 
