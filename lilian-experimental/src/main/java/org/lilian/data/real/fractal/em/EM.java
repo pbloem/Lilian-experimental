@@ -7,7 +7,9 @@ import java.io.Serializable;
 import java.util.*;
 
 import org.apache.commons.math.linear.ArrayRealVector;
+import org.apache.commons.math.linear.EigenDecompositionImpl;
 import org.apache.commons.math.linear.RealVector;
+import org.apache.commons.math.linear.SingularValueDecompositionImpl;
 import org.lilian.Global;
 import org.lilian.data.real.AffineMap;
 import org.lilian.data.real.Datasets;
@@ -37,7 +39,6 @@ import org.lilian.util.Series;
  */
 public class EM implements Serializable
 {
-	
 	public static enum ProbMode {NONE, OLD, NEW} // How to determine the component priors
 												 // NEW is better
 	

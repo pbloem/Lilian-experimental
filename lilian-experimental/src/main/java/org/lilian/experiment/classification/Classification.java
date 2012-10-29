@@ -65,20 +65,6 @@ public class Classification extends AbstractExperiment
 			@Parameter(name="classifier")
 				String classifierChoice,
 			@Parameter(name="data")
-				String data,
-			@Parameter(name="withhold")
-				double withhold) throws IOException
-	{
-		this(
-			classifierChoice, 
-			Resources.csvClassification(new File(data)),
-			withhold);
-	}
-	
-	public Classification(
-			@Parameter(name="classifier")
-				String classifierChoice,
-			@Parameter(name="data")
 				Classified<Point> data,
 			@Parameter(name="withhold")
 				double withhold)
@@ -90,6 +76,21 @@ public class Classification extends AbstractExperiment
 		this.testData = convert(pair.second());
 		this.withhold = withhold;
 	}
+	
+	public Classification(
+			@Parameter(name="classifier")
+				String classifierChoice,
+			@Parameter(name="data")
+				String data,
+			@Parameter(name="withhold")
+				double withhold) throws IOException
+	{
+		this(
+			classifierChoice, 
+			Resources.csvClassification(new File(data)),
+			withhold);
+	}
+
 
 	@Override
 	protected void body()
