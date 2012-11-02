@@ -11,6 +11,8 @@ import javax.imageio.ImageIO;
 import org.lilian.data.real.Draw;
 import org.lilian.data.real.Generator;
 import org.lilian.data.real.Generators;
+import org.lilian.data.real.Map;
+import org.lilian.data.real.Maps;
 import org.lilian.data.real.PCA;
 import org.lilian.data.real.PCAIterative;
 import org.lilian.data.real.Point;
@@ -40,9 +42,12 @@ public class Quick
 //		Classification.write(result, new File("/Users/Peter/Documents/datasets/classification/digits/digits.20.csv"));
 //				
 		
-		Generator<Point> ikeda = Generators.ikeda();
+		List<Point> small = Generators.rossler().generate(100000);
+		Map map = Maps.centered(small);
 		
-		BufferedImage image = Draw.draw(ikeda, 100000000, 1000, false);
+		Generator<Point> gen = Generators.mapped(Generators.rossler(), map); 
+		
+		BufferedImage image = Draw.draw(gen, 100000000, 1000, false);
 		ImageIO.write(image, "PNG", new File("/Users/Peter/Desktop/quicktest.png"));
 	}
 
