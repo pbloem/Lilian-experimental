@@ -6,12 +6,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.lilian.data.real.Generators;
 import org.lilian.data.real.Point;
 import org.lilian.util.distance.Distance;
 import org.lilian.util.distance.EuclideanDistance;
 
 public class IFSDimMulti extends AbstractExperiment
 {
+	public static final int SIZE = 10000;
 	Distance<Point> metric = new EuclideanDistance();
 	
 	private int generations;
@@ -58,13 +60,16 @@ public class IFSDimMulti extends AbstractExperiment
 				{
 					File dataFile = new File(dataset);
 					List<Point> dataPoints = null;
-					try
-					{
-						dataPoints = Resources.csvClassification(dataFile);
-					} catch (IOException e)
-					{
-						e.printStackTrace();
-					}
+					if (dataset.equals("henon"))
+						dataPoints = Generators.henon().generate(SIZE);	
+					else if (dataset.equals("ikeda"))
+						dataPoints = Generators.ikeda().generate(SIZE);	
+					else
+						try
+						{
+							dataPoints = Resources.csvClassification(dataFile);
+						} catch (IOException e)
+						{ throw new RuntimeException(e); }
 					
 					IFSDimension experiment = new IFSDimension(generations, depth, comp, distSampleSize, testSampleSize, dataPoints, dimensionSample, ksSamples, bootstraps);
 					results.add(experiment);
