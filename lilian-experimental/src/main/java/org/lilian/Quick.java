@@ -46,22 +46,22 @@ public class Quick
 //		
 //		Classified<Point> result = Classification.combine(simple, mnist.classes());
 //		Classification.write(result, new File("/Users/Peter/Documents/datasets/classification/digits/digits.20.csv"));
-//				
-		
-		List<Point> small = Generators.rossler().generate(1000000);
+//						
+		List<Point> small = Generators.lorenz().generate(10000);
 
 		Map center = Maps.centered(small),
-		    camera = Cameras.basic();
+		   camera = Cameras.basic();
 		Map map = center.compose(camera);
+		// Map map = center;
 		
-//		for(Point p  : new MappedList(small, center))
-//			System.out.println(p);
+		//for(Point p  : new MappedList(small, center))
+		//	System.out.println(p);
 		//map = Cameras.basic();
 		
-		Generator<Point> gen = Generators.mapped(Generators.rossler(), map);
+		Generator<Point> gen = Generators.mapped(Generators.lorenz(), map);
 
 		
-		BufferedImage image = Draw.draw(gen, 100000000, 1000, true);
+		BufferedImage image = Draw.draw(gen, 1000000000, 1000, false);
 		ImageIO.write(image, "PNG", new File("/Users/Peter/Desktop/quicktest.png"));
 	}
 
