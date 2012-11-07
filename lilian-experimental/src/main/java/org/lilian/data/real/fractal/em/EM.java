@@ -32,10 +32,12 @@ import org.lilian.util.MatrixTools;
 import org.lilian.util.Series;
 
 /**
+ * OLD DO NOT USE ANY MORE. USE org.lilian.data.real.fractal.EM from Lilian core 
+ * 
  * An EM-style algorithm for learning iterated function systems
  * 
  * @author Peter
- *
+ * @deprecated
  */
 public class EM implements Serializable
 {
@@ -158,6 +160,11 @@ public class EM implements Serializable
 	public IFS<Similitude> model()
 	{
 		return model;
+	}
+	
+	public double score()
+	{
+		return modelPerformance;
 	}
 	
 	public List<List<Integer>> codes()
@@ -905,5 +912,30 @@ public class EM implements Serializable
 		{
 			return num * dim;
 		}
+	}
+	
+	public static IFS<Similitude> learn(List<Point> data, int components, int depth, int iterations, int eval)
+	{
+		int dim = data.get(0).dimensionality();
+		
+		EM em = new EM(EM.initialSphere(dim, components, 1.0, 0.5), data, true, new IFSTarget<Similitude>(eval, data));
+		IFS<Similitude> model = null;
+		double score = Double.NEGATIVE_INFINITY;
+		
+		for(int i : Series.series(iterations))
+		{
+			em.distributePoints(eval, depth, -1);
+			em.findIFS();
+						
+			Global.log().info("Generation " + i + ", score " + score + " " + em.score());
+
+			if(em.score() > score)
+			{
+				model = em.model();
+				score = em.score();
+			}
+		}
+		
+		return model;
 	}
 }

@@ -11,6 +11,7 @@ import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
 import org.lilian.data.real.fractal.IFS;
+import org.lilian.experiment.old.FractalEM;
 import org.lilian.util.Series;
 import org.lilian.util.distance.Distance;
 import org.lilian.util.distance.EuclideanDistance;

@@ -1,4 +1,4 @@
-package org.lilian.experiment;
+package org.lilian.experiment.old;
 
 import static org.lilian.data.real.Draw.toPixel;
 import static org.lilian.util.Series.series;
@@ -33,6 +33,11 @@ import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSTarget;
 import org.lilian.data.real.fractal.IFSs;
 import org.lilian.data.real.fractal.em.EM;
+import org.lilian.experiment.AbstractExperiment;
+import org.lilian.experiment.Parameter;
+import org.lilian.experiment.Reportable;
+import org.lilian.experiment.Result;
+import org.lilian.experiment.State;
 import org.lilian.search.Builder;
 import org.lilian.search.Parametrizable;
 import org.lilian.search.evo.ES;

@@ -13,6 +13,7 @@ import org.lilian.data.real.classification.Classification;
 import org.lilian.data.real.classification.Classified;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSs;
+import org.lilian.experiment.old.FractalEM;
 
 /**
  * Tests IFSs as dimension redution systems.
