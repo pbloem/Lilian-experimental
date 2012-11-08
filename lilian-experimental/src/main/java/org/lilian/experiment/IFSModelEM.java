@@ -130,12 +130,14 @@ public class IFSModelEM extends AbstractExperiment
 		
 		scores = new ArrayList<Double>(generations);
 		
-		map = Maps.centered(trainingData);
-		trainingData = new MappedList(trainingData, map);	
+//		map = Maps.centered(trainingData);
+//		trainingData = new MappedList(trainingData, map);	
 		
 		logger.info("Data size: " + trainingData.size());
 		
-		BufferedImage image = Draw.draw(trainingData, 1000, true, false);
+		BufferedImage image;
+		
+		image = Draw.draw(trainingData, 1000, true, false);
 
 		try
 		{
@@ -160,7 +162,28 @@ public class IFSModelEM extends AbstractExperiment
 		if(model == null)
 			throw new IllegalArgumentException("Initialization strategy \""+initStrategy+"\" not recognized.");
 				
+		// * Create the EM model
 		em = new EM(model, trainingData);
+		
+		image = Draw.draw(em.basis().generate(trainingData.size()), 1000, true, false);
+
+		try
+		{
+			ImageIO.write(image, "PNG", new File(dir, "basis.png"));
+		} catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
+		
+		image = Draw.draw(new MVN(2).generate(trainingData.size()), 1000, true, false);
+
+		try
+		{
+			ImageIO.write(image, "PNG", new File(dir, "plain.png"));
+		} catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}		
 	}
 	
 	@Override
@@ -193,7 +216,9 @@ public class IFSModelEM extends AbstractExperiment
 			if(dim == 2)
 				write(em.model(), dir, String.format("generation%04d", currentGeneration));
 			logger.info("generation " + currentGeneration + ": " + Functions.toc() + " seconds.");
-			Functions.tic();				
+			Functions.tic();		
+			
+			// * save the current state of the experiment
 			save();
 						
 			currentGeneration++;
@@ -285,14 +310,17 @@ public class IFSModelEM extends AbstractExperiment
 	 */
 	private <M extends Map & Parametrizable> void write(IFS<M> ifs, File dir, String name)
 	{		
-		int its = highQuality ? (int) 10000000 : 100000;
+		int div = highQuality ? 1 : 4;
+		int its = highQuality ? (int) 10000000 : 10000;
 		
 		File genDir = new File(dir, "generations");
 		genDir.mkdirs();
 		
 //		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true, depth, basis);
 //		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true);
-		BufferedImage image = Draw.draw(ifs.generator(depth, em.basis()).generate(its), 1000, true, false);
+		BufferedImage image;
+		
+		image= Draw.draw(ifs.generator(depth, em.basis()).generate(its), 1000/div, true, false);
 		
 		try
 		{
@@ -301,5 +329,16 @@ public class IFSModelEM extends AbstractExperiment
 		{
 			e.printStackTrace();
 		}
+		
+		image= Draw.draw(ifs.generator().generate(its), 1000/div, true, false);
+		
+		try
+		{
+			ImageIO.write(image, "PNG", new File(genDir, name + ".deep.png") );
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		
 	}
 }
