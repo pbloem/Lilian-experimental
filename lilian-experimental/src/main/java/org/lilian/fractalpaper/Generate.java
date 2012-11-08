@@ -5,9 +5,11 @@ import static org.lilian.data.real.Draw.invert;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
 import org.lilian.data.real.Generator;
 import org.lilian.data.real.MVN;
@@ -22,7 +24,7 @@ import org.lilian.util.Series;
 public class Generate extends AbstractExperiment
 {
 	public static final int RES = 750;
-	public static final int ITS = 100000000;
+	public static final int ITS = 1000000;
 
 
 	@Override
@@ -46,11 +48,23 @@ public class Generate extends AbstractExperiment
 //			ImageIO.write(invert(image), "PNG", new File(measures, "square.png"));
 //			
 //			IFS<Similitude> ifs = IFSs.square(1.0, 2.0, 4.0, 8.0);
+			IFS<Similitude> mvn;
 			
-			IFS<Similitude> mvn = EM.learn(new MVN(2, 0.3).generate(100000), 2, 5, 1000, 2000);
-			image = Draw.draw(mvn.generator(), ITS, RES, true);
+			List<Point> data = Datasets.ball(2).generate(10000000);
+			for(int i : Series.series(100))
+			{
+				mvn = org.lilian.data.real.fractal.EM.learn(data, 2, 5, 1000, 10000);
+				image = Draw.draw(mvn.generator(), ITS, RES, true);
+		
+				ImageIO.write(invert(image), "PNG", new File(measures, "ball."+i+".new.png"));
+				
+				mvn = EM.learn(data, 2, 5, 1000, 10000);
+				image = Draw.draw(mvn.generator(), ITS, RES, true);
+		
+				ImageIO.write(invert(image), "PNG", new File(measures, "ball."+i+".old.png"));
+			}
+			
 
-			ImageIO.write(invert(image), "PNG", new File(measures, "mvn.png"));
 			
 //			for(int i : Series.series(5))
 //			{
