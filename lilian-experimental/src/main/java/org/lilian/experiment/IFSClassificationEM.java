@@ -53,19 +53,18 @@ public class IFSClassificationEM extends AbstractExperiment
 	protected int dim;
 	protected int classes;
 	protected int depth;
-	protected boolean useLikelihood;
 	protected double initialVar;
 	protected int resolution;
-	protected int distSampleSize;
+	protected int emSampleSize;
+	protected int trainSampleSize;
 	protected int testSampleSize;
 	protected int beamWidth;
 	protected boolean print;
-	protected boolean dataBasis;
 	
 	/**
 	 * State information
 	 */
-	public @State List<FractalEM> emExperiments;
+	public @State List<IFSModelEM> emExperiments;
 	public @State double score;
 	public @State List<Generator<Point>> bases = new ArrayList<Generator<Point>>();
 	
@@ -82,18 +81,16 @@ public class IFSClassificationEM extends AbstractExperiment
 				int components,
 			@Parameter(name="depth")				
 				int depth,
-			@Parameter(name="use likelihood")
-				boolean useLikelihood,
 			@Parameter(name="resolution")
 				int resolution,
-			@Parameter(name="distribution sample size")
-				int distSampleSize,
+			@Parameter(name="em sample size")
+				int emSampleSize,
+			@Parameter(name="train sample size")
+				int trainSampleSize,
 			@Parameter(name="test sample size")
 				int testSampleSize,
 			@Parameter(name="print classifier")
-				boolean print,
-			@Parameter(name="data basis")
-				boolean dataBasis
+				boolean print
 	)
 	{	
 		Pair<Classified<Point>, Classified<Point>> split = Classification.split(data, testRatio);
@@ -104,43 +101,13 @@ public class IFSClassificationEM extends AbstractExperiment
 		this.components = components;
 		this.dim = trainingData.get(0).dimensionality();
 		this.depth = depth;
-		this.useLikelihood = useLikelihood; 
 		this.resolution = resolution;
-		this.distSampleSize = distSampleSize;
+		this.emSampleSize = emSampleSize;
+		this.trainSampleSize = trainSampleSize;
 		this.testSampleSize = testSampleSize;
 		this.print = print;
-		this.dataBasis = dataBasis;
 		
 		this.classes = trainingData.numClasses();
-	}
-	
-	@Override
-	protected void body()
-	{
-		for(FractalEM em : emExperiments)
-			Environment.current().child(em);
-
-		// * Construct a model
-		IFSClassifierBasic ic = null;
-		for(int i : series(trainingData.numClasses()))
-		{
-			double prior = trainingData.points(i).size() / (double) trainingData.size();
-			IFS<Similitude> ifs =  useLikelihood ? emExperiments.get(i).bestLikelihoodModel() : emExperiments.get(i).bestModel();
-			AffineMap map = emExperiments.get(i).map();
-			
-			if(ic == null)
-				ic = new IFSClassifierBasic(ifs, prior, map, emExperiments.get(i).basis(), depth);
-			else
-				ic.add(ifs, prior, map, emExperiments.get(i).basis());
-			
-			bases.add(emExperiments.get(i).basis());
-		}
-		
-		write(ic, dir, "classifier");
-		
-		logger.info("Calculating score");
-		
-		score = Classification.symmetricError(ic, testData);
 	}
 	
 	public void setup()
@@ -161,22 +128,48 @@ public class IFSClassificationEM extends AbstractExperiment
 			logger.warning("Failed to write dataset. " + e.toString() + " " + Arrays.toString(e.getStackTrace()));
 		}	
 	
-		emExperiments = new ArrayList<FractalEM>(trainingData.numClasses());
+		emExperiments = new ArrayList<IFSModelEM>(trainingData.numClasses());
 		for(int i : series(trainingData.numClasses()))
 		{
 			List<Point> points = trainingData.points(i);
 			logger.info("Dataset size for class " + i + ": " + points.size());
 			
-			FractalEM em = new FractalEM(
-					points, 0.0,
-					depth, generations, components, distSampleSize,
-					true, -1, false, false, testSampleSize, 0.0, false, "sphere", 
-					0.0, true, dataBasis);
+			IFSModelEM em = new IFSModelEM(points, 0.0, depth, generations, components, emSampleSize, trainSampleSize, -1, false, "sphere");
 			
 			emExperiments.add(em);
 		}
 	}
 	
+	@Override
+	protected void body()
+	{
+		for(IFSModelEM em : emExperiments)
+			Environment.current().child(em);
+
+		// * Construct a model
+		IFSClassifierBasic ic = null;
+		for(int i : series(trainingData.numClasses()))
+		{
+			double prior = trainingData.points(i).size() / (double) trainingData.size();
+			IFS<Similitude> ifs = emExperiments.get(i).bestModel();
+			AffineMap map = emExperiments.get(i).map();
+			
+			if(ic == null)
+				ic = new IFSClassifierBasic(ifs, prior, map, emExperiments.get(i).basis(), depth);
+			else
+				ic.add(ifs, prior, map, emExperiments.get(i).basis());
+			
+			bases.add(emExperiments.get(i).basis());
+		}
+		
+		write(ic, dir, "classifier");
+		
+		logger.info("Calculating score");
+		
+		score = Classification.symmetricError(ic, testData);
+	}
+	
+
 	@Result(name = "Symmetric error")
 	public double scores()
 	{

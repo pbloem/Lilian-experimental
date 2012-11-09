@@ -130,8 +130,8 @@ public class IFSModelEM extends AbstractExperiment
 		
 		scores = new ArrayList<Double>(generations);
 		
-//		map = Maps.centered(trainingData);
-//		trainingData = new MappedList(trainingData, map);	
+		map = Maps.centered(trainingData);
+		trainingData = new MappedList(trainingData, map);	
 		
 		logger.info("Data size: " + trainingData.size());
 		
