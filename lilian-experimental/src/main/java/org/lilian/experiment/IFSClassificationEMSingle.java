@@ -54,20 +54,19 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 	protected int dim;
 	protected int classes;
 	protected int depth;
-	protected boolean useLikelihood;
 	protected double initialVar;
 	protected int resolution;
-	protected int distSampleSize;
+	protected int emSampleSize;
+	protected int trainSampleSize;
 	protected int testSampleSize;
 	protected int beamWidth;
 	protected boolean print;
-	protected boolean dataBasis;
 	protected boolean smooth;
 	
 	/**
 	 * State information
 	 */
-	public @State FractalEM emExperiment;
+	public @State IFSModelEM emExperiment;
 	public @State double score;
 	public @State List<Generator<Point>> bases = new ArrayList<Generator<Point>>();
 	
@@ -84,18 +83,16 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 				int components,
 			@Parameter(name="depth")				
 				int depth,
-			@Parameter(name="use likelihood")
-				boolean useLikelihood,
 			@Parameter(name="resolution")
 				int resolution,
-			@Parameter(name="distribution sample size")
-				int distSampleSize,
+			@Parameter(name="em sample size")
+				int emSampleSize,
+			@Parameter(name="train sample size")
+				int trainSampleSize,				
 			@Parameter(name="test sample size")
 				int testSampleSize,
 			@Parameter(name="print classifier")
 				boolean print,
-			@Parameter(name="data basis")
-				boolean dataBasis,
 			@Parameter(name="smooth")
 				boolean smooth
 	)
@@ -108,12 +105,11 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 		this.components = components;
 		this.dim = trainingData.get(0).dimensionality();
 		this.depth = depth;
-		this.useLikelihood = useLikelihood; 
 		this.resolution = resolution;
-		this.distSampleSize = distSampleSize;
+		this.emSampleSize = emSampleSize;
+		this.trainSampleSize = trainSampleSize;
 		this.testSampleSize = testSampleSize;
 		this.print = print;
-		this.dataBasis = dataBasis;
 		this.smooth = smooth;
 		
 		this.classes = trainingData.numClasses();
@@ -125,7 +121,7 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 		Environment.current().child(emExperiment);
 
 		// * Construct a model
-		IFS<Similitude> ifs =  useLikelihood ? emExperiment.bestLikelihoodModel() : emExperiment.bestModel();
+		IFS<Similitude> ifs = emExperiment.bestModel();
 		AffineMap map = emExperiment.map();
 			
 		IFSClassifierSingle ic = new IFSClassifierSingle(ifs, depth, smooth, map, classes);
@@ -158,16 +154,14 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 			logger.warning("Failed to write dataset. " + e.toString() + " " + Arrays.toString(e.getStackTrace()));
 		}	
 
-		emExperiment = new FractalEM(
-				trainingData, 0.0,
-				depth, generations, components, distSampleSize,
-				true, -1, false, false, testSampleSize, 0.0, true, "sphere", 
-				0.0, true, dataBasis);
+		emExperiment = new IFSModelEM(
+				trainingData, 0.0, depth, generations, components, 
+				emSampleSize, trainSampleSize, -1, false, "sphere");
 			
 	}
 	
 	@Result(name = "Symmetric error")
-	public double scores()
+	public double score()
 	{
 		return score;
 	}
