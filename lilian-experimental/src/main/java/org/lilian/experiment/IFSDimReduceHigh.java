@@ -80,10 +80,10 @@ public class IFSDimReduceHigh extends AbstractExperiment
 		
 		List<Point> subData = pca.simplify(intDim);
 		
-		FractalEM emExperiment = new FractalEM(
-				subData, 0.0, learningDepth, generations, 4, learnSampleSize, true, 
-				-1, false, false, evaluationSampleSize, 0.0, false, "sphere", 0.0,
-				true, true);
+		IFSModelEM emExperiment = new IFSModelEM(
+				data, 0.0, learningDepth, generations, 4, learnSampleSize, 
+				evaluationSampleSize, -1, false, "sphere"); 
+				
 		
 		Environment.current().child(emExperiment);
 		

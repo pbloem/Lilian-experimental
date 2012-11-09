@@ -30,8 +30,8 @@ public class IFSDimension extends AbstractExperiment
 	private int generations;
 	private int depth;
 	private int components;
-	private int distSampleSize;
-	private int testSampleSize;
+	private int emSampleSize;
+	private int trainSampleSize;
 	private List<Point> data;
 	private int dimensionSample;
 	private int ksSamples;
@@ -48,8 +48,8 @@ public class IFSDimension extends AbstractExperiment
 			@Parameter(name="generations", description="") int generations, 
 			@Parameter(name="depth", description="") int depth, 
 			@Parameter(name="components", description="") int components,
-			@Parameter(name="dist sample size", description="") int distSampleSize,
-			@Parameter(name="test sample size", description="") int testSampleSize, 
+			@Parameter(name="em sample size", description="") int emSampleSize,
+			@Parameter(name="train sample size", description="") int trainSampleSize, 
 			@Parameter(name="data", description="") List<Point> data,
 			@Parameter(name="dimension sample size", description="") int dimensionSample,
 			@Parameter(name="ks samples", description="") int ksSamples,
@@ -58,8 +58,8 @@ public class IFSDimension extends AbstractExperiment
 		this.generations = generations;
 		this.depth = depth;
 		this.components = components;
-		this.distSampleSize = distSampleSize;
-		this.testSampleSize = testSampleSize;
+		this.emSampleSize = emSampleSize;
+		this.trainSampleSize = trainSampleSize;
 		this.data = data;
 		this.dimensionSample = dimensionSample;
 		this.ksSamples = ksSamples;
@@ -79,10 +79,11 @@ public class IFSDimension extends AbstractExperiment
 	@Override
 	protected void body()
 	{	
-		FractalEM em = new FractalEM(
-				data, 0.0, depth, generations, components, distSampleSize, 
-				true, -1, false, false, testSampleSize, 0.0, false, "sphere", 0.0, true, true);
-		
+		IFSModelEM em = new IFSModelEM(
+				data, 0.0, depth, generations, components, emSampleSize, 
+				trainSampleSize, -1, false, "sphere");
+				
+				
 		Environment.current().child(em);
 		
 		IFS<Similitude> model = em.model();
@@ -106,8 +107,8 @@ public class IFSDimension extends AbstractExperiment
 		HausdorffDistance<Point> distance = new HausdorffDistance<Point>(new EuclideanDistance());
 		for(int i : Series.series(bootstraps))
 		{
-			modelDraw = model.generator(depth).generate(testSampleSize);
-			dataDraw = Datasets.sampleWithoutReplacement(data, testSampleSize);
+			modelDraw = model.generator(depth).generate(trainSampleSize);
+			dataDraw = Datasets.sampleWithoutReplacement(data, trainSampleSize);
 			
 			values.add(distance.distance(modelDraw, dataDraw));
 		}
