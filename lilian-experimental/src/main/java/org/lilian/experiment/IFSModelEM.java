@@ -64,7 +64,8 @@ public class IFSModelEM extends AbstractExperiment
 	public @State List<Double> scores;
 	public @State IFS<Similitude> bestModel, model;
 	public @State AffineMap map;
-	public @State double testScore;	
+	public @State double testScore;
+	public @State MVN basis;
 	
 	private Distance<List<Point>> distance = new HausdorffDistance<Point>(new SquaredEuclideanDistance());
 
@@ -164,6 +165,8 @@ public class IFSModelEM extends AbstractExperiment
 				
 		// * Create the EM model
 		em = new EM(model, trainingData);
+		
+		basis = em.basis();
 		
 		image = Draw.draw(em.basis().generate(trainingData.size()), 1000, true, false);
 
@@ -281,7 +284,7 @@ public class IFSModelEM extends AbstractExperiment
 	
 	public MVN basis()
 	{
-		return em.basis();
+		return basis;
 	}
 	
 	/**
