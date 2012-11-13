@@ -14,8 +14,9 @@ fit = (fit - min(fit)) * (1 / (max(fit) - min(fit)))
 fit = fit * 60 + 10
 #print fit
 
+perset = 3
 for i in range(0, 3):
-    sub = data[(12*i):(12*(i+1)),:]
+    sub = data[(perset*i):(perset*(i+1)),:]
     
     eb = ax.errorbar(sub[:, 0], sub[:, 2], sub[:, 1], sub[:, 3], ecolor='black', capsize=0, marker='None', linestyle='None', zorder=10)
     
