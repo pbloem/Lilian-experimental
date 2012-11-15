@@ -62,6 +62,7 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 	protected int beamWidth;
 	protected boolean print;
 	protected boolean smooth;
+	protected int numSources;
 	
 	/**
 	 * State information
@@ -94,7 +95,9 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 			@Parameter(name="print classifier")
 				boolean print,
 			@Parameter(name="smooth")
-				boolean smooth
+				boolean smooth,
+			@Parameter(name="num sources")
+				int numSources
 	)
 	{	
 		Pair<Classified<Point>, Classified<Point>> split = Classification.split(data, testRatio);
@@ -113,6 +116,7 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 		this.smooth = smooth;
 		
 		this.classes = trainingData.numClasses();
+		this.numSources = numSources;
 	}
 	
 	@Override
@@ -156,7 +160,7 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 
 		emExperiment = new IFSModelEM(
 				trainingData, 0.0, depth, generations, components, 
-				emSampleSize, trainSampleSize, -1, false, "sphere");
+				emSampleSize, trainSampleSize, -1, false, "sphere", numSources);
 			
 	}
 	

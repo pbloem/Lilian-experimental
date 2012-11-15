@@ -55,6 +55,7 @@ public class IFSModelEM extends AbstractExperiment
 	protected int testSampleSize;
 	protected boolean highQuality;
 	protected String initStrategy;
+	protected int numSources;
 
 	/**
 	 * State information
@@ -94,6 +95,34 @@ public class IFSModelEM extends AbstractExperiment
 				String initStrategy
 			)
 	{
+		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, 1);
+	}
+	
+	public IFSModelEM(
+			@Parameter(name="data") 				
+				List<Point> data, 
+			@Parameter(name="test ratio", description="What percentage of the data to use for testing")
+				double testRatio,				
+			@Parameter(name="depth") 				
+				int depth, 
+			@Parameter(name="generations") 			
+				int generations,
+			@Parameter(name="number of components")
+				int components, 
+			@Parameter(name="em sample size", description="How many points to use in each iteration of the EM algorithm.") 
+				int emSampleSize,
+			@Parameter(name="train sample size", description="The sample size (from the training set) for evaluating the model at each iteration.")
+				int trainSampleSize,
+			@Parameter(name="test sample size", description="Sample size (from the test set) for the final evaluation.")
+				int testSampleSize,
+			@Parameter(name="high quality", description="true: full HD 10E7, iterations, false: 1/16th HD, 10E4 iterations")
+				boolean highQuality,
+			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
+				String initStrategy,
+			@Parameter(name="num sources", description="The number of sources used when determining codes.")
+				int numSources
+			)
+	{
 	
 		// * Split the data in test and training sets
 		List<Point> dataCopy = new ArrayList<Point>(data);
@@ -123,6 +152,8 @@ public class IFSModelEM extends AbstractExperiment
 		this.emSampleSize = emSampleSize;
 		this.trainSampleSize = trainSampleSize;
 		this.testSampleSize = testSampleSize;
+		
+		this.numSources = numSources;
 	}	
 	
 	public void setup()
@@ -164,7 +195,7 @@ public class IFSModelEM extends AbstractExperiment
 			throw new IllegalArgumentException("Initialization strategy \""+initStrategy+"\" not recognized.");
 				
 		// * Create the EM model
-		em = new EM(model, trainingData);
+		em = new EM(model, trainingData, numSources, 0.3, true);
 		
 		basis = em.basis();
 		
