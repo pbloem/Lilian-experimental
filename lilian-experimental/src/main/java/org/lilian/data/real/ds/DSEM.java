@@ -27,9 +27,9 @@ import org.lilian.util.Series;
 
 public class DSEM extends AbstractExperiment
 {
-	public static final boolean CHEAT = true;
+	public static final boolean CHEAT = false;
 
-	private static final int SAMPLES = 1000000;
+	private static final int SAMPLES = 100;
 	private static final int RES = 1000;
 	private List<Point> data;
 	private double sigma;
