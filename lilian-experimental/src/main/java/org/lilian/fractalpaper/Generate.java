@@ -17,7 +17,6 @@ import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSs;
-import org.lilian.data.real.fractal.em.EM;
 import org.lilian.experiment.AbstractExperiment;
 import org.lilian.util.Series;
 
@@ -58,7 +57,7 @@ public class Generate extends AbstractExperiment
 		
 				ImageIO.write(invert(image), "PNG", new File(measures, "ball."+i+".new.png"));
 				
-				mvn = EM.learn(data, 2, 5, 1000, 10000);
+				mvn = null;
 				image = Draw.draw(mvn.generator(), ITS, RES, true);
 		
 				ImageIO.write(invert(image), "PNG", new File(measures, "ball."+i+".old.png"));

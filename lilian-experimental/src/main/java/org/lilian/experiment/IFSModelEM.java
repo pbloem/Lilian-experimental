@@ -56,6 +56,7 @@ public class IFSModelEM extends AbstractExperiment
 	protected boolean highQuality;
 	protected String initStrategy;
 	protected int numSources;
+	protected boolean centerData;
 
 	/**
 	 * State information
@@ -95,7 +96,7 @@ public class IFSModelEM extends AbstractExperiment
 				String initStrategy
 			)
 	{
-		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, 1);
+		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, 1, true);
 	}
 	
 	public IFSModelEM(
@@ -120,7 +121,9 @@ public class IFSModelEM extends AbstractExperiment
 			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
 				String initStrategy,
 			@Parameter(name="num sources", description="The number of sources used when determining codes.")
-				int numSources
+				int numSources,
+			@Parameter(name="center data")
+				boolean centerData
 			)
 	{
 	
@@ -154,6 +157,7 @@ public class IFSModelEM extends AbstractExperiment
 		this.testSampleSize = testSampleSize;
 		
 		this.numSources = numSources;
+		this.centerData = centerData;
 	}	
 	
 	public void setup()
@@ -162,8 +166,11 @@ public class IFSModelEM extends AbstractExperiment
 		
 		scores = new ArrayList<Double>(generations);
 		
-		map = Maps.centered(trainingData);
-		trainingData = new MappedList(trainingData, map);	
+		if(centerData)
+		{
+			map = Maps.centered(trainingData);
+			trainingData = new MappedList(trainingData, map);
+		}
 		
 		logger.info("Data size: " + trainingData.size());
 		

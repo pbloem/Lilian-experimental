@@ -247,21 +247,21 @@ public class EMTests
 		return image;
 	}
 	
-	@Test
-	public void findScalarTest()
-	{
-		List<Double> x, y;
-		x = Arrays.asList(0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0);
-		y = Arrays.asList(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0);
-		
-		assertEquals(EM.findScalar(x, y), 2.0, 0.0);
-		
-		x = Arrays.asList(0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0);
-		y = Arrays.asList(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.1);
-		
-		assertEquals(EM.findScalar(x, y), 2.0, 0.1);
-	
-	}
+//	@Test
+//	public void findScalarTest()
+//	{
+//		List<Double> x, y;
+//		x = Arrays.asList(0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0);
+//		y = Arrays.asList(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0);
+//		
+//		assertEquals(EM.findScalar(x, y), 2.0, 0.0);
+//		
+//		x = Arrays.asList(0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0);
+//		y = Arrays.asList(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.1);
+//		
+//		assertEquals(EM.findScalar(x, y), 2.0, 0.1);
+//	
+//	}
 	
 	@Test
 	public void testEMInitial() throws IOException	
@@ -293,12 +293,12 @@ public class EMTests
 //			ImageIO.write(image, "PNG", new File(dir, String.format("sphere.%04d.png", i)));
 //		}
 		
-		for(int i : Series.series(num))
-		{
-			IFS<Similitude> model = EM.initialSpread(dim, comp, 1.0, 0.5);
-			// image = Draw.draw(model.generator(), 10000000, xrange, yrange, 1920, 1080, true);
-			image = Draw.draw(model.generator(), 10000000, 1000, true);
-			ImageIO.write(image, "PNG", new File(dir, String.format("spread.%04d.png", i)));
-		}		
+//		for(int i : Series.series(num))
+//		{
+//			IFS<Similitude> model = EM.initialSpread(dim, comp, 1.0, 0.5);
+//			// image = Draw.draw(model.generator(), 10000000, xrange, yrange, 1920, 1080, true);
+//			image = Draw.draw(model.generator(), 10000000, 1000, true);
+//			ImageIO.write(image, "PNG", new File(dir, String.format("spread.%04d.png", i)));
+//		}		
 	}
 }

@@ -30,8 +30,6 @@ import org.lilian.data.real.fractal.IFSClassifierBasic;
 import org.lilian.data.real.fractal.IFSClassifierSingle;
 import org.lilian.data.real.fractal.IFSTarget;
 import org.lilian.data.real.fractal.IFSs;
-import org.lilian.data.real.fractal.em.EM;
-import org.lilian.experiment.old.FractalEM;
 import org.lilian.search.Builder;
 import org.lilian.search.Parametrizable;
 import org.lilian.search.evo.ES;
@@ -160,7 +158,7 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 
 		emExperiment = new IFSModelEM(
 				trainingData, 0.0, depth, generations, components, 
-				emSampleSize, trainSampleSize, -1, false, "sphere", numSources);
+				emSampleSize, trainSampleSize, -1, false, "sphere", numSources, true);
 			
 	}
 	

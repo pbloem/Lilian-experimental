@@ -33,7 +33,6 @@ import org.lilian.data.real.classification.Classified;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSTarget;
 import org.lilian.data.real.fractal.IFSs;
-import org.lilian.data.real.fractal.em.EM;
 import org.lilian.search.Builder;
 import org.lilian.search.Parametrizable;
 import org.lilian.search.evo.ES;
