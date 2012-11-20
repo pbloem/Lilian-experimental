@@ -40,6 +40,7 @@ public class DSEM extends AbstractExperiment
 	private int emSampleSize;
 	private int generations;
 	private int epochs;
+	private double var;
 	
 	public EM em;
 	
@@ -61,7 +62,9 @@ public class DSEM extends AbstractExperiment
 		@Parameter(name="generations")
 		int generations, 
 		@Parameter(name="epochs")
-		int epochs)
+		int epochs,
+		@Parameter(name="init var")
+		double var)
 	{
 		this.data = data;
 		this.sigma = sigma;
@@ -72,6 +75,7 @@ public class DSEM extends AbstractExperiment
 		this.emSampleSize = emSampleSize;
 		this.generations = generations;
 		this.epochs = epochs;
+		this.var = var;
 	}
 
 	@Override
@@ -92,7 +96,7 @@ public class DSEM extends AbstractExperiment
 		} else
 			map = ThreeLayer.random(
 					data.get(0).dimensionality(), 
-					hidden, EM.VAR, Activations.sigmoid());
+					hidden, var, Activations.sigmoid());
 		
 		em = new EM(data, sigma, numSources, map);
 		
