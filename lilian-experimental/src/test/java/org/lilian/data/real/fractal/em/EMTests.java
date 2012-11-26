@@ -299,6 +299,6 @@ public class EMTests
 //			// image = Draw.draw(model.generator(), 10000000, xrange, yrange, 1920, 1080, true);
 //			image = Draw.draw(model.generator(), 10000000, 1000, true);
 //			ImageIO.write(image, "PNG", new File(dir, String.format("spread.%04d.png", i)));
-//		}		
+//		}
 	}
 }

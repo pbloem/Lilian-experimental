@@ -36,8 +36,8 @@ import org.lilian.util.distance.HausdorffDistance;
 
 public class Flight extends AbstractExperiment
 {
-	private static double[] xrange = new double[]{-2.1333, 2.1333};
-	private static double[] yrange = new double[]{-1.2, 1.2};	
+	private static double[] xrange = new double[]{-1, 1};
+	private static double[] yrange = new double[]{-1, 1};	
 	
 	private static final int DIM = 2;
 	private static final boolean HIGH_QUALITY = false;
@@ -50,9 +50,9 @@ public class Flight extends AbstractExperiment
 	private Distance<List<Point>> distance = new HausdorffDistance<Point>(new EuclideanDistance());
 	private double initVar;
 	private boolean highQuality;
-	private double distanceWeight;
 
 	public ES<ThreeLayer> es;
+	public ThreeLayer model;
 	
 	public Flight(
 			@Parameter(name="data") List<Point> data,
@@ -61,8 +61,7 @@ public class Flight extends AbstractExperiment
 			@Parameter(name="iterations") int iterations,
 			@Parameter(name="population") int population,
 			@Parameter(name="init var") double initVar,
-			@Parameter(name="high quality") boolean highQuality,
-			@Parameter(name="distance weight") double distanceWeight)
+			@Parameter(name="high quality") boolean highQuality)
 	{
 		this.data = data;
 		this.points = points;
@@ -71,7 +70,6 @@ public class Flight extends AbstractExperiment
 		this.population = population;
 		this.initVar = initVar;
 		this.highQuality = highQuality;
-		this.distanceWeight = distanceWeight;
 	}
 
 	@Override
@@ -107,6 +105,8 @@ public class Flight extends AbstractExperiment
 				write(es.best().instance(), String.format("generation%04d", i));
 				logger.info(i + ": " + es.best().parameters());
 			}
+			
+			model = es.best().instance();
 		}
 	}
 	
@@ -129,7 +129,7 @@ public class Flight extends AbstractExperiment
 //		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true);
 		BufferedImage image = Draw.draw(
 				NeuralNetworks.orbit(nn, new MVN(DIM).generate(), its), 
-				xrange, yrange, 1920/div, 1080/div, true, false);
+				xrange, yrange, 1000/div, 1000/div, true, false);
 
 		try
 		{
@@ -139,85 +139,65 @@ public class Flight extends AbstractExperiment
 			e.printStackTrace();
 		}
 		
-		for(int step : Series.series(1, 3))
-		{
-			List<Point> sequence = NeuralNetworks.orbit(nn, new MVN(DIM).generate(), 5000 * step);
-			int w = 1920, h = 1080;
-			
-			image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-			Graphics2D graphics = image.createGraphics();
-			
-			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-	
-			graphics.setColor(new Color(1.0f, 1.0f, 1.0f, 0.05f));
-			graphics.setStroke(new BasicStroke(0.5f));	
-		
-			Point last = sequence.get(0), current;
-			
-			for(int i : Series.series(1, step, sequence.size()))
-			{
-				current = sequence.get(i);
-				
-				graphics.drawLine(
-						toPixel(last.get(0), w, -1.0, 1.0),
-						toPixel(last.get(1), h, -1.0, 1.0), 
-						toPixel(current.get(0), w, -1.0, 1.0), 
-						toPixel(current.get(1), h, -1.0, 1.0));
-				
-				last = current;
-			}
-			
-			graphics.dispose();
-			try
-			{
-				ImageIO.write(image, "PNG", new File(sub, name + "." + step + ".line.png") );
-			} catch (IOException e)
-			{
-				e.printStackTrace();
-			}
-		}
+//		for(int step : Series.series(1, 3))
+//		{
+//			List<Point> sequence = NeuralNetworks.orbit(nn, new MVN(DIM).generate(), 5000 * step);
+//			int w = 1920, h = 1080;
+//			
+//			image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+//			Graphics2D graphics = image.createGraphics();
+//			
+//			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+//	
+//			graphics.setColor(new Color(1.0f, 1.0f, 1.0f, 0.05f));
+//			graphics.setStroke(new BasicStroke(0.5f));	
+//		
+//			Point last = sequence.get(0), current;
+//			
+//			for(int i : Series.series(1, step, sequence.size()))
+//			{
+//				current = sequence.get(i);
+//				
+//				graphics.drawLine(
+//						toPixel(last.get(0), w, -1.0, 1.0),
+//						toPixel(last.get(1), h, -1.0, 1.0), 
+//						toPixel(current.get(0), w, -1.0, 1.0), 
+//						toPixel(current.get(1), h, -1.0, 1.0));
+//				
+//				last = current;
+//			}
+//			
+//			graphics.dispose();
+//			try
+//			{
+//				ImageIO.write(image, "PNG", new File(sub, name + "." + step + ".line.png") );
+//			} catch (IOException e)
+//			{
+//				e.printStackTrace();
+//			}
+//		}
 	}
 	
 	private class FlightTarget implements Target<ThreeLayer>
 	{
 		private static final long serialVersionUID = 273846960467310845L;
-		private MVN mvn = new MVN(2);
-		private Distance<Point> ed = new EuclideanDistance();
-		
+		private MVN mvn = new MVN(data.get(0).dimensionality()); 
 		
 		@Override
 		public double score(ThreeLayer nn)
 		{
 			List<Point> orbit = NeuralNetworks.orbit(nn, mvn.generate(), points);
-			// List<Point> target = mvn.generate(points);
 			List<Point> target = Datasets.sample(data, points); 
+			
+			return - distance.distance(orbit, target);
 
-			// * calculate mean distance between steps
-			double sum = 0.0;
-			Point last = orbit.get(0), current;
-			for(int i : Series.series(1, orbit.size()))
-			{
-				current = orbit.get(i);
-				
-				sum += ed.distance(current, last);
-				
-				last = current;
-			}
-			
-			sum /= orbit.size() - 1.0;
-			
-			// Global.log().info("avg distance " + sum);
-			
-			double dist = distance.distance(orbit, target);
-			
-			// Global.log().info("hauss dist " + dist);
-			
-			return - (
-					(1.0 - distanceWeight) * dist +
-					distanceWeight * sum
-				);
 		}
 		
+	}
+	
+	public ThreeLayer model()
+	{
+		return model;
 	}
 
 }

@@ -20,19 +20,22 @@ import org.lilian.data.real.MappedList;
 import org.lilian.data.real.Maps;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
-import org.lilian.data.real.fractal.BranchingEM;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.EM;
+import org.lilian.data.real.fractal.NeuralEM;
+import org.lilian.data.real.fractal.NeuralIFS;
 import org.lilian.data.real.fractal.SimEM;
 import org.lilian.data.real.fractal.IFSTarget;
 import org.lilian.data.real.fractal.IFSs;
+import org.lilian.neural.Activations;
+import org.lilian.neural.ThreeLayer;
 import org.lilian.search.Parametrizable;
 import org.lilian.util.Functions;
 import org.lilian.util.distance.Distance;
 import org.lilian.util.distance.HausdorffDistance;
 import org.lilian.util.distance.SquaredEuclideanDistance;
 
-public class IFSModelEM extends AbstractExperiment
+public class IFSModelEMNeural extends AbstractExperiment
 {
 	@Reportable
 	private static final double VAR = 0.6;
@@ -45,6 +48,12 @@ public class IFSModelEM extends AbstractExperiment
 
 	@Reportable
 	private static final double IDENTITY_INIT_VAR = 0.1;
+
+	private static final int INITIAL_EXAMPLES = 1000000;
+
+	private static final double INITIAL_LEARNINGRATE = 0.0001;
+
+	private static final double INITIAL_VAR = 0.5;
 	
 	protected List<Point> trainingData;
 	protected List<Point> testData;		
@@ -56,56 +65,30 @@ public class IFSModelEM extends AbstractExperiment
 	protected int trainSampleSize;
 	protected int testSampleSize;
 	protected boolean highQuality;
-	protected String initStrategy;
 	protected int numSources;
 	protected boolean centerData;
-	protected double branchingVariance;
-	protected int beamWidth;
+	protected int hidden;
+	protected double initVar;
+	protected double learningRate;
+	protected int epochs;
+	protected String initStrategy;
 
 	/**
 	 * State information
 	 */
 	public @State int currentGeneration;
-	public @State EM<Similitude> em;
+	public @State EM<ThreeLayer> em;
 	public @State List<Double> scores;
-	public @State IFS<Similitude> bestModel, model;
+	public @State IFS<ThreeLayer> bestModel, model;
 	public @State AffineMap map;
 	public @State double testScore;
 	public @State MVN basis;
 	
 	private Distance<List<Point>> distance = new HausdorffDistance<Point>(new SquaredEuclideanDistance());
-	
-	private boolean branching = false;
 
 	private double bestScore = Double.POSITIVE_INFINITY;
-
-	public IFSModelEM(
-			@Parameter(name="data") 				
-				List<Point> data, 
-			@Parameter(name="test ratio", description="What percentage of the data to use for testing")
-				double testRatio,				
-			@Parameter(name="depth") 				
-				int depth, 
-			@Parameter(name="generations") 			
-				int generations,
-			@Parameter(name="number of components")
-				int components, 
-			@Parameter(name="em sample size", description="How many points to use in each iteration of the EM algorithm.") 
-				int emSampleSize,
-			@Parameter(name="train sample size", description="The sample size (from the training set) for evaluating the model at each iteration.")
-				int trainSampleSize,
-			@Parameter(name="test sample size", description="Sample size (from the test set) for the final evaluation.")
-				int testSampleSize,
-			@Parameter(name="high quality", description="true: full HD 10E7, iterations, false: 1/16th HD, 10E4 iterations")
-				boolean highQuality,
-			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
-				String initStrategy
-			)
-	{
-		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, 1, true);
-	}
 	
-	public IFSModelEM(
+	public IFSModelEMNeural(
 			@Parameter(name="data") 				
 				List<Point> data, 
 			@Parameter(name="test ratio", description="What percentage of the data to use for testing")
@@ -124,51 +107,20 @@ public class IFSModelEM extends AbstractExperiment
 				int testSampleSize,
 			@Parameter(name="high quality", description="true: full HD 10E7, iterations, false: 1/16th HD, 10E4 iterations")
 				boolean highQuality,
-			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
-				String initStrategy,
+			@Parameter(name="hidden", description="number of hidden nodes")
+				int hidden,
 			@Parameter(name="num sources", description="The number of sources used when determining codes.")
 				int numSources,
+			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
+				String initStrategy,				
 			@Parameter(name="center data")
 				boolean centerData,
-			@Parameter(name="beam width")
-				int beamWidth,
-			@Parameter(name="branching variance")
-				double branchingVariance
-			)
-	{
-		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, numSources, centerData);
-		
-		branching = true;
-	
-		this.branchingVariance = branchingVariance;
-		this.beamWidth = beamWidth;
-	}
-	
-	public IFSModelEM(
-			@Parameter(name="data") 				
-				List<Point> data, 
-			@Parameter(name="test ratio", description="What percentage of the data to use for testing")
-				double testRatio,				
-			@Parameter(name="depth") 				
-				int depth, 
-			@Parameter(name="generations") 			
-				int generations,
-			@Parameter(name="number of components")
-				int components, 
-			@Parameter(name="em sample size", description="How many points to use in each iteration of the EM algorithm.") 
-				int emSampleSize,
-			@Parameter(name="train sample size", description="The sample size (from the training set) for evaluating the model at each iteration.")
-				int trainSampleSize,
-			@Parameter(name="test sample size", description="Sample size (from the test set) for the final evaluation.")
-				int testSampleSize,
-			@Parameter(name="high quality", description="true: full HD 10E7, iterations, false: 1/16th HD, 10E4 iterations")
-				boolean highQuality,
-			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
-				String initStrategy,
-			@Parameter(name="num sources", description="The number of sources used when determining codes.")
-				int numSources,
-			@Parameter(name="center data")
-				boolean centerData
+			@Parameter(name="init var")
+				double initVar,
+			@Parameter(name="epochs")
+				int epochs,
+			@Parameter(name="learning rate")
+				double learningRate
 			)
 	{
 	
@@ -195,7 +147,6 @@ public class IFSModelEM extends AbstractExperiment
 		this.dim = data.get(0).dimensionality();
 		
 		this.highQuality = highQuality;
-		this.initStrategy = initStrategy;
 		
 		this.emSampleSize = emSampleSize;
 		this.trainSampleSize = trainSampleSize;
@@ -203,6 +154,14 @@ public class IFSModelEM extends AbstractExperiment
 		
 		this.numSources = numSources;
 		this.centerData = centerData;
+		
+		this.hidden = hidden;
+		this.initVar = initVar;
+		
+		this.learningRate = learningRate;
+		this.epochs = epochs;
+		
+		this.initStrategy = initStrategy;
 	}	
 	
 	public void setup()
@@ -245,12 +204,14 @@ public class IFSModelEM extends AbstractExperiment
 		
 		if(model == null)
 			throw new IllegalArgumentException("Initialization strategy \""+initStrategy+"\" not recognized.");
-				
+		
+		IFS<ThreeLayer> initial = NeuralIFS.copy(model, hidden, INITIAL_EXAMPLES, INITIAL_LEARNINGRATE, INITIAL_VAR);
+		
 		// * Create the EM model
-		if(branching)
-			em = new BranchingEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim), branchingVariance, beamWidth, trainSampleSize);
-		else
-			em = new SimEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim));
+		em = new NeuralEM(
+				initial, 
+				trainingData, numSources,
+				ThreeLayer.builder(dim,  hidden, Activations.sigmoid()), epochs, learningRate);
 		
 		basis = em.basis();
 		
@@ -308,7 +269,7 @@ public class IFSModelEM extends AbstractExperiment
 			Functions.tic();		
 			
 			// * save the current state of the experiment
-			save();
+			// save();
 						
 			currentGeneration++;
 
@@ -358,12 +319,12 @@ public class IFSModelEM extends AbstractExperiment
 		return scores;
 	}
 	
-	public IFS<Similitude> model()
+	public IFS<ThreeLayer> model()
 	{
 		return model;
 	}
 
-	public IFS<Similitude> bestModel()
+	public IFS<ThreeLayer> bestModel()
 	{
 		return bestModel;
 	}
@@ -409,7 +370,7 @@ public class IFSModelEM extends AbstractExperiment
 //		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true);
 		BufferedImage image;
 		
-		image= Draw.draw(ifs, its, new double[]{-1.1, 1.1}, new double[]{-1.1, 1.1}, 1000/div, 1000/div, true, depth, em.basis());
+		image= Draw.draw(ifs.generator(depth, em.basis()).generate(its), 1000/div, true, false);
 		
 		try
 		{

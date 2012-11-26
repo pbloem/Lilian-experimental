@@ -41,30 +41,72 @@ public class DSEM extends AbstractExperiment
 	private int generations;
 	private int epochs;
 	private double var;
+	protected double branchingVariance;
+	protected int sampleSize;
+	protected int beamWidth;
 	
 	public EM em;
+	public ThreeLayer map = null;
+	
+	public DSEM(
+			@Parameter(name="data")
+				List<Point> data, 
+			@Parameter(name="map")
+				ThreeLayer map, 
+			@Parameter(name="sigma")
+				double sigma, 
+			@Parameter(name="num sources")
+				int numSources, 
+			@Parameter(name="learning rate")
+				double learningRate,
+			@Parameter(name="reset")
+				boolean reset, 
+			@Parameter(name="em sample size")
+				int emSampleSize,
+			@Parameter(name="generations")
+				int generations, 
+			@Parameter(name="epochs")
+				int epochs,
+			@Parameter(name="init var")
+				double var,
+			@Parameter(name="beam width")
+				int beamWidth,
+			@Parameter(name="branching variance")
+				double branchingVariance,
+			@Parameter(name="sample size")
+				int sampleSize)
+	{
+		this(data, sigma, numSources, map.hiddenSize(), learningRate, reset, emSampleSize, generations, epochs, var, beamWidth, branchingVariance, sampleSize);
+		this.map = map;
+	}	
 	
 	public DSEM(
 		@Parameter(name="data")
 		List<Point> data, 
 		@Parameter(name="sigma")
-		double sigma, 
+			double sigma, 
 		@Parameter(name="num sources")
-		int numSources, 
+			int numSources, 
 		@Parameter(name="hidden")
-		int hidden,
+			int hidden,
 		@Parameter(name="learning rate")
-		double learningRate,
+			double learningRate,
 		@Parameter(name="reset")
-		boolean reset, 
+			boolean reset, 
 		@Parameter(name="em sample size")
-		int emSampleSize,
+			int emSampleSize,
 		@Parameter(name="generations")
-		int generations, 
+			int generations, 
 		@Parameter(name="epochs")
-		int epochs,
+			int epochs,
 		@Parameter(name="init var")
-		double var)
+			double var,
+		@Parameter(name="beam width")
+			int beamWidth,
+		@Parameter(name="branching variance")
+			double branchingVariance,
+		@Parameter(name="sample size")
+			int sampleSize)
 	{
 		this.data = data;
 		this.sigma = sigma;
@@ -76,29 +118,34 @@ public class DSEM extends AbstractExperiment
 		this.generations = generations;
 		this.epochs = epochs;
 		this.var = var;
+		this.branchingVariance = branchingVariance;
+		this.beamWidth = beamWidth;
+		this.sampleSize = sampleSize;
 	}
 
 	@Override
 	protected void setup()
 	{
-		ThreeLayer map;
-		if(CHEAT)
-		{
-			double rate = 0.001;
-			Map target = Maps.henon();
-			map = ThreeLayer.random(2, hidden, 0.5, Activations.sigmoid());
-			
-			List<Point> from = new MVN(2).generate(10000),
-			            to = target.map(from);
-			
-			map.train(from, to, rate, 500);
-					
-		} else
-			map = ThreeLayer.random(
-					data.get(0).dimensionality(), 
-					hidden, var, Activations.sigmoid());
+		if(map == null)
+			if(CHEAT)
+			{
+				double rate = 0.001;
+				Map target = Maps.henon();
+				map = ThreeLayer.random(2, hidden, 0.5, Activations.sigmoid());
+				
+				List<Point> from = new MVN(2).generate(10000),
+				            to = target.map(from);
+				
+				map.train(from, to, rate, 500);
+						
+			} else
+				map = ThreeLayer.random(
+						data.get(0).dimensionality(), 
+						hidden, var, Activations.sigmoid());
 		
-		em = new EM(data, sigma, numSources, map);
+		em = new BranchingEM(
+				data, sigma, numSources, map, 
+				branchingVariance, beamWidth, sampleSize);
 		
 		BufferedImage image = Draw.draw(data, RES, true);
 		try
