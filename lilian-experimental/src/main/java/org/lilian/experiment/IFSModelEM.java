@@ -138,7 +138,7 @@ public class IFSModelEM extends AbstractExperiment
 	{
 		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, numSources, centerData);
 		
-		branching = true;
+		branching = beamWidth > 0;
 	
 		this.branchingVariance = branchingVariance;
 		this.beamWidth = beamWidth;
