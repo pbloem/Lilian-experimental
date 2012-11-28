@@ -260,9 +260,9 @@ public class IFSModelEM extends AbstractExperiment
 				
 		// * Create the EM model
 		if(branching)
-			em = new BranchingEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim), branchingVariance, beamWidth, trainSampleSize, 0.01);
+			em = new BranchingEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim), branchingVariance, beamWidth, trainSampleSize, spanningPointsVariance);
 		else
-			em = new SimEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim), 0.01);
+			em = new SimEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim), spanningPointsVariance);
 		
 		basis = em.basis();
 		
