@@ -20,6 +20,7 @@ import org.lilian.data.real.MappedList;
 import org.lilian.data.real.Maps;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
+// import org.lilian.data.real.fractal.BranchingEM;
 import org.lilian.data.real.fractal.BranchingEM;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.EM;
@@ -242,6 +243,8 @@ public class IFSModelEM extends AbstractExperiment
 			model = IFSs.initialPoints(SCALE, Datasets.sample(trainingData, components));
 		else if(initStrategy.toLowerCase().equals("identity"))
 			model = IFSs.initialIdentity(dim, components, IDENTITY_INIT_VAR);
+		else if(initStrategy.toLowerCase().equals("koch"))
+			model = IFSs.koch2Sim();
 		
 		if(model == null)
 			throw new IllegalArgumentException("Initialization strategy \""+initStrategy+"\" not recognized.");

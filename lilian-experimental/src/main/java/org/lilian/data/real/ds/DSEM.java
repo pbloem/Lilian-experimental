@@ -143,7 +143,10 @@ public class DSEM extends AbstractExperiment
 						data.get(0).dimensionality(), 
 						hidden, var, Activations.sigmoid());
 		
-		em = new BranchingEM(
+		if(beamWidth < 1)
+			em = new EM(data, sigma, numSources, map);
+		else
+			em = new BranchingEM(
 				data, sigma, numSources, map, 
 				branchingVariance, beamWidth, sampleSize);
 		

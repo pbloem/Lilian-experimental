@@ -38,9 +38,6 @@ public class Flight extends AbstractExperiment
 {
 	private static double[] xrange = new double[]{-1, 1};
 	private static double[] yrange = new double[]{-1, 1};	
-	
-	private static final int DIM = 2;
-	private static final boolean HIGH_QUALITY = false;
 		
 	private List<Point> data;
 	private int points;
@@ -50,6 +47,7 @@ public class Flight extends AbstractExperiment
 	private Distance<List<Point>> distance = new HausdorffDistance<Point>(new EuclideanDistance());
 	private double initVar;
 	private boolean highQuality;
+	private int dim;
 
 	public ES<ThreeLayer> es;
 	public ThreeLayer model;
@@ -70,12 +68,15 @@ public class Flight extends AbstractExperiment
 		this.population = population;
 		this.initVar = initVar;
 		this.highQuality = highQuality;
+		
+
+		dim = data.get(0).dimensionality();
 	}
 
 	@Override
 	protected void setup()
 	{
-		Builder<ThreeLayer> builder = ThreeLayer.builder(DIM, hidden, Activations.sigmoid());
+		Builder<ThreeLayer> builder = ThreeLayer.builder(dim, hidden, Activations.sigmoid());
 		es = new ES<ThreeLayer>(
 				builder,
 				new FlightTarget(),
@@ -128,7 +129,7 @@ public class Flight extends AbstractExperiment
 //		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true, depth, basis);
 //		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true);
 		BufferedImage image = Draw.draw(
-				NeuralNetworks.orbit(nn, new MVN(DIM).generate(), its), 
+				NeuralNetworks.orbit(nn, new MVN(dim).generate(), its), 
 				xrange, yrange, 1000/div, 1000/div, true, false);
 
 		try
