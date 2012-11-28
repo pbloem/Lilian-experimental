@@ -62,6 +62,7 @@ public class IFSModelEM extends AbstractExperiment
 	protected boolean centerData;
 	protected double branchingVariance;
 	protected int beamWidth;
+	protected double spanningPointsVariance;
 
 	/**
 	 * State information
@@ -100,10 +101,12 @@ public class IFSModelEM extends AbstractExperiment
 			@Parameter(name="high quality", description="true: full HD 10E7, iterations, false: 1/16th HD, 10E4 iterations")
 				boolean highQuality,
 			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
-				String initStrategy
+				String initStrategy,
+			@Parameter(name="spanning points variance", description="When multiple points per code are found, we use point sampled from a basic MVN with this distribution to describe the from and to set.")
+				double spanningPointsVariance
 			)
 	{
-		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, 1, true);
+		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, 1, true, spanningPointsVariance);
 	}
 	
 	public IFSModelEM(
@@ -134,10 +137,12 @@ public class IFSModelEM extends AbstractExperiment
 			@Parameter(name="beam width")
 				int beamWidth,
 			@Parameter(name="branching variance")
-				double branchingVariance
+				double branchingVariance,
+			@Parameter(name="spanning points variance", description="When multiple points per code are found, we use point sampled from a basic MVN with this distribution to describe the from and to set.")
+				double spanningPointsVariance
 			)
 	{
-		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, numSources, centerData);
+		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, numSources, centerData, spanningPointsVariance);
 		
 		branching = beamWidth > 0;
 	
@@ -169,7 +174,9 @@ public class IFSModelEM extends AbstractExperiment
 			@Parameter(name="num sources", description="The number of sources used when determining codes.")
 				int numSources,
 			@Parameter(name="center data")
-				boolean centerData
+				boolean centerData,
+			@Parameter(name="spanning points variance", description="When multiple points per code are found, we use point sampled from a basic MVN with this distribution to describe the from and to set.")
+				double spanningPointsVariance
 			)
 	{
 	
@@ -204,6 +211,8 @@ public class IFSModelEM extends AbstractExperiment
 		
 		this.numSources = numSources;
 		this.centerData = centerData;
+		
+		this.spanningPointsVariance = spanningPointsVariance;
 	}	
 	
 	public void setup()
@@ -251,9 +260,9 @@ public class IFSModelEM extends AbstractExperiment
 				
 		// * Create the EM model
 		if(branching)
-			em = new BranchingEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim), branchingVariance, beamWidth, trainSampleSize);
+			em = new BranchingEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim), branchingVariance, beamWidth, trainSampleSize, 0.01);
 		else
-			em = new SimEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim));
+			em = new SimEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim), 0.01);
 		
 		basis = em.basis();
 		

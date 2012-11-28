@@ -88,7 +88,7 @@ public class IFSDimReduce extends AbstractExperiment
 		
 		IFSModelEM emExperiment = new IFSModelEM(
 				data, 0.0, learningDepth, generations, 4, learnSampleSize, 
-				evaluationSampleSize, -1, false, "sphere"); 
+				evaluationSampleSize, -1, false, "sphere", 0.01); 
 				
 				
 		Environment.current().child(emExperiment);

@@ -38,14 +38,20 @@ public class IFSDimReduceHigh extends AbstractExperiment
 	public Classified<Point> reducedIFS;
 	
 	public IFSDimReduceHigh(
-			@Parameter(name="data", description="") Classified<Point> data, 
-			@Parameter(name="generations", description="") int generations,
-			@Parameter(name="learning depth", description="") int learningDepth,
-			@Parameter(name="coding depth", description="") int codingDepth, 
-			@Parameter(name="learning sample size", description="") int learnSampleSize,
-			@Parameter(name="evaluation sample size", description="") int evaluationSampleSize,
+			@Parameter(name="data", description="") 
+				Classified<Point> data, 
+			@Parameter(name="generations", description="") 
+				int generations,
+			@Parameter(name="learning depth", description="") 
+				int learningDepth,
+			@Parameter(name="coding depth", description="") 
+				int codingDepth, 
+			@Parameter(name="learning sample size", description="") 
+				int learnSampleSize,
+			@Parameter(name="evaluation sample size", description="") 
+				int evaluationSampleSize,
 			@Parameter(name="inter dim", description="Intermediary dimension. The dataset is reduced to this dimension by PCA before the IFS method is applied")
-			int intDim,
+				int intDim,
 			@Parameter(name="data sample", description="use a subsample of the data") 
 				int dataSample)
 	{
@@ -81,7 +87,7 @@ public class IFSDimReduceHigh extends AbstractExperiment
 		
 		IFSModelEM emExperiment = new IFSModelEM(
 				data, 0.0, learningDepth, generations, 4, learnSampleSize, 
-				evaluationSampleSize, -1, false, "sphere"); 
+				evaluationSampleSize, -1, false, "sphere", 0.01); 
 				
 		
 		Environment.current().child(emExperiment);

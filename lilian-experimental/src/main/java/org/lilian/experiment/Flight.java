@@ -118,7 +118,7 @@ public class Flight extends AbstractExperiment
 	 * @param dir
 	 * @param name
 	 */
-	private void write(ThreeLayer nn, String name)
+	public void write(ThreeLayer nn, String name)
 	{		
 		int div = highQuality ? 1 : 16;
 		int its = highQuality ? (int) 1000000 : 100000;

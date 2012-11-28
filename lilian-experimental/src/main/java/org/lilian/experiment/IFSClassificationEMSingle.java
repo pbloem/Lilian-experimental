@@ -62,6 +62,7 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 	protected int numSources;
 	protected int beamWidth;
 	protected double branchingVariance;
+	protected double spanningPointsVariance;
 	
 	/**
 	 * State information
@@ -100,7 +101,10 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 			@Parameter(name="branching variance")
 				double branchingVariance,
 			@Parameter(name="beam width")
-				int beamWidth
+				int beamWidth,
+			@Parameter(name="spanning points variance")
+				double spanningPointsVariance
+			
 	)
 	{	
 		Pair<Classified<Point>, Classified<Point>> split = Classification.split(data, testRatio);
@@ -123,6 +127,8 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 		
 		this.branchingVariance = branchingVariance;
 		this.beamWidth = beamWidth;
+		
+		this.spanningPointsVariance = spanningPointsVariance;
 	}
 	
 	@Override
@@ -167,7 +173,7 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 		emExperiment = new IFSModelEM(
 				trainingData, 0.0, depth, generations, components, 
 				emSampleSize, trainSampleSize, -1, false, "sphere", numSources, true,
-				beamWidth, branchingVariance);
+				beamWidth, branchingVariance, spanningPointsVariance);
 			
 	}
 	

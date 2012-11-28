@@ -80,7 +80,7 @@ public class IFSDimension extends AbstractExperiment
 	{	
 		IFSModelEM em = new IFSModelEM(
 				data, 0.0, depth, generations, components, emSampleSize, 
-				trainSampleSize, -1, false, "sphere");
+				trainSampleSize, -1, false, "sphere", 0.01);
 				
 				
 		Environment.current().child(em);
