@@ -29,8 +29,8 @@ public class DSEM extends AbstractExperiment
 {
 	public static final boolean CHEAT = false;
 
-	private static final int SAMPLES = 10000;
-	private static final int RES = 400;
+	private static final int SAMPLES = 100000000;
+	private static final int RES = 1000;
 	private List<Point> data;
 	private double sigma;
 	private int numSources;
