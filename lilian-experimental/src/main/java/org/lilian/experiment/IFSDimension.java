@@ -19,6 +19,7 @@ import org.lilian.util.distance.HausdorffDistance;
 /**
  * Test the hypothesis that IFS models scale their dimension to that of the
  * dataset.
+ * 
  * @author Peter
  *
  */
@@ -33,8 +34,8 @@ public class IFSDimension extends AbstractExperiment
 	private int trainSampleSize;
 	private List<Point> data;
 	private int dimensionSample;
-	private int ksSamples;
 	private int bootstraps;
+	private double spanningPointsVariance;
 	
 	public @State double modelDimension;
 	public @State double modelDimUncertainty;
@@ -51,8 +52,8 @@ public class IFSDimension extends AbstractExperiment
 			@Parameter(name="train sample size", description="") int trainSampleSize, 
 			@Parameter(name="data", description="") List<Point> data,
 			@Parameter(name="dimension sample size", description="") int dimensionSample,
-			@Parameter(name="ks samples", description="") int ksSamples,
-			@Parameter(name="bootstraps", description="") int bootstraps)
+			@Parameter(name="bootstraps", description="") int bootstraps,
+			@Parameter(name="spanning points variance") double spanningPointsVariance)
 	{
 		this.generations = generations;
 		this.depth = depth;
@@ -61,8 +62,8 @@ public class IFSDimension extends AbstractExperiment
 		this.trainSampleSize = trainSampleSize;
 		this.data = data;
 		this.dimensionSample = dimensionSample;
-		this.ksSamples = ksSamples;
 		this.bootstraps = bootstraps;
+		this.spanningPointsVariance = spanningPointsVariance;
 	}
 
 	@Override
@@ -80,7 +81,7 @@ public class IFSDimension extends AbstractExperiment
 	{	
 		IFSModelEM em = new IFSModelEM(
 				data, 0.0, depth, generations, components, emSampleSize, 
-				trainSampleSize, -1, false, "sphere", 0.01);
+				trainSampleSize, -1, false, "sphere", spanningPointsVariance);
 				
 				
 		Environment.current().child(em);
