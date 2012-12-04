@@ -6,6 +6,7 @@ import java.util.List;
 import org.lilian.Global;
 import org.lilian.data.real.MappedList;
 import org.lilian.data.real.PCA;
+import org.lilian.data.real.PCAIterative;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
 import org.lilian.data.real.classification.Classification;
@@ -31,6 +32,7 @@ public class IFSDimReduce extends AbstractExperiment
 	private int codingDepth;
 	private int learnSampleSize;
 	private int evaluationSampleSize;
+	private double spanningPointsVariance;
 	
 	public Classified<Point> reducedPCA;
 	public Classified<Point> reducedIFS;
@@ -42,7 +44,8 @@ public class IFSDimReduce extends AbstractExperiment
 			@Parameter(name="coding depth", description="") int codingDepth, 
 			@Parameter(name="learning sample size", description="") int learnSampleSize,
 			@Parameter(name="evaluation sample size", description="") int evaluationSampleSize,
-			@Parameter(name="data sample", description="use a subsample of the data") int dataSample)
+			@Parameter(name="data sample", description="use a subsample of the data") int dataSample,
+			@Parameter(name="spanning points variance") double spanningPointsVariance)
 	{
 		this.data = Classification.sample(data, dataSample);
 		this.generations = generations;
@@ -50,6 +53,7 @@ public class IFSDimReduce extends AbstractExperiment
 		this.codingDepth = codingDepth;
 		this.learnSampleSize = learnSampleSize;
 		this.evaluationSampleSize = evaluationSampleSize;
+		this.spanningPointsVariance = spanningPointsVariance;
 	}
 	
 	public IFSDimReduce(
@@ -58,7 +62,8 @@ public class IFSDimReduce extends AbstractExperiment
 			@Parameter(name="learning depth", description="") int learningDepth,
 			@Parameter(name="coding depth", description="") int codingDepth, 
 			@Parameter(name="learning sample size", description="") int learnSampleSize,
-			@Parameter(name="evaluation sample size", description="") int evaluationSampleSize)
+			@Parameter(name="evaluation sample size", description="") int evaluationSampleSize,
+			@Parameter(name="spanning points variance") double spanningPointsVariance)
 	{
 		this.data = data;
 		this.generations = generations;
@@ -66,6 +71,7 @@ public class IFSDimReduce extends AbstractExperiment
 		this.codingDepth = codingDepth;
 		this.learnSampleSize = learnSampleSize;
 		this.evaluationSampleSize = evaluationSampleSize;
+		this.spanningPointsVariance = spanningPointsVariance;
 	}
 
 	@Override
@@ -79,7 +85,7 @@ public class IFSDimReduce extends AbstractExperiment
 	{
 		logger.info("Computing PCA model");
 		
-		PCA pca = new PCA(data);
+		PCAIterative pca = new PCAIterative(data, 2, 50);
 		List<Point> reducedPCAPoints = pca.simplify(2); 
 
 		reducedPCA = Classification.combine(reducedPCAPoints, data.classes());
@@ -88,8 +94,7 @@ public class IFSDimReduce extends AbstractExperiment
 		
 		IFSModelEM emExperiment = new IFSModelEM(
 				data, 0.0, learningDepth, generations, 4, learnSampleSize, 
-				evaluationSampleSize, -1, false, "sphere", 0.01); 
-				
+				evaluationSampleSize, -1, false, "sphere", spanningPointsVariance); 
 				
 		Environment.current().child(emExperiment);
 		

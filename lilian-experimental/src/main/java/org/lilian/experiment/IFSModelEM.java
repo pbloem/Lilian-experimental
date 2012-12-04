@@ -36,13 +36,13 @@ import org.lilian.util.distance.SquaredEuclideanDistance;
 public class IFSModelEM extends AbstractExperiment
 {
 	@Reportable
-	private static final double VAR = 0.6;
+	private static final double VAR = 0.1;
 
 	@Reportable
 	private static final double RADIUS = 0.7;
 
 	@Reportable
-	private static final double SCALE = 0.5;
+	private static final double SCALE = 0.1;
 
 	@Reportable
 	private static final double IDENTITY_INIT_VAR = 0.1;
@@ -71,6 +71,7 @@ public class IFSModelEM extends AbstractExperiment
 	public @State EM<Similitude> em;
 	public @State List<Double> scores;
 	public @State IFS<Similitude> bestModel, model;
+	public @State int bestGeneration = -1;
 	public @State AffineMap map;
 	public @State double testScore;
 	public @State MVN basis;
@@ -128,7 +129,7 @@ public class IFSModelEM extends AbstractExperiment
 				int testSampleSize,
 			@Parameter(name="high quality", description="true: full HD 10E7, iterations, false: 1/16th HD, 10E4 iterations")
 				boolean highQuality,
-			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
+			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity, maps)")
 				String initStrategy,
 			@Parameter(name="num sources", description="The number of sources used when determining codes.")
 				int numSources,
@@ -169,7 +170,7 @@ public class IFSModelEM extends AbstractExperiment
 				int testSampleSize,
 			@Parameter(name="high quality", description="true: full HD 10E7, iterations, false: 1/16th HD, 10E4 iterations")
 				boolean highQuality,
-			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
+			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity, maps)")
 				String initStrategy,
 			@Parameter(name="num sources", description="The number of sources used when determining codes.")
 				int numSources,
@@ -254,15 +255,20 @@ public class IFSModelEM extends AbstractExperiment
 			model = IFSs.initialIdentity(dim, components, IDENTITY_INIT_VAR);
 		else if(initStrategy.toLowerCase().equals("koch"))
 			model = IFSs.koch2Sim();
+		else if(initStrategy.toLowerCase().equals("maps"))
+			model = IFSs.initialMaps(trainingData, components, 2);
 		
 		if(model == null)
 			throw new IllegalArgumentException("Initialization strategy \""+initStrategy+"\" not recognized.");
 				
 		// * Create the EM model
 		if(branching)
-			em = new BranchingEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim), branchingVariance, beamWidth, trainSampleSize, spanningPointsVariance);
+			em = new BranchingEM(model, trainingData, numSources, 
+					Similitude.similitudeBuilder(dim), branchingVariance, 
+					beamWidth, trainSampleSize, spanningPointsVariance);
 		else
-			em = new SimEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim), spanningPointsVariance);
+			em = new SimEM(model, trainingData, numSources, 
+					Similitude.similitudeBuilder(dim), spanningPointsVariance);
 		
 		basis = em.basis();
 		
@@ -311,6 +317,7 @@ public class IFSModelEM extends AbstractExperiment
 			{
 				bestScore = d;
 				bestModel = em.model();
+				bestGeneration = currentGeneration;
 			}
 
 
@@ -383,6 +390,12 @@ public class IFSModelEM extends AbstractExperiment
 	public MVN basis()
 	{
 		return basis;
+	}
+	
+	@Result(name="best generation")
+	public int bestGeneration()
+	{
+		return bestGeneration;
 	}
 	
 	/**

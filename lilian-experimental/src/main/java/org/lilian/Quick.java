@@ -35,34 +35,34 @@ public class Quick
 	 */
 	public static void main(String[] args) throws IOException
 	{
-//		int n = 20, sub = 5000;
-//		
-//		Classified<Point> mnist = Resources.csvClassification(
-//				new File("/Users/Peter/Documents/datasets/classification/digits/digits.csv"));
-//		// mnist = Classification.sample(mnist, sub);
-//		
-//		PCAIterative pca = new PCAIterative(mnist, n, 10);
-//		List<Point> simple = pca.simplify(n);
-//		
-//		Classified<Point> result = Classification.combine(simple, mnist.classes());
-//		Classification.write(result, new File("/Users/Peter/Documents/datasets/classification/digits/digits.20.csv"));
-//						
-		List<Point> small = Generators.lorenz().generate(10000);
-
-		Map center = Maps.centered(small),
-		   camera = Cameras.basic();
-		Map map = center.compose(camera);
-		// Map map = center;
+		int n = 10, sub = 5000;
 		
-		//for(Point p  : new MappedList(small, center))
-		//	System.out.println(p);
-		//map = Cameras.basic();
+		Classified<Point> mnist = Resources.csvClassification(
+				new File("/Users/Peter/Documents/datasets/classification/digits/digits.csv"));
+		// mnist = Classification.sample(mnist, sub);
 		
-		Generator<Point> gen = Generators.mapped(Generators.lorenz(), map);
-
+		PCAIterative pca = new PCAIterative(mnist, n, 10);
+		List<Point> simple = pca.simplify(n);
 		
-		BufferedImage image = Draw.draw(gen, 1000000000, 1000, false);
-		ImageIO.write(image, "PNG", new File("/Users/Peter/Desktop/quicktest.png"));
+		Classified<Point> result = Classification.combine(simple, mnist.classes());
+		Classification.write(result, new File("/Users/Peter/Documents/datasets/classification/digits/digits."+n+".csv"));
+						
+//		List<Point> small = Generators.lorenz().generate(10000);
+//
+//		Map center = Maps.centered(small),
+//		   camera = Cameras.basic();
+//		Map map = center.compose(camera);
+//		// Map map = center;
+//		
+//		//for(Point p  : new MappedList(small, center))
+//		//	System.out.println(p);
+//		//map = Cameras.basic();
+//		
+//		Generator<Point> gen = Generators.mapped(Generators.lorenz(), map);
+//
+//		
+//		BufferedImage image = Draw.draw(gen, 1000000000, 1000, false);
+//		ImageIO.write(image, "PNG", new File("/Users/Peter/Desktop/quicktest.png"));
 	}
 
 }
