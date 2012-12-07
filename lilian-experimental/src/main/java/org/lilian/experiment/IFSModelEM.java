@@ -416,6 +416,15 @@ public class IFSModelEM extends AbstractExperiment
 		return image;
 	}
 	
+	@Result(name="best model deep")
+	public BufferedImage bestModelDeepImage()
+	{
+		BufferedImage image = Draw.draw(
+				bestModel.generator().generate(10000000), 
+				1000, true, false);
+		return image;
+	}
+	
 	/**
 	 * Print out the current best approximation at full HD resolution.
 	 * @param ifs
