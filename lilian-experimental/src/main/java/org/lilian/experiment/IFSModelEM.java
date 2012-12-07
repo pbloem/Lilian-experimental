@@ -313,7 +313,7 @@ public class IFSModelEM extends AbstractExperiment
 					em.model().generator(depth, em.basis()).generate(trainingData.size()));
 				
 			scores.add(d);
-			if(bestScore > d)
+			if(d < bestScore)
 			{
 				bestScore = d;
 				bestModel = em.model();

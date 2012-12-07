@@ -25,6 +25,9 @@ import org.lilian.util.distance.HausdorffDistance;
  */
 public class IFSDimension extends AbstractExperiment
 {
+	@Reportable
+	public static final boolean SAMPLE_DEEP = true; 
+	
 	Distance<Point> metric = new EuclideanDistance();
 	
 	private int generations;
@@ -87,7 +90,12 @@ public class IFSDimension extends AbstractExperiment
 		Environment.current().child(em);
 		
 		IFS<Similitude> model = em.model();
-		List<Point> modelDraw = model.generator(depth).generate(dimensionSample == -1 ? data.size() : dimensionSample);
+		
+		List<Point> modelDraw = 
+				SAMPLE_DEEP ? 
+						(model.generator(depth).generate(dimensionSample == -1 ? data.size() : dimensionSample)):
+						(model.generator().generate(dimensionSample == -1 ? data.size() : dimensionSample));
+		
 		List<Point> dataDraw = dimensionSample == -1 ?
 				data :
 				Datasets.sampleWithoutReplacement(data, dimensionSample);
