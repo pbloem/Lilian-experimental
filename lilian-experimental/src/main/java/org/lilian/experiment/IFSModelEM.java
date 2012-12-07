@@ -36,6 +36,9 @@ import org.lilian.util.distance.SquaredEuclideanDistance;
 public class IFSModelEM extends AbstractExperiment
 {
 	@Reportable
+	private static final boolean CENTER_UNIFORM = true;
+	
+	@Reportable
 	private static final double VAR = 0.1;
 
 	@Reportable
@@ -224,7 +227,9 @@ public class IFSModelEM extends AbstractExperiment
 		
 		if(centerData)
 		{
-			map = Maps.centered(trainingData);
+			map = CENTER_UNIFORM ? 
+				Maps.centerUniform(trainingData) :
+				Maps.centered(trainingData) ;
 			trainingData = new MappedList(trainingData, map);
 		}
 		
