@@ -2,7 +2,10 @@ package org.lilian;
 
 import static org.lilian.util.Series.series;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -35,18 +38,27 @@ public class Quick
 	 */
 	public static void main(String[] args) throws IOException
 	{
-		int n = 10, sub = 5000;
+		List<Point> data = Generators.logistic().generate(1000000);
 		
-		Classified<Point> mnist = Resources.csvClassification(
-				new File("/Users/Peter/Documents/datasets/classification/digits/digits.csv"));
-		// mnist = Classification.sample(mnist, sub);
+		Set<Point> set = new HashSet<Point>(data);
+		Global.log().info("Uniquification retained " + (set.size()) + " points out of " + data.size());
+		data = new ArrayList<Point>(set);
 		
-		PCAIterative pca = new PCAIterative(mnist, n, 10);
-		List<Point> simple = pca.simplify(n);
+		// for(Point p : data)
+		//	System.out.println(p);
 		
-		Classified<Point> result = Classification.combine(simple, mnist.classes());
-		Classification.write(result, new File("/Users/Peter/Documents/datasets/classification/digits/digits."+n+".csv"));
-						
+//		int n = 10, sub = 5000;
+//		
+//		Classified<Point> mnist = Resources.csvClassification(
+//				new File("/Users/Peter/Documents/datasets/classification/digits/digits.csv"));
+//		// mnist = Classification.sample(mnist, sub);
+//		
+//		PCAIterative pca = new PCAIterative(mnist, n, 10);
+//		List<Point> simple = pca.simplify(n);
+//		
+//		Classified<Point> result = Classification.combine(simple, mnist.classes());
+//		Classification.write(result, new File("/Users/Peter/Documents/datasets/classification/digits/digits."+n+".csv"));
+//						
 //		List<Point> small = Generators.lorenz().generate(10000);
 //
 //		Map center = Maps.centered(small),

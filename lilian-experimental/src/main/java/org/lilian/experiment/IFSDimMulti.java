@@ -66,6 +66,8 @@ public class IFSDimMulti extends AbstractExperiment
 						dataPoints = Generators.ikeda().generate(SIZE);	
 					else if (dataset.equals("rossler"))
 						dataPoints = Generators.rossler().generate(SIZE);
+					else if (dataset.equals("logistic"))
+						dataPoints = Generators.logistic().generate(SIZE);					
 					else
 						try
 						{

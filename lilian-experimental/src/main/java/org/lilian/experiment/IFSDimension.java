@@ -94,7 +94,7 @@ public class IFSDimension extends AbstractExperiment
 		List<Point> modelDraw = 
 				SAMPLE_DEEP ? 
 						(model.generator(depth).generate(dimensionSample == -1 ? data.size() : dimensionSample)):
-						(model.generator().generate(dimensionSample == -1 ? data.size() : dimensionSample));
+						(model.generator(depth).generate(dimensionSample == -1 ? data.size() : dimensionSample));
 		
 		List<Point> dataDraw = dimensionSample == -1 ?
 				data :

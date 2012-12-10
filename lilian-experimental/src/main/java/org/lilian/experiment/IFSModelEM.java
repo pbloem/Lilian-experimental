@@ -235,16 +235,18 @@ public class IFSModelEM extends AbstractExperiment
 		
 		logger.info("Data size: " + trainingData.size());
 		
-		BufferedImage image;
 		
-		image = Draw.draw(trainingData, 1000, true, false);
+		if(dim > 1)
+		{		
+			BufferedImage image = Draw.draw(trainingData, 1000, true, false);
 
-		try
-		{
-			ImageIO.write(image, "PNG", new File(dir, "data.png"));
-		} catch (IOException e)
-		{
-			throw new RuntimeException(e);
+			try
+			{
+				ImageIO.write(image, "PNG", new File(dir, "data.png"));
+			} catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}
 		}
 		
 		IFS<Similitude> model = null;
@@ -277,25 +279,29 @@ public class IFSModelEM extends AbstractExperiment
 		
 		basis = em.basis();
 		
-		image = Draw.draw(em.basis().generate(trainingData.size()), 1000, true, false);
-
-		try
+		if(dim > 1)
 		{
-			ImageIO.write(image, "PNG", new File(dir, "basis.png"));
-		} catch (IOException e)
-		{
-			throw new RuntimeException(e);
+			BufferedImage image = Draw.draw(
+					em.basis().generate(trainingData.size()), 1000, true, false);
+	
+			try
+			{
+				ImageIO.write(image, "PNG", new File(dir, "basis.png"));
+			} catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}
+			
+			image = Draw.draw(new MVN(2).generate(trainingData.size()), 1000, true, false);
+	
+			try
+			{
+				ImageIO.write(image, "PNG", new File(dir, "plain.png"));
+			} catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}	
 		}
-		
-		image = Draw.draw(new MVN(2).generate(trainingData.size()), 1000, true, false);
-
-		try
-		{
-			ImageIO.write(image, "PNG", new File(dir, "plain.png"));
-		} catch (IOException e)
-		{
-			throw new RuntimeException(e);
-		}		
 	}
 	
 	@Override
