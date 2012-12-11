@@ -356,6 +356,8 @@ public class IFSModelEM extends AbstractExperiment
 				testScore = distance.distance(
 						testData, 
 						em.model().generator(depth, em.basis()).generate(testData.size()));
+		} else {
+			Global.log().info("Test data size == 0, no test.");
 		}
 		
 	}
@@ -422,7 +424,7 @@ public class IFSModelEM extends AbstractExperiment
 	public BufferedImage bestModelImage()
 	{
 		BufferedImage image = Draw.draw(
-				bestModel.generator(depth, em.basis()).generate(10000000), 
+				bestModel.generator(depth, em.basis()).generate(100000), 
 				1000, true, false);
 		return image;
 	}
@@ -431,7 +433,7 @@ public class IFSModelEM extends AbstractExperiment
 	public BufferedImage bestModelDeepImage()
 	{
 		BufferedImage image = Draw.draw(
-				bestModel.generator().generate(10000000), 
+				bestModel.generator().generate(100000), 
 				1000, true, false);
 		return image;
 	}
