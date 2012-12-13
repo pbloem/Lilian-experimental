@@ -61,6 +61,7 @@ public class IFSClassificationEM extends AbstractExperiment
 	protected int numSources;
 	protected boolean print;
 	protected double spanningPointsVariance; 
+	protected String goodnessOfFitTest;
 	
 	/**
 	 * State information
@@ -99,7 +100,9 @@ public class IFSClassificationEM extends AbstractExperiment
 			@Parameter(name="beam width")
 				int beamWidth,
 			@Parameter(name="spanning points variance")
-			 double spanningPointsVariance
+				double spanningPointsVariance,
+			@Parameter(name="goodness of fit test", description="The method used to select the best model from the iterations of the EM model. Options: hausdorff (Hasudorff distance), likelihood (log likelihood), none (just use last iteration)")
+				String goodnessOfFitTest
 	)
 	{	
 		Pair<Classified<Point>, Classified<Point>> split = Classification.split(data, testRatio);
@@ -123,7 +126,7 @@ public class IFSClassificationEM extends AbstractExperiment
 		this.branchingVariance = branchingVariance;
 		
 		this.spanningPointsVariance = spanningPointsVariance;
-		
+		this.goodnessOfFitTest = goodnessOfFitTest;
 	}
 	
 	public void setup()
@@ -153,7 +156,7 @@ public class IFSClassificationEM extends AbstractExperiment
 			IFSModelEM em = new IFSModelEM(
 					points, 0.0, depth, generations, components, emSampleSize,
 					trainSampleSize, -1, false, "sphere", numSources, true,
-					beamWidth, branchingVariance, spanningPointsVariance);
+					beamWidth, branchingVariance, spanningPointsVariance, goodnessOfFitTest);
 			
 			emExperiments.add(em);
 		}

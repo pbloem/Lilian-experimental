@@ -66,7 +66,8 @@ public class IFSModelEM extends AbstractExperiment
 	protected double branchingVariance;
 	protected int beamWidth;
 	protected double spanningPointsVariance;
-
+	protected String goodnessOfFitTest;
+	
 	/**
 	 * State information
 	 */
@@ -74,6 +75,7 @@ public class IFSModelEM extends AbstractExperiment
 	public @State EM<Similitude> em;
 	public @State List<Double> scores;
 	public @State IFS<Similitude> bestModel, model;
+	public @State boolean usingApproximation = true; // for the likelihood gof test (true so long as all non-approximated tests score 0.0)
 	public @State int bestGeneration = -1;
 	public @State AffineMap map;
 	public @State double testScore;
@@ -83,7 +85,7 @@ public class IFSModelEM extends AbstractExperiment
 	
 	private boolean branching = false;
 
-	private double bestScore = Double.POSITIVE_INFINITY;
+	private double bestScore;
 
 	public IFSModelEM(
 			@Parameter(name="data") 				
@@ -107,10 +109,12 @@ public class IFSModelEM extends AbstractExperiment
 			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
 				String initStrategy,
 			@Parameter(name="spanning points variance", description="When multiple points per code are found, we use point sampled from a basic MVN with this distribution to describe the from and to set.")
-				double spanningPointsVariance
+				double spanningPointsVariance,
+			@Parameter(name="goodness of fit test", description="The method used to select the best model from the iterations of the EM model. Options: hausdorff (Hasudorff distance), likelihood (log likelihood), none (just use last iteration)")
+				String goodnessOfFitTest
 			)
 	{
-		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, 1, true, spanningPointsVariance);
+		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, 1, true, spanningPointsVariance, goodnessOfFitTest);
 	}
 	
 	public IFSModelEM(
@@ -143,10 +147,12 @@ public class IFSModelEM extends AbstractExperiment
 			@Parameter(name="branching variance")
 				double branchingVariance,
 			@Parameter(name="spanning points variance", description="When multiple points per code are found, we use point sampled from a basic MVN with this distribution to describe the from and to set.")
-				double spanningPointsVariance
+				double spanningPointsVariance,
+			@Parameter(name="goodness of fit test", description="The method used to select the best model from the iterations of the EM model. Options: hausdorff (Hasudorff distance), likelihood (log likelihood), none (just use last iteration)")
+				String goodnessOfFitTest
 			)
 	{
-		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, numSources, centerData, spanningPointsVariance);
+		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, numSources, centerData, spanningPointsVariance, goodnessOfFitTest);
 		
 		branching = beamWidth > 0;
 	
@@ -180,7 +186,9 @@ public class IFSModelEM extends AbstractExperiment
 			@Parameter(name="center data")
 				boolean centerData,
 			@Parameter(name="spanning points variance", description="When multiple points per code are found, we use point sampled from a basic MVN with this distribution to describe the from and to set.")
-				double spanningPointsVariance
+				double spanningPointsVariance,
+			@Parameter(name="goodness of fit test", description="The method used to select the best model from the iterations of the EM model. Options: hausdorff (Hasudorff distance), likelihood (log likelihood), none (just use last iteration)")
+				String goodnessOfFitTest
 			)
 	{
 	
@@ -217,6 +225,7 @@ public class IFSModelEM extends AbstractExperiment
 		this.centerData = centerData;
 		
 		this.spanningPointsVariance = spanningPointsVariance;
+		this.goodnessOfFitTest = goodnessOfFitTest;
 	}	
 	
 	public void setup()
@@ -302,6 +311,14 @@ public class IFSModelEM extends AbstractExperiment
 				throw new RuntimeException(e);
 			}	
 		}
+		
+		if(goodnessOfFitTest.toLowerCase().equals("hausdorff"))
+		{
+			bestScore = Double.POSITIVE_INFINITY;
+		} else if(goodnessOfFitTest.toLowerCase().equals("likelihood"))
+		{
+			bestScore = Double.NEGATIVE_INFINITY;
+		}	
 	}
 	
 	@Override
@@ -312,25 +329,64 @@ public class IFSModelEM extends AbstractExperiment
 		{
 			model = em.model();
 			
-			double d;
+			// * Measure model performance
 			
-			if(trainSampleSize != -1)
-				d = distance.distance(
-					Datasets.sample(trainingData, trainSampleSize),
-					em.model().generator(depth, em.basis()).generate(trainSampleSize));
-			else
-				d = distance.distance(
-					trainingData, 
-					em.model().generator(depth, em.basis()).generate(trainingData.size()));
-				
-			scores.add(d);
-			if(d < bestScore)
+			List<Point> dataSample = trainSampleSize == -1 ? trainingData : Datasets.sample(trainingData, trainSampleSize);
+			List<Point> modelSample = null;
+			if(goodnessOfFitTest.toLowerCase().equals("hausdorff"))
+				modelSample = em.model().generator(depth, em.basis()).generate(dataSample.size()); 
+			
+			if(goodnessOfFitTest.toLowerCase().equals("hausdorff"))
 			{
-				bestScore = d;
-				bestModel = em.model();
-				bestGeneration = currentGeneration;
+				double d = distance.distance(modelSample,  dataSample);
+				
+				scores.add(d);
+				if(d < bestScore)
+				{
+					bestScore = d;
+					bestModel = em.model();
+					bestGeneration = currentGeneration;
+				}
+			} else if(goodnessOfFitTest.toLowerCase().equals("likelihood"))
+			{
+				double d = 0.0, dApprox = 0.0;
+				
+				for(Point p : dataSample)
+				{
+					IFS.SearchResult result = IFS.search(model, p, depth, basis);
+					d += Math.log(result.probSum());
+					dApprox += Math.log(result.approximation());
+				}
+				
+				if(usingApproximation)
+				{ 
+					if(d > Double.NEGATIVE_INFINITY) // first model with non-zero prob
+					{
+						usingApproximation = false;
+						bestModel = model;
+						bestScore = d;
+					} else if (dApprox > bestScore)
+					{
+						bestModel = model;
+						bestScore = dApprox;
+					}
+				} else 
+				{
+					if (d > bestScore)
+					{
+						bestModel = model;
+						bestScore = dApprox;
+					}	
+				}
+				
+			} else if(goodnessOfFitTest.toLowerCase().equals("none"))
+			{
+				// assume convergence
+				bestModel = model;
+			} else
+			{
+				throw new IllegalArgumentException("Goodness of fit test '"+goodnessOfFitTest+"' not recognized. ");
 			}
-
 
 			if(dim == 2)
 				write(em.model(), dir, String.format("generation%04d", currentGeneration));

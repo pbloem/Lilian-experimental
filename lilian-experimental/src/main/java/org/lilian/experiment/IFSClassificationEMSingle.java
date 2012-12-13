@@ -173,7 +173,7 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 		emExperiment = new IFSModelEM(
 				trainingData, 0.0, depth, generations, components, 
 				emSampleSize, trainSampleSize, -1, false, "sphere", numSources, true,
-				beamWidth, branchingVariance, spanningPointsVariance);
+				beamWidth, branchingVariance, spanningPointsVariance, "hausdorff");
 			
 	}
 	
