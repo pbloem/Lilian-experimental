@@ -62,6 +62,7 @@ public class IFSClassificationEM extends AbstractExperiment
 	protected boolean print;
 	protected double spanningPointsVariance; 
 	protected String goodnessOfFitTest;
+	protected boolean deepening;
 	
 	/**
 	 * State information
@@ -102,7 +103,9 @@ public class IFSClassificationEM extends AbstractExperiment
 			@Parameter(name="spanning points variance")
 				double spanningPointsVariance,
 			@Parameter(name="goodness of fit test", description="The method used to select the best model from the iterations of the EM model. Options: hausdorff (Hasudorff distance), likelihood (log likelihood), none (just use last iteration)")
-				String goodnessOfFitTest
+				String goodnessOfFitTest,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening
 	)
 	{	
 		Pair<Classified<Point>, Classified<Point>> split = Classification.split(data, testRatio);
@@ -127,6 +130,8 @@ public class IFSClassificationEM extends AbstractExperiment
 		
 		this.spanningPointsVariance = spanningPointsVariance;
 		this.goodnessOfFitTest = goodnessOfFitTest;
+		
+		this.deepening = deepening;
 	}
 	
 	public void setup()
@@ -156,7 +161,8 @@ public class IFSClassificationEM extends AbstractExperiment
 			IFSModelEM em = new IFSModelEM(
 					points, 0.0, depth, generations, components, emSampleSize,
 					trainSampleSize, -1, false, "sphere", numSources, true,
-					beamWidth, branchingVariance, spanningPointsVariance, goodnessOfFitTest);
+					beamWidth, branchingVariance, spanningPointsVariance, 
+					goodnessOfFitTest, deepening);
 			
 			emExperiments.add(em);
 		}

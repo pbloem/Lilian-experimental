@@ -39,6 +39,7 @@ public class IFSDimension extends AbstractExperiment
 	private int dimensionSample;
 	private int bootstraps;
 	private double spanningPointsVariance;
+	protected boolean deepening;
 	
 	public @State double modelDimension;
 	public @State double modelDimUncertainty;
@@ -56,7 +57,9 @@ public class IFSDimension extends AbstractExperiment
 			@Parameter(name="data", description="") List<Point> data,
 			@Parameter(name="dimension sample size", description="") int dimensionSample,
 			@Parameter(name="bootstraps", description="") int bootstraps,
-			@Parameter(name="spanning points variance") double spanningPointsVariance)
+			@Parameter(name="spanning points variance") double spanningPointsVariance,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening)
 	{
 		this.generations = generations;
 		this.depth = depth;
@@ -67,6 +70,7 @@ public class IFSDimension extends AbstractExperiment
 		this.dimensionSample = dimensionSample;
 		this.bootstraps = bootstraps;
 		this.spanningPointsVariance = spanningPointsVariance;
+		this.deepening = deepening;
 	}
 
 	@Override
@@ -84,7 +88,8 @@ public class IFSDimension extends AbstractExperiment
 	{	
 		IFSModelEM em = new IFSModelEM(
 				data, 0.0, depth, generations, components, emSampleSize, 
-				trainSampleSize, -1, false, "sphere", spanningPointsVariance, "hausdorff");
+				trainSampleSize, -1, false, "sphere", spanningPointsVariance, 
+				"hausdorff", deepening);
 				
 				
 		Environment.current().child(em);

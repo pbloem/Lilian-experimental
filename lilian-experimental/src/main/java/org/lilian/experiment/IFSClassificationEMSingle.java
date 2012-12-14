@@ -63,6 +63,7 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 	protected int beamWidth;
 	protected double branchingVariance;
 	protected double spanningPointsVariance;
+	protected boolean deepening;
 	
 	/**
 	 * State information
@@ -103,7 +104,9 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 			@Parameter(name="beam width")
 				int beamWidth,
 			@Parameter(name="spanning points variance")
-				double spanningPointsVariance
+				double spanningPointsVariance,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening
 			
 	)
 	{	
@@ -129,6 +132,7 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 		this.beamWidth = beamWidth;
 		
 		this.spanningPointsVariance = spanningPointsVariance;
+		this.deepening = deepening;
 	}
 	
 	@Override
@@ -172,8 +176,9 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 
 		emExperiment = new IFSModelEM(
 				trainingData, 0.0, depth, generations, components, 
-				emSampleSize, trainSampleSize, -1, false, "sphere", numSources, true,
-				beamWidth, branchingVariance, spanningPointsVariance, "hausdorff");
+				emSampleSize, trainSampleSize, -1, false, "sphere", numSources, 
+				true, beamWidth, branchingVariance, spanningPointsVariance, 
+				"likelihood", deepening);
 			
 	}
 	

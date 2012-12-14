@@ -25,6 +25,7 @@ public class IFSDimMulti extends AbstractExperiment
 	private int dimensionSample;
 	private int bootstraps;
 	private double spanningPointsVariance;
+	private boolean deepening;
 	
 	public @State List<IFSDimension> results = new ArrayList<IFSDimension>(); 
 	
@@ -37,7 +38,9 @@ public class IFSDimMulti extends AbstractExperiment
 			@Parameter(name="datasets", description="") List<String> datasets,
 			@Parameter(name="dimension sample size", description="") int dimensionSample,
 			@Parameter(name="bootstraps", description="") int bootstraps,
-			@Parameter(name="spanning points variance") double spanningPointsVariance)
+			@Parameter(name="spanning points variance") double spanningPointsVariance,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening)
 	{
 		super();
 		this.generations = generations;
@@ -49,6 +52,7 @@ public class IFSDimMulti extends AbstractExperiment
 		this.dimensionSample = dimensionSample;
 		this.bootstraps = bootstraps;
 		this.spanningPointsVariance = spanningPointsVariance;
+		this.deepening = deepening;
 	}	
 
 	@Override
@@ -79,7 +83,8 @@ public class IFSDimMulti extends AbstractExperiment
 							new IFSDimension(
 									generations, depth, comp, distSampleSize, 
 									testSampleSize, dataPoints, dimensionSample, 
-									bootstraps, spanningPointsVariance);
+									bootstraps, spanningPointsVariance, 
+									deepening);
 					
 					results.add(experiment);
 					

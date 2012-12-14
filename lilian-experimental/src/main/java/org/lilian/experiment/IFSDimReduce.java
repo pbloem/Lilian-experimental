@@ -33,6 +33,7 @@ public class IFSDimReduce extends AbstractExperiment
 	private int learnSampleSize;
 	private int evaluationSampleSize;
 	private double spanningPointsVariance;
+	private boolean deepening;
 	
 	public Classified<Point> reducedPCA;
 	public Classified<Point> reducedIFS;
@@ -45,7 +46,9 @@ public class IFSDimReduce extends AbstractExperiment
 			@Parameter(name="learning sample size", description="") int learnSampleSize,
 			@Parameter(name="evaluation sample size", description="") int evaluationSampleSize,
 			@Parameter(name="data sample", description="use a subsample of the data") int dataSample,
-			@Parameter(name="spanning points variance") double spanningPointsVariance)
+			@Parameter(name="spanning points variance") double spanningPointsVariance,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+			boolean deepening)
 	{
 		this.data = Classification.sample(data, dataSample);
 		this.generations = generations;
@@ -54,6 +57,7 @@ public class IFSDimReduce extends AbstractExperiment
 		this.learnSampleSize = learnSampleSize;
 		this.evaluationSampleSize = evaluationSampleSize;
 		this.spanningPointsVariance = spanningPointsVariance;
+		this.deepening = deepening;
 	}
 	
 	public IFSDimReduce(
@@ -63,7 +67,9 @@ public class IFSDimReduce extends AbstractExperiment
 			@Parameter(name="coding depth", description="") int codingDepth, 
 			@Parameter(name="learning sample size", description="") int learnSampleSize,
 			@Parameter(name="evaluation sample size", description="") int evaluationSampleSize,
-			@Parameter(name="spanning points variance") double spanningPointsVariance)
+			@Parameter(name="spanning points variance") double spanningPointsVariance,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+			boolean deepening)
 	{
 		this.data = data;
 		this.generations = generations;
@@ -72,6 +78,7 @@ public class IFSDimReduce extends AbstractExperiment
 		this.learnSampleSize = learnSampleSize;
 		this.evaluationSampleSize = evaluationSampleSize;
 		this.spanningPointsVariance = spanningPointsVariance;
+		this.deepening = deepening;
 	}
 
 	@Override
@@ -94,7 +101,8 @@ public class IFSDimReduce extends AbstractExperiment
 		
 		IFSModelEM emExperiment = new IFSModelEM(
 				data, 0.0, learningDepth, generations, 4, learnSampleSize, 
-				evaluationSampleSize, -1, false, "sphere", spanningPointsVariance, "hausdorff"); 
+				evaluationSampleSize, -1, false, "sphere", 
+				spanningPointsVariance, "likelihood", deepening); 
 				
 		Environment.current().child(emExperiment);
 		

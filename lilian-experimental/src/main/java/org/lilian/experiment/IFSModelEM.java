@@ -67,6 +67,7 @@ public class IFSModelEM extends AbstractExperiment
 	protected int beamWidth;
 	protected double spanningPointsVariance;
 	protected String goodnessOfFitTest;
+	protected boolean deepening;
 	
 	/**
 	 * State information
@@ -111,10 +112,12 @@ public class IFSModelEM extends AbstractExperiment
 			@Parameter(name="spanning points variance", description="When multiple points per code are found, we use point sampled from a basic MVN with this distribution to describe the from and to set.")
 				double spanningPointsVariance,
 			@Parameter(name="goodness of fit test", description="The method used to select the best model from the iterations of the EM model. Options: hausdorff (Hasudorff distance), likelihood (log likelihood), none (just use last iteration)")
-				String goodnessOfFitTest
+				String goodnessOfFitTest,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening
 			)
 	{
-		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, 1, true, spanningPointsVariance, goodnessOfFitTest);
+		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, 1, true, spanningPointsVariance, goodnessOfFitTest, deepening);
 	}
 	
 	public IFSModelEM(
@@ -149,10 +152,12 @@ public class IFSModelEM extends AbstractExperiment
 			@Parameter(name="spanning points variance", description="When multiple points per code are found, we use point sampled from a basic MVN with this distribution to describe the from and to set.")
 				double spanningPointsVariance,
 			@Parameter(name="goodness of fit test", description="The method used to select the best model from the iterations of the EM model. Options: hausdorff (Hasudorff distance), likelihood (log likelihood), none (just use last iteration)")
-				String goodnessOfFitTest
+				String goodnessOfFitTest,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening
 			)
 	{
-		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, numSources, centerData, spanningPointsVariance, goodnessOfFitTest);
+		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, numSources, centerData, spanningPointsVariance, goodnessOfFitTest, deepening);
 		
 		branching = beamWidth > 0;
 	
@@ -188,7 +193,9 @@ public class IFSModelEM extends AbstractExperiment
 			@Parameter(name="spanning points variance", description="When multiple points per code are found, we use point sampled from a basic MVN with this distribution to describe the from and to set.")
 				double spanningPointsVariance,
 			@Parameter(name="goodness of fit test", description="The method used to select the best model from the iterations of the EM model. Options: hausdorff (Hasudorff distance), likelihood (log likelihood), none (just use last iteration)")
-				String goodnessOfFitTest
+				String goodnessOfFitTest,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening
 			)
 	{
 	
@@ -226,6 +233,8 @@ public class IFSModelEM extends AbstractExperiment
 		
 		this.spanningPointsVariance = spanningPointsVariance;
 		this.goodnessOfFitTest = goodnessOfFitTest;
+		
+		this.deepening = deepening;
 	}	
 	
 	public void setup()
@@ -396,10 +405,12 @@ public class IFSModelEM extends AbstractExperiment
 			// * save the current state of the experiment
 			save();
 						
-			currentGeneration++;
-
-			em.iterate(emSampleSize, depth);
-
+			int d = deepening ? 
+					(int) Math.floor(depth * (currentGeneration/(double)generations)) + 1 :
+					depth;
+			em.iterate(emSampleSize, d);
+			
+			currentGeneration++;	
 		}
 		
 		if(testData.size() > 0)
