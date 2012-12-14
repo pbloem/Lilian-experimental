@@ -232,11 +232,12 @@ public class IFSClassificationEM extends AbstractExperiment
 				ImageIO.write(image, "PNG", new File(dir, name + ".png") );
 			}
 			
-			List<Point> points = new ArrayList<Point>();
+			int pts = 1000000;
+			List<Point> points = new ArrayList<Point>(pts + 100);
 			for(int i : Series.series(ifs.size()))
 				points.addAll(
 					ifs.preMap(i).inverse().map(
-						ifs.model(i).generator(depth, bases.get(i)).generate(1000000)
+						ifs.model(i).generator(depth, bases.get(i)).generate((int)(pts * ifs.prior(i)))
 					)
 				);
 
