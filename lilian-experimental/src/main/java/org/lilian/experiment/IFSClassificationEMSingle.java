@@ -30,6 +30,7 @@ import org.lilian.data.real.fractal.IFSClassifierBasic;
 import org.lilian.data.real.fractal.IFSClassifierSingle;
 import org.lilian.data.real.fractal.IFSTarget;
 import org.lilian.data.real.fractal.IFSs;
+import org.lilian.data.real.fractal.SpatialIndexClassifier;
 import org.lilian.search.Builder;
 import org.lilian.search.Parametrizable;
 import org.lilian.search.evo.ES;
@@ -69,7 +70,7 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 	 * State information
 	 */
 	public @State IFSModelEM emExperiment;
-	public @State double score;
+	public @State double score, compScore;
 	public @State List<Generator<Point>> bases = new ArrayList<Generator<Point>>();
 	
 	private double bestDistance = Double.MAX_VALUE;
@@ -146,6 +147,8 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 			
 		IFSClassifierSingle ic = new IFSClassifierSingle(ifs, depth, smooth, map, classes);
 		
+		SpatialIndexClassifier comp = new SpatialIndexClassifier(depth, smooth, map, classes);
+		
 		logger.info("Model finished. Training code tree.");
 		ic.train(trainingData);
 		
@@ -154,6 +157,14 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 		logger.info("Calculating score");
 		
 		score = Classification.symmetricError(ic, testData);
+		
+		logger.info("Training code tree for SpatialIndexClassifier.");
+		comp.train(trainingData);
+				
+		logger.info("Calculating score for SpatialIndexClassifier");
+		
+		compScore = Classification.symmetricError(comp, testData);
+		
 	}
 	
 	public void setup()
@@ -186,6 +197,12 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 	public double score()
 	{
 		return score;
+	}
+	
+	@Result(name = "Symmetric error (SpatialIndexClassifier)")
+	public double scoreSIC()
+	{
+		return compScore;
 	}
 
 	@Result(name = "Best distance")

@@ -68,6 +68,7 @@ public class IFSModelEM extends AbstractExperiment
 	protected double spanningPointsVariance;
 	protected String goodnessOfFitTest;
 	protected boolean deepening;
+	protected int previousDepth = -1;
 	
 	/**
 	 * State information
@@ -367,6 +368,9 @@ public class IFSModelEM extends AbstractExperiment
 					dApprox += Math.log(result.approximation());
 				}
 				
+				logger.info("score: " + d + " approx:" + dApprox + "using approx: " + usingApproximation);
+				scores.add(d);
+				
 				if(usingApproximation)
 				{ 
 					if(d > Double.NEGATIVE_INFINITY) // first model with non-zero prob
@@ -384,7 +388,7 @@ public class IFSModelEM extends AbstractExperiment
 					if (d > bestScore)
 					{
 						bestModel = model;
-						bestScore = dApprox;
+						bestScore = d;
 					}	
 				}
 				
@@ -404,12 +408,19 @@ public class IFSModelEM extends AbstractExperiment
 			
 			// * save the current state of the experiment
 			save();
-						
+			
+			
 			int d = deepening ? 
 					(int) Math.floor(depth * (currentGeneration/(double)generations)) + 1 :
 					depth;
-			em.iterate(emSampleSize, d);
 			
+			// * revert to best model when increasing depth
+			if(d != previousDepth && model != null)
+				em.setModel(bestModel);
+			previousDepth = d;
+			
+			em.iterate(emSampleSize, d);
+						
 			currentGeneration++;	
 		}
 		
