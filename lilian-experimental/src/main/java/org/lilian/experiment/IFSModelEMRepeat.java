@@ -45,6 +45,8 @@ public class IFSModelEMRepeat extends AbstractExperiment
 	 */
 	public @State int bestIndex;
 	public @State IFSModelEM best;
+	public @State List<Double> scores = new ArrayList<Double>();
+	public @State boolean usingApproximation = true;
 
 	public IFSModelEMRepeat(
 			@Parameter(name="em-repeats")
@@ -199,12 +201,32 @@ public class IFSModelEMRepeat extends AbstractExperiment
 			Environment.current().child(exp);
 			
 			double score = exp.bestScore();
+			scores.add(score);
+			
 			if(gof.equals("likelihood"))
 			{
-				if(score >= bestScore)
+				if(usingApproximation)
 				{
-					best = exp;
-					bestIndex = i;
+					if(exp.usingApproximateLikelihood())
+					{
+						best = exp;
+						bestIndex = i;
+						bestScore = score;		
+					} else
+					{
+						usingApproximation = false;
+						best = exp;
+						bestIndex = i;
+						bestScore = score;
+					}
+				} else
+				{
+					if(score >= bestScore && ! exp.usingApproximateLikelihood())
+					{
+						best = exp;
+						bestIndex = i;
+						bestScore = score;
+					}
 				}
 			} else
 			{
@@ -212,6 +234,7 @@ public class IFSModelEMRepeat extends AbstractExperiment
 				{
 					best = exp;
 					bestIndex = i;
+					bestScore = score;
 				}
 			}
 		}
@@ -226,6 +249,12 @@ public class IFSModelEMRepeat extends AbstractExperiment
 	public int bestIndex()
 	{
 		return bestIndex;
+	}
+	
+	@Result(name="scores")
+	public List<Double> scores()
+	{
+		return scores;
 	}
 
 }

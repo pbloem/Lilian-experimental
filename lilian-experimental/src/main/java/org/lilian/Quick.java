@@ -26,6 +26,8 @@ import org.lilian.data.real.PCAIterative;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.classification.Classification;
 import org.lilian.data.real.classification.Classified;
+import org.lilian.data.real.classification.Classifiers;
+import org.lilian.data.real.fractal.IFSClassifierBasic;
 import org.lilian.experiment.Resources;
 import org.lilian.util.Series;
 
@@ -38,11 +40,11 @@ public class Quick
 	 */
 	public static void main(String[] args) throws IOException
 	{
-		List<Point> data = Generators.logistic().generate(1000000);
-		
-		Set<Point> set = new HashSet<Point>(data);
-		Global.log().info("Uniquification retained " + (set.size()) + " points out of " + data.size());
-		data = new ArrayList<Point>(set);
+//		List<Point> data = Generators.logistic().generate(1000000);
+//		
+//		Set<Point> set = new HashSet<Point>(data);
+//		Global.log().info("Uniquification retained " + (set.size()) + " points out of " + data.size());
+//		data = new ArrayList<Point>(set);
 		
 		// for(Point p : data)
 		//	System.out.println(p);
@@ -75,6 +77,13 @@ public class Quick
 //		
 //		BufferedImage image = Draw.draw(gen, 1000000000, 1000, false);
 //		ImageIO.write(image, "PNG", new File("/Users/Peter/Desktop/quicktest.png"));
+		
+		IFSClassifierBasic ifsc = IFSClassifierBasic.sierpinski(7);
+		
+		BufferedImage image = Classifiers.draw(ifsc, 320);
+		ImageIO.write(image, "PNG", new File("/Users/Peter/Desktop/quicktest.png"));
+
+		
 	}
 
 }

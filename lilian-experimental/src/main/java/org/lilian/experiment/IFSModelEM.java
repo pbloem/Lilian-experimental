@@ -483,6 +483,11 @@ public class IFSModelEM extends AbstractExperiment
 		return basis;
 	}
 	
+	public boolean usingApproximateLikelihood()
+	{
+		return usingApproximation;
+	}
+	
 	@Result(name="best generation")
 	public int bestGeneration()
 	{
