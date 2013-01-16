@@ -65,11 +65,13 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 	protected double branchingVariance;
 	protected double spanningPointsVariance;
 	protected boolean deepening;
+	protected String gofTest;
+	protected int repeats;
 	
 	/**
 	 * State information
 	 */
-	public @State IFSModelEM emExperiment;
+	public @State IFSModelEMRepeat emExperiment;
 	public @State double score, compScore;
 	public @State List<Generator<Point>> bases = new ArrayList<Generator<Point>>();
 	
@@ -106,10 +108,12 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 				int beamWidth,
 			@Parameter(name="spanning points variance")
 				double spanningPointsVariance,
+			@Parameter(name="goodness of fit test")
+				String gofTest,
 			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
-				boolean deepening
-			
-	)
+				boolean deepening,
+			@Parameter(name="em repeats")
+				int repeats)
 	{	
 		Pair<Classified<Point>, Classified<Point>> split = Classification.split(data, testRatio);
 		this.trainingData = split.second();
@@ -133,7 +137,9 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 		this.beamWidth = beamWidth;
 		
 		this.spanningPointsVariance = spanningPointsVariance;
+		this.gofTest = gofTest;
 		this.deepening = deepening;
+		this.repeats = repeats;
 	}
 	
 	@Override
@@ -142,8 +148,8 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 		Environment.current().child(emExperiment);
 
 		// * Construct a model
-		IFS<Similitude> ifs = emExperiment.bestModel();
-		AffineMap map = emExperiment.map();
+		IFS<Similitude> ifs = emExperiment.best().bestModel();
+		AffineMap map = emExperiment.best().map();
 			
 		IFSClassifierSingle ic = new IFSClassifierSingle(ifs, depth, smooth, map, classes);
 		
@@ -185,11 +191,11 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 			logger.warning("Failed to write dataset. " + e.toString() + " " + Arrays.toString(e.getStackTrace()));
 		}	
 
-		emExperiment = new IFSModelEM(
-				trainingData, 0.0, depth, generations, components, 
+		emExperiment = new IFSModelEMRepeat(
+				repeats, trainingData, 0.0, depth, generations, components, 
 				emSampleSize, trainSampleSize, -1, false, "sphere", numSources, 
 				true, beamWidth, branchingVariance, spanningPointsVariance, 
-				"likelihood", deepening);
+				gofTest, deepening);
 			
 	}
 	
