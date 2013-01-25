@@ -34,6 +34,8 @@ import org.lilian.data.real.fractal.random.ChoiceTree;
 import org.lilian.data.real.fractal.random.DiscreteRIFS;
 import org.lilian.data.real.fractal.random.RIFSs;
 import org.lilian.experiment.Resources;
+import org.lilian.graphs.Graph;
+import org.lilian.graphs.data.GML;
 import org.lilian.util.Series;
 
 public class Quick
@@ -45,24 +47,43 @@ public class Quick
 	 */
 	public static void main(String[] args) throws IOException
 	{
+		File file = new File("/Users/Peter/Documents/datasets/graphs/commit/commit.gml");
 		
+		Graph<String> graph = GML.read(file);
+		
+		System.out.println(graph.size());
+		System.out.println(graph.numLinks());
+		
+//		DiscreteRIFS<Similitude> model = RIFSs.koch2UpDown();
+//		ChoiceTree tree = model.randomInstance(8);
+//		
+//		BufferedImage image = Draw.draw(model.generator(tree).generate(1000000), 200, false);
+//		ImageIO.write(image, "PNG", new File("/Users/Peter/Desktop/quicktest-points.png"));
+//		
+//		image = Draw.drawDensities(model, tree, new double[]{-1.0, 1.0}, new double[]{-1.0, 1.0}, 200, false);
+//		ImageIO.write(image, "PNG", new File("/Users/Peter/Desktop/quicktest-densities.png"));
+//
+//		image = Draw.drawDensities(model, tree, new double[]{-1.0, 1.0}, new double[]{-1.0, 1.0}, 200, true);
+//		ImageIO.write(image, "PNG", new File("/Users/Peter/Desktop/quicktest-aprox.png"));
+//		
+//		
 //		BufferedImage image = Draw.draw(RIFSs.koch2UpDownOff().meanInstance(1000000, 12), 1000, true);
 //		ImageIO.write(image, "PNG", new File("/Users/Peter/Desktop/quicktest.png"));
 		
-		int n = 100;
-		for(int i : Series.series(n))
-		{
-			List<Point> data = new ArrayList<Point>();
-			
-			for(int j : Series.series(200))
-			{
-				DiscreteRIFS<Similitude> model = RIFSs.koch2UpDownOff(i/(n - 1.0));
-				
-				data.addAll(model.generator(model.randomInstance(12)).generate(1000));
-			}
-			BufferedImage image = Draw.draw(data, 1000, true);
-			ImageIO.write(image, "PNG", new File(String.format("/Users/Peter/Desktop/quicktest%03d.png", i)));
-		}
+//		int n = 100;
+//		for(int i : Series.series(n))
+//		{
+//			List<Point> data = new ArrayList<Point>();
+//			
+//			for(int j : Series.series(200))
+//			{
+//				DiscreteRIFS<Similitude> model = RIFSs.koch2UpDownOff(i/(n - 1.0));
+//				
+//				data.addAll(model.generator(model.randomInstance(12)).generate(1000));
+//			}
+//			BufferedImage image = Draw.draw(data, 1000, true);
+//			ImageIO.write(image, "PNG", new File(String.format("/Users/Peter/Desktop/quicktest%03d.png", i)));
+//		}
 
 		
 //		List<Point> data = Generators.logistic().generate(1000000);

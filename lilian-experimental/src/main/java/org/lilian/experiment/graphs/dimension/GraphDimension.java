@@ -10,7 +10,7 @@ import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Environment;
 import org.lilian.experiment.Parameter;
 import org.lilian.experiment.Result;
-import org.lilian.experiment.graphs.GraphMeasures;
+import org.lilian.experiment.old.GraphMeasures;
 import org.lilian.util.Series;
 import org.lilian.util.graphs.jung.Boxing;
 import org.lilian.util.graphs.jung.BoxingAlgorithm;

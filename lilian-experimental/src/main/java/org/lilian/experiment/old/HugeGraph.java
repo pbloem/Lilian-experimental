@@ -1,12 +1,15 @@
-package org.lilian.experiment.graphs;
+package org.lilian.experiment.old;
 
+import java.util.Map;
 
 import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
-import org.lilian.graphs.Graph;
-import org.lilian.graphs.Measures;
-import org.lilian.graphs.Node;
+import org.lilian.util.graphs.jung.Measures;
+
+import edu.uci.ics.jung.algorithms.metrics.Metrics;
+import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.graph.UndirectedGraph;
 
 /**
  * Graphs measures that will work on huge graphs. Generally, these are linear in 
@@ -15,9 +18,9 @@ import org.lilian.graphs.Node;
  * @author Peter
  *
  */
-public class HugeGraph<N> extends AbstractExperiment
+public class HugeGraph<V, E> extends AbstractExperiment
 {
-	protected Graph<N> graph;
+	protected Graph<V, E> graph;
 
 	public @State double meanDegree;
 	public @State double stdDegree;
@@ -25,7 +28,7 @@ public class HugeGraph<N> extends AbstractExperiment
 	public @State double assortativity = Double.NaN;
 	public @State double meanLocalClusteringCoefficient = Double.NaN;
 	
-	public HugeGraph(Graph<N> graph)
+	public HugeGraph(Graph<V, E> graph)
 	{
 		this.graph = graph;
 	}
@@ -41,25 +44,25 @@ public class HugeGraph<N> extends AbstractExperiment
 	{
 		// * Calculate mean degree
 		meanDegree = 0.0;
-		for(Node<N> node : graph.nodes())
-			meanDegree += node.degree();
-		meanDegree /= graph.size();
+		for(V node : graph.getVertices())
+			meanDegree += graph.degree(node);
+		meanDegree /= graph.getVertexCount();
 		
 		// * Calculate degree std
 		double varSum = 0.0;
-		for(Node<N> node : graph.nodes())
+		for(V node : graph.getVertices())
 		{
-			double v = node.degree();
+			double v = graph.degree(node);
 			
 			double diff = meanDegree - v;
 			varSum += diff * diff;
 		}
 
-		double variance = varSum/(graph.size() - 1);
+		double variance = varSum/(graph.getVertexCount() - 1);
 		stdDegree = Math.sqrt(variance);
 		
 		logger.info("Calculating assortativity");
-		assortativity = Measures.assortativity(graph);
+//		assortativity = Measures.assortativity(graph);
 		logger.info("finished");
 		
 //		logger.info("Calculating mean local clustering coefficient");
@@ -85,13 +88,13 @@ public class HugeGraph<N> extends AbstractExperiment
 	@Result(name="Number of nodes (vertices)")
 	public int numNodes()
 	{
-		return graph.size();
+		return graph.getVertexCount();
 	}
 	
 	@Result(name="Number of links (edges)")
 	public int numLinks()
 	{
-		return graph.numLinks();
+		return graph.getEdgeCount();
 	}
 	
 	@Result(name="Assortivity")

@@ -1,15 +1,15 @@
-package org.lilian.experiment.graphs;
+package org.lilian.experiment.old;
 
 import edu.uci.ics.jung.graph.Graph;
 
-public class LargeDirectedGraph<V, E> extends HugeDirectedGraph<V, E>
+public class SmallDirectedGraph<V, E> extends LargeDirectedGraph<V, E>
 {
 
-	public LargeDirectedGraph(Graph<V, E> graph)
+	public SmallDirectedGraph(Graph<V, E> graph)
 	{
 		super(graph);
 	}
-	
+
 	@Override
 	protected void setup()
 	{
@@ -20,5 +20,5 @@ public class LargeDirectedGraph<V, E> extends HugeDirectedGraph<V, E>
 	protected void body()
 	{
 		super.body();
-	}
+	}	
 }
