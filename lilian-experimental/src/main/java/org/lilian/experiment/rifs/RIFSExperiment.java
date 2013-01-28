@@ -20,8 +20,8 @@ import org.lilian.util.Series;
 
 public class RIFSExperiment extends AbstractExperiment
 {
-	private static int M = 100;
-	private static int N = 100000;
+	private static int M = 50;
+	private static int N = 1000;
 	private static int DEPTH = 3;
 	private static int RES = 500;
 	private static int NUM_RANDOM = 3;
@@ -46,7 +46,7 @@ public class RIFSExperiment extends AbstractExperiment
 	@Override
 	protected void setup()
 	{
-		em = new RIFSEM(TARGET, data, DEPTH, 1000, 0.1, 0.3);
+		em = new RIFSEM(TARGET, data, DEPTH, 500, 0.01, 0.3);
 		
 		genDir = new File(dir, "generations/");
 		genDir.mkdirs();
@@ -58,8 +58,7 @@ public class RIFSExperiment extends AbstractExperiment
 		for(int i : Series.series(generations))
 		{
 			logger.info("Starting generation " + i);
-			
-			em.iteration();
+
 			
 			BufferedImage image = RIFSs.draw(em.model(), RES, NUM_RANDOM);
 			try {
@@ -67,6 +66,8 @@ public class RIFSExperiment extends AbstractExperiment
 				ImageIO.write(image, "PNG", new File(genDir, String.format("%04d.png", i)));
 				
 			} catch (IOException e) { throw new RuntimeException(e); }
+			
+			em.iteration();	
 		}
 	}
 
