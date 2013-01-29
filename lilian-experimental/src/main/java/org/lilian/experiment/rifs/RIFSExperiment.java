@@ -21,9 +21,9 @@ import org.lilian.util.Series;
 public class RIFSExperiment extends AbstractExperiment
 {
 	private static int M = 50;
-	private static int N = 1000;
-	private static int DEPTH = 3;
-	private static int RES = 500;
+	private static int N = 100000;
+	private static int DEPTH = 8;
+	private static int RES = 200;
 	private static int NUM_RANDOM = 3;
 	
 	private int generations = 100;
@@ -46,7 +46,9 @@ public class RIFSExperiment extends AbstractExperiment
 	@Override
 	protected void setup()
 	{
-		em = new RIFSEM(TARGET, data, DEPTH, 500, 0.01, 0.3);
+		// DiscreteRIFS<Similitude> initial = RIFSs.initialSphere(2, 2, 2, 1.0, 0.33);
+		DiscreteRIFS<Similitude> initial = TARGET;
+		em = new RIFSEM(initial, data, DEPTH, 1024, 0.0001, 0.3);
 		
 		genDir = new File(dir, "generations/");
 		genDir.mkdirs();
@@ -58,7 +60,6 @@ public class RIFSExperiment extends AbstractExperiment
 		for(int i : Series.series(generations))
 		{
 			logger.info("Starting generation " + i);
-
 			
 			BufferedImage image = RIFSs.draw(em.model(), RES, NUM_RANDOM);
 			try {
