@@ -27,10 +27,10 @@ public class RIFSExperiment extends AbstractExperiment
 	//   successfully induced from a random initial model. (in less than 
 	//   five generations)
 	
-	private static int M = 100;
+	private static int M = 5;
 	private static int N = 10000;
-	private static int N_SAMPLE = 128;
-	private static int DEPTH = 6;
+	private static int N_SAMPLE = 1024;
+	private static int DEPTH = 10;
 	private static int RES = 200;
 	private static int NUM_RANDOM = 3;
 	
