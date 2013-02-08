@@ -27,16 +27,16 @@ public class RIFSExperiment extends AbstractExperiment
 	//   successfully induced from a random initial model. (in less than 
 	//   five generations)
 	
-	private static int M = 5;
+	private static int M = 50;
 	private static int N = 10000;
-	private static int N_SAMPLE = 1024;
-	private static int DEPTH = 10;
+	private static int N_SAMPLE = 128;
+	private static int DEPTH = 4;
 	private static int RES = 200;
 	private static int NUM_RANDOM = 3;
 	
 	private int generations = 100;
 	
-	private static DiscreteRIFS<Similitude> TARGET = RIFSs.cantor(); 
+	private static DiscreteRIFS<Similitude> TARGET = RIFSs.koch2UpDown(); 
 	
 	private List<List<Point>> data = new ArrayList<List<Point>>(M);
 	private List<ChoiceTree> dataTrees = new ArrayList<ChoiceTree>(M);
@@ -60,10 +60,10 @@ public class RIFSExperiment extends AbstractExperiment
 	@Override
 	protected void setup()
 	{
-		// DiscreteRIFS<Similitude> initial = RIFSs.initialSphere(2, 2, 2, 1.0, 0.33);
-		DiscreteRIFS<Similitude> initial = TARGET;
+		DiscreteRIFS<Similitude> initial = RIFSs.initialSphere(2, 2, 2, 1.0, 0.33);
+		// DiscreteRIFS<Similitude> initial = TARGET;
 	
-		em = new RIFSEM(initial, data, DEPTH, N_SAMPLE, 0.00001, 0.3);
+		em = new RIFSEM(initial, data, DEPTH, N_SAMPLE, 0.001, 0.3);
 		
 		genDir = new File(dir, "generations/");
 		genDir.mkdirs();
