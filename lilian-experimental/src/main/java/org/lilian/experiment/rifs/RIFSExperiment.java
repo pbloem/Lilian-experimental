@@ -9,6 +9,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import org.lilian.Global;
+import org.lilian.data.real.Draw;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
 import org.lilian.data.real.fractal.random.ChoiceTree;
@@ -16,6 +17,7 @@ import org.lilian.data.real.fractal.random.DiscreteRIFS;
 import org.lilian.data.real.fractal.random.RIFSEM;
 import org.lilian.data.real.fractal.random.RIFSs;
 import org.lilian.experiment.AbstractExperiment;
+import org.lilian.experiment.Parameter;
 import org.lilian.experiment.State;
 import org.lilian.util.Series;
 
@@ -27,43 +29,79 @@ public class RIFSExperiment extends AbstractExperiment
 	//   successfully induced from a random initial model. (in less than 
 	//   five generations)
 	
-	private static int M = 50;
-	private static int N = 10000;
-	private static int N_SAMPLE = 128;
-	private static int DEPTH = 4;
 	private static int RES = 200;
 	private static int NUM_RANDOM = 3;
-	
-	private int generations = 100;
-	
-	private static DiscreteRIFS<Similitude> TARGET = RIFSs.koch2UpDown(); 
-	
-	private List<List<Point>> data = new ArrayList<List<Point>>(M);
-	private List<ChoiceTree> dataTrees = new ArrayList<ChoiceTree>(M);
+		
+	private List<List<Point>> data;
+	private int sample;
+	private int depth;
+	private int generations;
+	private double spanningPointsVariance;
+	private double perturbVar;
+	private int componentIFSs;
+	private int mapsPerComponent;
 	
 	private File genDir;
 	
 	@State
 	public RIFSEM em; 
 	
-	public RIFSExperiment()
+	public RIFSExperiment(
+			@Parameter(name="data") 	
+				List<List<Point>> data,
+			@Parameter(name="sample") 	
+				int sample,
+			@Parameter(name="depth") 	
+				int depth,
+			@Parameter(name="generations")
+				int generations,
+			@Parameter(name="spanning points variance")
+				double spanningPointsVariance,
+			@Parameter(name="perturb var")
+				double perturbVar,
+			@Parameter(name="component IFSs")
+				int componentIFSs,
+			@Parameter(name="maps per component")
+				int mapsPerComponent
+	)
 	{
-		
-		for(int i : Series.series(M))
-		{
-			ChoiceTree tree = ChoiceTree.random(TARGET, DEPTH);
-			dataTrees.add(tree);
-			data.add(TARGET.generator(tree).generate(N));
-		}
+		this.data = data;
+		this.depth = depth;
+		this.sample = sample;
+		this.generations = generations;
+		this.spanningPointsVariance = spanningPointsVariance;
+		this.perturbVar = perturbVar;
+		this.componentIFSs = componentIFSs;
+		this.mapsPerComponent = mapsPerComponent;
 	}
 	
 	@Override
 	protected void setup()
 	{
-		DiscreteRIFS<Similitude> initial = RIFSs.initialSphere(2, 2, 2, 1.0, 0.33);
-		// DiscreteRIFS<Similitude> initial = TARGET;
+		
+		// * Draw the data
+		File dataDir = new File(dir, "data/");
+		dataDir.mkdirs();
+		
+		for(int i :Series.series( data.size()))
+		{
+			BufferedImage image = Draw.draw(data.get(i), RES, true);
+			try
+			{
+				ImageIO.write(image, "PNG", new File(dataDir, String.format("data%04d.png", i)));
+			} catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}
+		}
+		
+		// * Set up the EM
+		DiscreteRIFS<Similitude> initial = RIFSs.initialSphere(
+				data.get(0).get(0).dimensionality(), 
+				componentIFSs, mapsPerComponent,
+				1.0, 0.33);
 	
-		em = new RIFSEM(initial, data, DEPTH, N_SAMPLE, 0.001, 0.3);
+		em = new RIFSEM(initial, data, depth, sample, spanningPointsVariance, perturbVar);
 		
 		genDir = new File(dir, "generations/");
 		genDir.mkdirs();
