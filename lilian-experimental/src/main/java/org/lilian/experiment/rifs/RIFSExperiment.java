@@ -40,6 +40,7 @@ public class RIFSExperiment extends AbstractExperiment
 	private double perturbVar;
 	private int componentIFSs;
 	private int mapsPerComponent;
+	private int numSources;
 	
 	private File genDir;
 	
@@ -62,7 +63,9 @@ public class RIFSExperiment extends AbstractExperiment
 			@Parameter(name="component IFSs")
 				int componentIFSs,
 			@Parameter(name="maps per component")
-				int mapsPerComponent
+				int mapsPerComponent,
+			@Parameter(name="num sources")
+				int numSources
 	)
 	{
 		this.data = data;
@@ -73,6 +76,7 @@ public class RIFSExperiment extends AbstractExperiment
 		this.perturbVar = perturbVar;
 		this.componentIFSs = componentIFSs;
 		this.mapsPerComponent = mapsPerComponent;
+		this.numSources = numSources;
 	}
 	
 	@Override
@@ -101,7 +105,7 @@ public class RIFSExperiment extends AbstractExperiment
 				componentIFSs, mapsPerComponent,
 				1.0, 0.33);
 	
-		em = new RIFSEM(initial, data, depth, sample, spanningPointsVariance, perturbVar);
+		em = new RIFSEM(initial, data, depth, sample, spanningPointsVariance, perturbVar, numSources);
 		
 		genDir = new File(dir, "generations/");
 		genDir.mkdirs();
