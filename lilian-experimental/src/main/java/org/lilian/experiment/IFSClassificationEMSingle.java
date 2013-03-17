@@ -30,6 +30,7 @@ import org.lilian.data.real.fractal.IFSClassifierBasic;
 import org.lilian.data.real.fractal.IFSClassifierSingle;
 import org.lilian.data.real.fractal.IFSTarget;
 import org.lilian.data.real.fractal.IFSs;
+import org.lilian.data.real.fractal.SpatialIndexClassifier;
 import org.lilian.search.Builder;
 import org.lilian.search.Parametrizable;
 import org.lilian.search.evo.ES;
@@ -63,12 +64,15 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 	protected int beamWidth;
 	protected double branchingVariance;
 	protected double spanningPointsVariance;
+	protected boolean deepening;
+	protected String gofTest;
+	protected int repeats;
 	
 	/**
 	 * State information
 	 */
-	public @State IFSModelEM emExperiment;
-	public @State double score;
+	public @State IFSModelEMRepeat emExperiment;
+	public @State double score, compScore;
 	public @State List<Generator<Point>> bases = new ArrayList<Generator<Point>>();
 	
 	private double bestDistance = Double.MAX_VALUE;
@@ -103,9 +107,13 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 			@Parameter(name="beam width")
 				int beamWidth,
 			@Parameter(name="spanning points variance")
-				double spanningPointsVariance
-			
-	)
+				double spanningPointsVariance,
+			@Parameter(name="goodness of fit test")
+				String gofTest,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening,
+			@Parameter(name="em repeats")
+				int repeats)
 	{	
 		Pair<Classified<Point>, Classified<Point>> split = Classification.split(data, testRatio);
 		this.trainingData = split.second();
@@ -129,6 +137,9 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 		this.beamWidth = beamWidth;
 		
 		this.spanningPointsVariance = spanningPointsVariance;
+		this.gofTest = gofTest;
+		this.deepening = deepening;
+		this.repeats = repeats;
 	}
 	
 	@Override
@@ -137,10 +148,12 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 		Environment.current().child(emExperiment);
 
 		// * Construct a model
-		IFS<Similitude> ifs = emExperiment.bestModel();
-		AffineMap map = emExperiment.map();
+		IFS<Similitude> ifs = emExperiment.best().bestModel();
+		AffineMap map = emExperiment.best().map();
 			
 		IFSClassifierSingle ic = new IFSClassifierSingle(ifs, depth, smooth, map, classes);
+		
+		SpatialIndexClassifier comp = new SpatialIndexClassifier(depth, smooth, map, classes);
 		
 		logger.info("Model finished. Training code tree.");
 		ic.train(trainingData);
@@ -150,6 +163,14 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 		logger.info("Calculating score");
 		
 		score = Classification.symmetricError(ic, testData);
+		
+		logger.info("Training code tree for SpatialIndexClassifier.");
+		comp.train(trainingData);
+				
+		logger.info("Calculating score for SpatialIndexClassifier");
+		
+		compScore = Classification.symmetricError(comp, testData);
+		
 	}
 	
 	public void setup()
@@ -170,10 +191,11 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 			logger.warning("Failed to write dataset. " + e.toString() + " " + Arrays.toString(e.getStackTrace()));
 		}	
 
-		emExperiment = new IFSModelEM(
-				trainingData, 0.0, depth, generations, components, 
-				emSampleSize, trainSampleSize, -1, false, "sphere", numSources, true,
-				beamWidth, branchingVariance, spanningPointsVariance);
+		emExperiment = new IFSModelEMRepeat(
+				repeats, trainingData, 0.0, depth, generations, components, 
+				emSampleSize, trainSampleSize, -1, false, "sphere", numSources, 
+				true, beamWidth, branchingVariance, spanningPointsVariance, 
+				gofTest, deepening);
 			
 	}
 	
@@ -181,6 +203,12 @@ public class IFSClassificationEMSingle extends AbstractExperiment
 	public double score()
 	{
 		return score;
+	}
+	
+	@Result(name = "Symmetric error (SpatialIndexClassifier)")
+	public double scoreSIC()
+	{
+		return compScore;
 	}
 
 	@Result(name = "Best distance")

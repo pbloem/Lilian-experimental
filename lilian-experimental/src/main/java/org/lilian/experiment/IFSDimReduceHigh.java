@@ -33,6 +33,7 @@ public class IFSDimReduceHigh extends AbstractExperiment
 	private int learnSampleSize;
 	private int intDim;
 	private int evaluationSampleSize;
+	private boolean deepening;
 	
 	public Classified<Point> reducedPCA;
 	public Classified<Point> reducedIFS;
@@ -53,7 +54,9 @@ public class IFSDimReduceHigh extends AbstractExperiment
 			@Parameter(name="inter dim", description="Intermediary dimension. The dataset is reduced to this dimension by PCA before the IFS method is applied")
 				int intDim,
 			@Parameter(name="data sample", description="use a subsample of the data") 
-				int dataSample)
+				int dataSample,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening)
 	{
 		this.data = Classification.sample(data, dataSample);
 		this.generations = generations;
@@ -62,6 +65,7 @@ public class IFSDimReduceHigh extends AbstractExperiment
 		this.learnSampleSize = learnSampleSize;
 		this.intDim = intDim;
 		this.evaluationSampleSize = evaluationSampleSize;
+		this.deepening = deepening;
 	}
 	
 	@Override
@@ -87,7 +91,8 @@ public class IFSDimReduceHigh extends AbstractExperiment
 		
 		IFSModelEM emExperiment = new IFSModelEM(
 				data, 0.0, learningDepth, generations, 4, learnSampleSize, 
-				evaluationSampleSize, -1, false, "sphere", 0.01); 
+				evaluationSampleSize, -1, false, "sphere", 0.01, "hausdorff",
+				deepening); 
 				
 		
 		Environment.current().child(emExperiment);

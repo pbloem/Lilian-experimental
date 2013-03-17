@@ -42,14 +42,12 @@ mn = min(xmax, ymax)
 
 ax.plot( [0, mn], [0, mn], color='gray', zorder=0)
 
-y = 1.26
+y = 0.538
 ax.plot( [0, xmax], [y, y], color='gray', zorder=1)
 y = 1.7
 ax.plot( [0, xmax], [y, y], color='gray', zorder=1)
 y = 2.01
 ax.plot( [0, xmax], [y, y], color='gray', zorder=1)
-
-
 
 p.xlim([0, xmax])
 p.ylim([0, ymax])

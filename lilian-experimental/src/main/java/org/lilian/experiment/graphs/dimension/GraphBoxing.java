@@ -15,7 +15,7 @@ import org.lilian.experiment.Factory;
 import org.lilian.experiment.Parameter;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
-import org.lilian.experiment.graphs.GraphMeasures;
+import org.lilian.experiment.old.GraphMeasures;
 import org.lilian.util.graphs.jung.Boxing;
 import org.lilian.util.graphs.jung.CBBBoxer;
 import org.openrdf.rio.RDFFormat;

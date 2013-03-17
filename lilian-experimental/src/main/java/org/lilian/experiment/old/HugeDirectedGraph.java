@@ -1,4 +1,4 @@
-package org.lilian.experiment.graphs;
+package org.lilian.experiment.old;
 
 import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Result;

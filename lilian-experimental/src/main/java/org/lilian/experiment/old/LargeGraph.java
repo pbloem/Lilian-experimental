@@ -1,4 +1,4 @@
-package org.lilian.experiment.graphs;
+package org.lilian.experiment.old;
 
 import static java.util.Collections.reverseOrder;
 
@@ -16,13 +16,15 @@ import org.apache.commons.collections15.Transformer;
 import org.data2semantics.tools.graphs.Graphs;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
-import org.lilian.graphs.Graph;
-import org.lilian.graphs.Node;
 import org.lilian.models.BasicFrequencyModel;
 import org.lilian.util.Functions;
 import org.lilian.util.Series;
 import org.lilian.util.graphs.jung.FloydWarshall;
 
+import edu.uci.ics.jung.algorithms.cluster.WeakComponentClusterer;
+import edu.uci.ics.jung.algorithms.metrics.Metrics;
+import edu.uci.ics.jung.algorithms.shortestpath.DistanceStatistics;
+import edu.uci.ics.jung.graph.Graph;
 
 /**
  * Graph measures for large graphs. These methods are generally a low polynomial 
@@ -33,9 +35,9 @@ import org.lilian.util.graphs.jung.FloydWarshall;
  * @param <V>
  * @param <E>
  */
-public class LargeGraph<N> extends HugeGraph<N>
+public class LargeGraph<V, E> extends HugeGraph<V, E>
 {
-	private static final double PL_ACCURACY = 0.1;
+	private static final double PL_ACCURACY = 0.01;
 	private static final int PL_DATASAMPLE = 1000;
 	
 	public @State double diameter = Double.NaN;	
@@ -48,13 +50,13 @@ public class LargeGraph<N> extends HugeGraph<N>
 	public @State List<Pair> vertexLabelFrequencies;
 	public @State List<Pair> edgeLabelFrequencies;	
 	
-	public @State Graph<N> largestComponent;
+	public @State Graph<V, E> largestComponent;
 
 	private double plExponent;
 	private int plMin;
 	private double plSignificance;
 
-	public LargeGraph(Graph<N> graph)
+	public LargeGraph(Graph<V, E> graph)
 	{
 		super(graph);
 	}
@@ -64,8 +66,8 @@ public class LargeGraph<N> extends HugeGraph<N>
 	{
 		super.setup();
 		
-		pairs = new ArrayList<Pair>(graph.size());	
-		degrees = new ArrayList<Integer>(graph.size());		
+		pairs = new ArrayList<Pair>(graph.getVertexCount());	
+		degrees = new ArrayList<Integer>(graph.getVertexCount());		
 	}
 
 	@Override
@@ -92,7 +94,7 @@ public class LargeGraph<N> extends HugeGraph<N>
 //		largestComponent = Graphs.undirectedSubgraph(graph, largest);
 //		
 //		logger.info("Calculating diameter");
-//		diameter = DistanceStatistics.diameter(graph);	
+//		diameter = DistanceStatistics.diameter(largestComponent);	
 //		
 //		logger.info("Calculating mean distance");
 //		FloydWarshall<V, E> fw = new FloydWarshall<V, E>(largestComponent);
@@ -106,10 +108,15 @@ public class LargeGraph<N> extends HugeGraph<N>
 //			}
 //		
 //		meanDistance /= (double) num;
-				
+//				
+		List<V> verts = new ArrayList<V>(graph.getVertices());
 		// * Collect degrees 
-		for(Node<N> node : graph.nodes())
-			degrees.add(node.degree());
+		for(int i : Series.series(200))
+		{
+			degrees.add(graph.degree(Functions.choose(verts)));
+//			pairs.add(
+//					new Pair(graph.degree(node), node.toString()));
+		}
 		
 		Collections.sort(degrees, reverseOrder());
 //		Collections.sort(pairs, reverseOrder());
@@ -134,9 +141,9 @@ public class LargeGraph<N> extends HugeGraph<N>
 //		for(String token : tokens)
 //			edgeLabelFrequencies.add(new Pair((int)edgeModel.frequency(token), token));	
 		
-		List<Integer> degreesPL = new ArrayList<Integer>(graph.size());
-		for(Node<N> node : graph.nodes())
-			degreesPL.add(node.degree());
+		List<Integer> degreesPL = new ArrayList<Integer>(graph.getVertexCount());
+		for(V vertex : graph.getVertices())
+			degreesPL.add(graph.degree(vertex));
 		
 		Discrete dist = Discrete.fit(degreesPL).fit();
 		plExponent = dist.exponent();

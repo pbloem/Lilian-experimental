@@ -19,11 +19,15 @@ import org.lilian.util.distance.HausdorffDistance;
 /**
  * Test the hypothesis that IFS models scale their dimension to that of the
  * dataset.
+ * 
  * @author Peter
  *
  */
 public class IFSDimension extends AbstractExperiment
 {
+	@Reportable
+	public static final boolean SAMPLE_DEEP = true; 
+	
 	Distance<Point> metric = new EuclideanDistance();
 	
 	private int generations;
@@ -33,8 +37,9 @@ public class IFSDimension extends AbstractExperiment
 	private int trainSampleSize;
 	private List<Point> data;
 	private int dimensionSample;
-	private int ksSamples;
 	private int bootstraps;
+	private double spanningPointsVariance;
+	protected boolean deepening;
 	
 	public @State double modelDimension;
 	public @State double modelDimUncertainty;
@@ -51,8 +56,10 @@ public class IFSDimension extends AbstractExperiment
 			@Parameter(name="train sample size", description="") int trainSampleSize, 
 			@Parameter(name="data", description="") List<Point> data,
 			@Parameter(name="dimension sample size", description="") int dimensionSample,
-			@Parameter(name="ks samples", description="") int ksSamples,
-			@Parameter(name="bootstraps", description="") int bootstraps)
+			@Parameter(name="bootstraps", description="") int bootstraps,
+			@Parameter(name="spanning points variance") double spanningPointsVariance,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening)
 	{
 		this.generations = generations;
 		this.depth = depth;
@@ -61,8 +68,9 @@ public class IFSDimension extends AbstractExperiment
 		this.trainSampleSize = trainSampleSize;
 		this.data = data;
 		this.dimensionSample = dimensionSample;
-		this.ksSamples = ksSamples;
 		this.bootstraps = bootstraps;
+		this.spanningPointsVariance = spanningPointsVariance;
+		this.deepening = deepening;
 	}
 
 	@Override
@@ -80,13 +88,19 @@ public class IFSDimension extends AbstractExperiment
 	{	
 		IFSModelEM em = new IFSModelEM(
 				data, 0.0, depth, generations, components, emSampleSize, 
-				trainSampleSize, -1, false, "sphere", 0.01);
+				trainSampleSize, -1, false, "sphere", spanningPointsVariance, 
+				"hausdorff", deepening);
 				
 				
 		Environment.current().child(em);
 		
 		IFS<Similitude> model = em.model();
-		List<Point> modelDraw = model.generator(depth).generate(dimensionSample == -1 ? data.size() : dimensionSample);
+		
+		List<Point> modelDraw = 
+				SAMPLE_DEEP ? 
+						(model.generator().generate(dimensionSample == -1 ? data.size() : dimensionSample)):
+						(model.generator(depth).generate(dimensionSample == -1 ? data.size() : dimensionSample));
+		
 		List<Point> dataDraw = dimensionSample == -1 ?
 				data :
 				Datasets.sampleWithoutReplacement(data, dimensionSample);

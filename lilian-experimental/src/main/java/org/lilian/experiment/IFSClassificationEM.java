@@ -42,6 +42,7 @@ import org.lilian.util.distance.SquaredEuclideanDistance;
 
 public class IFSClassificationEM extends AbstractExperiment
 {
+
 	
 	protected Classified<Point> trainingData;
 	protected Classified<Point> testData;	
@@ -61,11 +62,14 @@ public class IFSClassificationEM extends AbstractExperiment
 	protected int numSources;
 	protected boolean print;
 	protected double spanningPointsVariance; 
+	protected String goodnessOfFitTest;
+	protected boolean deepening;
+	protected int repeats;
 	
 	/**
 	 * State information
 	 */
-	public @State List<IFSModelEM> emExperiments;
+	public @State List<IFSModelEMRepeat> emExperiments;
 	public @State double score;
 	public @State List<Generator<Point>> bases = new ArrayList<Generator<Point>>();
 	
@@ -99,7 +103,13 @@ public class IFSClassificationEM extends AbstractExperiment
 			@Parameter(name="beam width")
 				int beamWidth,
 			@Parameter(name="spanning points variance")
-			 double spanningPointsVariance
+				double spanningPointsVariance,
+			@Parameter(name="goodness of fit test", description="The method used to select the best model from the iterations of the EM model. Options: hausdorff (Hasudorff distance), likelihood (log likelihood), none (just use last iteration)")
+				String goodnessOfFitTest,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening,
+			@Parameter(name="em repeats")
+				int repeats
 	)
 	{	
 		Pair<Classified<Point>, Classified<Point>> split = Classification.split(data, testRatio);
@@ -123,7 +133,10 @@ public class IFSClassificationEM extends AbstractExperiment
 		this.branchingVariance = branchingVariance;
 		
 		this.spanningPointsVariance = spanningPointsVariance;
+		this.goodnessOfFitTest = goodnessOfFitTest;
 		
+		this.deepening = deepening;
+		this.repeats = repeats;
 	}
 	
 	public void setup()
@@ -144,16 +157,17 @@ public class IFSClassificationEM extends AbstractExperiment
 			logger.warning("Failed to write dataset. " + e.toString() + " " + Arrays.toString(e.getStackTrace()));
 		}	
 	
-		emExperiments = new ArrayList<IFSModelEM>(trainingData.numClasses());
+		emExperiments = new ArrayList<IFSModelEMRepeat>(trainingData.numClasses());
 		for(int i : series(trainingData.numClasses()))
 		{
 			List<Point> points = trainingData.points(i);
 			logger.info("Dataset size for class " + i + ": " + points.size());
 			
-			IFSModelEM em = new IFSModelEM(
-					points, 0.0, depth, generations, components, emSampleSize,
+			IFSModelEMRepeat em = new IFSModelEMRepeat(
+					repeats, points, 0.0, depth, generations, components, emSampleSize,
 					trainSampleSize, -1, false, "sphere", numSources, true,
-					beamWidth, branchingVariance, spanningPointsVariance);
+					beamWidth, branchingVariance, spanningPointsVariance, 
+					goodnessOfFitTest, deepening);
 			
 			emExperiments.add(em);
 		}
@@ -162,7 +176,7 @@ public class IFSClassificationEM extends AbstractExperiment
 	@Override
 	protected void body()
 	{
-		for(IFSModelEM em : emExperiments)
+		for(IFSModelEMRepeat em : emExperiments)
 			Environment.current().child(em);
 
 		// * Construct a model
@@ -170,15 +184,15 @@ public class IFSClassificationEM extends AbstractExperiment
 		for(int i : series(trainingData.numClasses()))
 		{
 			double prior = trainingData.points(i).size() / (double) trainingData.size();
-			IFS<Similitude> ifs = emExperiments.get(i).bestModel();
-			AffineMap map = emExperiments.get(i).map();
+			IFS<Similitude> ifs = emExperiments.get(i).best().bestModel();
+			AffineMap map = emExperiments.get(i).best().map();
 			
 			if(ic == null)
-				ic = new IFSClassifierBasic(ifs, prior, map, emExperiments.get(i).basis(), depth);
+				ic = new IFSClassifierBasic(ifs, prior, map, emExperiments.get(i).best().basis(), depth);
 			else
-				ic.add(ifs, prior, map, emExperiments.get(i).basis());
+				ic.add(ifs, prior, map, emExperiments.get(i).best().basis());
 			
-			bases.add(emExperiments.get(i).basis());
+			bases.add(emExperiments.get(i).best().basis());
 		}
 		
 		write(ic, dir, "classifier");
@@ -229,11 +243,12 @@ public class IFSClassificationEM extends AbstractExperiment
 				ImageIO.write(image, "PNG", new File(dir, name + ".png") );
 			}
 			
-			List<Point> points = new ArrayList<Point>();
+			int pts = 1000000;
+			List<Point> points = new ArrayList<Point>(pts + 100);
 			for(int i : Series.series(ifs.size()))
 				points.addAll(
 					ifs.preMap(i).inverse().map(
-						ifs.model(i).generator(depth, bases.get(i)).generate(1000000)
+						ifs.model(i).generator(depth, bases.get(i)).generate((int)(pts * ifs.prior(i)))
 					)
 				);
 

@@ -13,7 +13,7 @@ import org.lilian.util.distance.EuclideanDistance;
 
 public class IFSDimMulti extends AbstractExperiment
 {
-	public static final int SIZE = 10000;
+	public static final int SIZE = 1000000;
 	Distance<Point> metric = new EuclideanDistance();
 	
 	private int generations;
@@ -23,8 +23,9 @@ public class IFSDimMulti extends AbstractExperiment
 	private int testSampleSize;
 	private List<String> datasets;
 	private int dimensionSample;
-	private int ksSamples;
 	private int bootstraps;
+	private double spanningPointsVariance;
+	private boolean deepening;
 	
 	public @State List<IFSDimension> results = new ArrayList<IFSDimension>(); 
 	
@@ -36,8 +37,10 @@ public class IFSDimMulti extends AbstractExperiment
 			@Parameter(name="test sample size", description="") int testSampleSize, 
 			@Parameter(name="datasets", description="") List<String> datasets,
 			@Parameter(name="dimension sample size", description="") int dimensionSample,
-			@Parameter(name="ks samples", description="") int ksSamples,
-			@Parameter(name="bootstraps", description="") int bootstraps)
+			@Parameter(name="bootstraps", description="") int bootstraps,
+			@Parameter(name="spanning points variance") double spanningPointsVariance,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening)
 	{
 		super();
 		this.generations = generations;
@@ -47,8 +50,9 @@ public class IFSDimMulti extends AbstractExperiment
 		this.testSampleSize = testSampleSize;
 		this.datasets = datasets;
 		this.dimensionSample = dimensionSample;
-		this.ksSamples = ksSamples;
 		this.bootstraps = bootstraps;
+		this.spanningPointsVariance = spanningPointsVariance;
+		this.deepening = deepening;
 	}	
 
 	@Override
@@ -66,6 +70,8 @@ public class IFSDimMulti extends AbstractExperiment
 						dataPoints = Generators.ikeda().generate(SIZE);	
 					else if (dataset.equals("rossler"))
 						dataPoints = Generators.rossler().generate(SIZE);
+					else if (dataset.equals("logistic"))
+						dataPoints = Generators.logistic().generate(SIZE);					
 					else
 						try
 						{
@@ -73,7 +79,13 @@ public class IFSDimMulti extends AbstractExperiment
 						} catch (IOException e)
 						{ throw new RuntimeException(e); }
 					
-					IFSDimension experiment = new IFSDimension(generations, depth, comp, distSampleSize, testSampleSize, dataPoints, dimensionSample, ksSamples, bootstraps);
+					IFSDimension experiment = 
+							new IFSDimension(
+									generations, depth, comp, distSampleSize, 
+									testSampleSize, dataPoints, dimensionSample, 
+									bootstraps, spanningPointsVariance, 
+									deepening);
+					
 					results.add(experiment);
 					
 					Environment.current().child(experiment);

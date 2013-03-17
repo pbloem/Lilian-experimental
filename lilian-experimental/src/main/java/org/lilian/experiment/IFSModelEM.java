@@ -36,13 +36,16 @@ import org.lilian.util.distance.SquaredEuclideanDistance;
 public class IFSModelEM extends AbstractExperiment
 {
 	@Reportable
-	private static final double VAR = 0.6;
+	private static final boolean CENTER_UNIFORM = true;
+	
+	@Reportable
+	private static final double VAR = 0.1;
 
 	@Reportable
 	private static final double RADIUS = 0.7;
 
 	@Reportable
-	private static final double SCALE = 0.5;
+	private static final double SCALE = 0.1;
 
 	@Reportable
 	private static final double IDENTITY_INIT_VAR = 0.1;
@@ -63,7 +66,10 @@ public class IFSModelEM extends AbstractExperiment
 	protected double branchingVariance;
 	protected int beamWidth;
 	protected double spanningPointsVariance;
-
+	protected String goodnessOfFitTest;
+	protected boolean deepening;
+	protected int previousDepth = -1;
+	
 	/**
 	 * State information
 	 */
@@ -71,6 +77,8 @@ public class IFSModelEM extends AbstractExperiment
 	public @State EM<Similitude> em;
 	public @State List<Double> scores;
 	public @State IFS<Similitude> bestModel, model;
+	public @State boolean usingApproximation = true; // for the likelihood gof test (true so long as all non-approximated tests score 0.0)
+	public @State int bestGeneration = -1;
 	public @State AffineMap map;
 	public @State double testScore;
 	public @State MVN basis;
@@ -79,7 +87,7 @@ public class IFSModelEM extends AbstractExperiment
 	
 	private boolean branching = false;
 
-	private double bestScore = Double.POSITIVE_INFINITY;
+	private double bestScore;
 
 	public IFSModelEM(
 			@Parameter(name="data") 				
@@ -103,10 +111,14 @@ public class IFSModelEM extends AbstractExperiment
 			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
 				String initStrategy,
 			@Parameter(name="spanning points variance", description="When multiple points per code are found, we use point sampled from a basic MVN with this distribution to describe the from and to set.")
-				double spanningPointsVariance
+				double spanningPointsVariance,
+			@Parameter(name="goodness of fit test", description="The method used to select the best model from the iterations of the EM model. Options: hausdorff (Hasudorff distance), likelihood (log likelihood), none (just use last iteration)")
+				String goodnessOfFitTest,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening
 			)
 	{
-		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, 1, true, spanningPointsVariance);
+		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, 1, true, spanningPointsVariance, goodnessOfFitTest, deepening);
 	}
 	
 	public IFSModelEM(
@@ -128,7 +140,7 @@ public class IFSModelEM extends AbstractExperiment
 				int testSampleSize,
 			@Parameter(name="high quality", description="true: full HD 10E7, iterations, false: 1/16th HD, 10E4 iterations")
 				boolean highQuality,
-			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
+			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity, maps)")
 				String initStrategy,
 			@Parameter(name="num sources", description="The number of sources used when determining codes.")
 				int numSources,
@@ -139,10 +151,14 @@ public class IFSModelEM extends AbstractExperiment
 			@Parameter(name="branching variance")
 				double branchingVariance,
 			@Parameter(name="spanning points variance", description="When multiple points per code are found, we use point sampled from a basic MVN with this distribution to describe the from and to set.")
-				double spanningPointsVariance
+				double spanningPointsVariance,
+			@Parameter(name="goodness of fit test", description="The method used to select the best model from the iterations of the EM model. Options: hausdorff (Hasudorff distance), likelihood (log likelihood), none (just use last iteration)")
+				String goodnessOfFitTest,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening
 			)
 	{
-		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, numSources, centerData, spanningPointsVariance);
+		this(data, testRatio, depth, generations, components, emSampleSize, trainSampleSize, testSampleSize, highQuality, initStrategy, numSources, centerData, spanningPointsVariance, goodnessOfFitTest, deepening);
 		
 		branching = beamWidth > 0;
 	
@@ -169,14 +185,18 @@ public class IFSModelEM extends AbstractExperiment
 				int testSampleSize,
 			@Parameter(name="high quality", description="true: full HD 10E7, iterations, false: 1/16th HD, 10E4 iterations")
 				boolean highQuality,
-			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity)")
+			@Parameter(name="init strategy", description="What method to use to initialize the EM algorithm (random, spread, sphere, points, identity, maps)")
 				String initStrategy,
 			@Parameter(name="num sources", description="The number of sources used when determining codes.")
 				int numSources,
 			@Parameter(name="center data")
 				boolean centerData,
 			@Parameter(name="spanning points variance", description="When multiple points per code are found, we use point sampled from a basic MVN with this distribution to describe the from and to set.")
-				double spanningPointsVariance
+				double spanningPointsVariance,
+			@Parameter(name="goodness of fit test", description="The method used to select the best model from the iterations of the EM model. Options: hausdorff (Hasudorff distance), likelihood (log likelihood), none (just use last iteration)")
+				String goodnessOfFitTest,
+			@Parameter(name="deepening", description="If true, the algorithm starts at depth 1 and increases linearly to the target depth")
+				boolean deepening
 			)
 	{
 	
@@ -213,6 +233,9 @@ public class IFSModelEM extends AbstractExperiment
 		this.centerData = centerData;
 		
 		this.spanningPointsVariance = spanningPointsVariance;
+		this.goodnessOfFitTest = goodnessOfFitTest;
+		
+		this.deepening = deepening;
 	}	
 	
 	public void setup()
@@ -223,22 +246,26 @@ public class IFSModelEM extends AbstractExperiment
 		
 		if(centerData)
 		{
-			map = Maps.centered(trainingData);
+			map = CENTER_UNIFORM ? 
+				Maps.centerUniform(trainingData) :
+				Maps.centered(trainingData) ;
 			trainingData = new MappedList(trainingData, map);
 		}
 		
 		logger.info("Data size: " + trainingData.size());
 		
-		BufferedImage image;
 		
-		image = Draw.draw(trainingData, 1000, true, false);
+		if(dim > 1)
+		{		
+			BufferedImage image = Draw.draw(trainingData, 1000, true, false);
 
-		try
-		{
-			ImageIO.write(image, "PNG", new File(dir, "data.png"));
-		} catch (IOException e)
-		{
-			throw new RuntimeException(e);
+			try
+			{
+				ImageIO.write(image, "PNG", new File(dir, "data.png"));
+			} catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}
 		}
 		
 		IFS<Similitude> model = null;
@@ -254,37 +281,54 @@ public class IFSModelEM extends AbstractExperiment
 			model = IFSs.initialIdentity(dim, components, IDENTITY_INIT_VAR);
 		else if(initStrategy.toLowerCase().equals("koch"))
 			model = IFSs.koch2Sim();
+		else if(initStrategy.toLowerCase().equals("maps"))
+			model = IFSs.initialMaps(trainingData, components, 2);
 		
 		if(model == null)
 			throw new IllegalArgumentException("Initialization strategy \""+initStrategy+"\" not recognized.");
 				
 		// * Create the EM model
 		if(branching)
-			em = new BranchingEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim), branchingVariance, beamWidth, trainSampleSize, spanningPointsVariance);
+			em = new BranchingEM(model, trainingData, numSources, 
+					Similitude.similitudeBuilder(dim), branchingVariance, 
+					beamWidth, trainSampleSize, spanningPointsVariance);
 		else
-			em = new SimEM(model, trainingData, numSources, Similitude.similitudeBuilder(dim), spanningPointsVariance);
+			em = new SimEM(model, trainingData, numSources, 
+					Similitude.similitudeBuilder(dim), spanningPointsVariance);
 		
 		basis = em.basis();
 		
-		image = Draw.draw(em.basis().generate(trainingData.size()), 1000, true, false);
-
-		try
+		if(dim > 1)
 		{
-			ImageIO.write(image, "PNG", new File(dir, "basis.png"));
-		} catch (IOException e)
-		{
-			throw new RuntimeException(e);
+			BufferedImage image = Draw.draw(
+					em.basis().generate(trainingData.size()), 1000, true, false);
+	
+			try
+			{
+				ImageIO.write(image, "PNG", new File(dir, "basis.png"));
+			} catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}
+			
+			image = Draw.draw(new MVN(2).generate(trainingData.size()), 1000, true, false);
+	
+			try
+			{
+				ImageIO.write(image, "PNG", new File(dir, "plain.png"));
+			} catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}	
 		}
 		
-		image = Draw.draw(new MVN(2).generate(trainingData.size()), 1000, true, false);
-
-		try
+		if(goodnessOfFitTest.toLowerCase().equals("hausdorff"))
 		{
-			ImageIO.write(image, "PNG", new File(dir, "plain.png"));
-		} catch (IOException e)
+			bestScore = Double.POSITIVE_INFINITY;
+		} else if(goodnessOfFitTest.toLowerCase().equals("likelihood"))
 		{
-			throw new RuntimeException(e);
-		}		
+			bestScore = Double.NEGATIVE_INFINITY;
+		}	
 	}
 	
 	@Override
@@ -295,24 +339,67 @@ public class IFSModelEM extends AbstractExperiment
 		{
 			model = em.model();
 			
-			double d;
+			// * Measure model performance
 			
-			if(trainSampleSize != -1)
-				d = distance.distance(
-					Datasets.sample(trainingData, trainSampleSize),
-					em.model().generator(depth, em.basis()).generate(trainSampleSize));
-			else
-				d = distance.distance(
-					trainingData, 
-					em.model().generator(depth, em.basis()).generate(trainingData.size()));
-				
-			scores.add(d);
-			if(bestScore > d)
+			List<Point> dataSample = trainSampleSize == -1 ? trainingData : Datasets.sample(trainingData, trainSampleSize);
+			List<Point> modelSample = null;
+			if(goodnessOfFitTest.toLowerCase().equals("hausdorff"))
+				modelSample = em.model().generator(depth, em.basis()).generate(dataSample.size()); 
+			
+			if(goodnessOfFitTest.toLowerCase().equals("hausdorff"))
 			{
-				bestScore = d;
-				bestModel = em.model();
+				double d = distance.distance(modelSample,  dataSample);
+				
+				scores.add(d);
+				if(d < bestScore)
+				{
+					bestScore = d;
+					bestModel = em.model();
+					bestGeneration = currentGeneration;
+				}
+			} else if(goodnessOfFitTest.toLowerCase().equals("likelihood"))
+			{
+				double d = 0.0, dApprox = 0.0;
+				
+				for(Point p : dataSample)
+				{
+					IFS.SearchResult result = IFS.search(model, p, depth, basis);
+					d += Math.log(result.probSum());
+					dApprox += Math.log(result.approximation());
+				}
+				
+				logger.info("score: " + d + " approx:" + dApprox + "using approx: " + usingApproximation);
+				scores.add(d);
+				
+				if(usingApproximation)
+				{ 
+					if(d > Double.NEGATIVE_INFINITY) // first model with non-zero prob
+					{
+						usingApproximation = false;
+						bestModel = model;
+						bestScore = d;
+					} else if (dApprox > bestScore)
+					{
+						bestModel = model;
+						bestScore = dApprox;
+					}
+				} else 
+				{
+					if (d > bestScore)
+					{
+						bestModel = model;
+						bestScore = d;
+					}	
+				}
+				
+			} else if(goodnessOfFitTest.toLowerCase().equals("none"))
+			{
+				// assume convergence
+				bestModel = model;
+			} else
+			{
+				throw new IllegalArgumentException("Goodness of fit test '"+goodnessOfFitTest+"' not recognized. ");
 			}
-
 
 			if(dim == 2)
 				write(em.model(), dir, String.format("generation%04d", currentGeneration));
@@ -321,11 +408,20 @@ public class IFSModelEM extends AbstractExperiment
 			
 			// * save the current state of the experiment
 			// save();
+			
+			
+			int d = deepening ? 
+					(int) Math.floor(depth * (currentGeneration/(double)generations)) + 1 :
+					depth;
+			
+			// * revert to best model when increasing depth
+			if(d != previousDepth && model != null)
+				em.setModel(bestModel);
+			previousDepth = d;
+			
+			em.iterate(emSampleSize, d);
 						
-			currentGeneration++;
-
-			em.iterate(emSampleSize, depth);
-
+			currentGeneration++;	
 		}
 		
 		if(testData.size() > 0)
@@ -338,6 +434,8 @@ public class IFSModelEM extends AbstractExperiment
 				testScore = distance.distance(
 						testData, 
 						em.model().generator(depth, em.basis()).generate(testData.size()));
+		} else {
+			Global.log().info("Test data size == 0, no test.");
 		}
 		
 	}
@@ -385,6 +483,17 @@ public class IFSModelEM extends AbstractExperiment
 		return basis;
 	}
 	
+	public boolean usingApproximateLikelihood()
+	{
+		return usingApproximation;
+	}
+	
+	@Result(name="best generation")
+	public int bestGeneration()
+	{
+		return bestGeneration;
+	}
+	
 	/**
 	 * The map that centers the data
 	 * @return
@@ -398,7 +507,16 @@ public class IFSModelEM extends AbstractExperiment
 	public BufferedImage bestModelImage()
 	{
 		BufferedImage image = Draw.draw(
-				bestModel.generator(depth, em.basis()).generate(10000000), 
+				bestModel.generator(depth, em.basis()).generate(100000), 
+				1000, true, false);
+		return image;
+	}
+	
+	@Result(name="best model deep")
+	public BufferedImage bestModelDeepImage()
+	{
+		BufferedImage image = Draw.draw(
+				bestModel.generator().generate(100000), 
 				1000, true, false);
 		return image;
 	}

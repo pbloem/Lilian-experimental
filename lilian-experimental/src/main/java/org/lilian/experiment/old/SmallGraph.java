@@ -1,21 +1,19 @@
-package org.lilian.experiment.graphs;
+package org.lilian.experiment.old;
 
 import java.awt.image.BufferedImage;
 
+import org.data2semantics.tools.graphs.Graphs;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
-import org.lilian.graphs.Graph;
-import org.lilian.graphs.Measures;
-import org.lilian.graphs.UTGraph;
-import org.lilian.graphs.jung.Graphs;
 
+import edu.uci.ics.jung.graph.Graph;
 
-public class SmallGraph<N> extends LargeGraph<N>
+public class SmallGraph<V, E> extends LargeGraph<V, E>
 {
 	public @State BufferedImage image;
 	public @State double globalClusteringCoefficient;
 
-	public SmallGraph(Graph<N> graph)
+	public SmallGraph(Graph<V, E> graph)
 	{
 		super(graph);
 	}
@@ -33,14 +31,10 @@ public class SmallGraph<N> extends LargeGraph<N>
 		
 		// * Rendering visualization
 		logger.info("Rendering visualization.");
-		if(graph instanceof UTGraph)
-		{
-			image = Graphs.image(
-				Graphs.toJUNG((UTGraph<?,?>)graph), 800, 494);	
-		}
+		image = org.data2semantics.tools.graphs.Graphs.image(graph, 800, 494);	
 		
 		logger.info("Calculating global Clustering Coefficient");
-		globalClusteringCoefficient = Measures.clusteringCoefficient(graph);
+		globalClusteringCoefficient = Graphs.clusteringCoefficient(graph);
 	}	
 	
 	@Result(name="Visualization")
