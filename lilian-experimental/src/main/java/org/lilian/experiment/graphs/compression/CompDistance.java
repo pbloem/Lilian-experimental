@@ -11,6 +11,7 @@ import org.lilian.data.real.clustering.KMedioids;
 import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
+import org.lilian.graphs.Graphs;
 import org.lilian.graphs.UTGraph;
 import org.lilian.graphs.compression.SubdueCompressor;
 import org.lilian.graphs.compression.ZIPGraphCompressor;
@@ -23,25 +24,25 @@ import org.lilian.util.distance.Distance;
 public class CompDistance extends AbstractExperiment
 {
 	public int paToAttach = 2;
-	public int nodes = 440;
-	public int perClass = 30;
+	public int nodes = 30;
+	public int perClass = 3;
 	public int kmIterations = 20;
 	
 	public enum Comp {ZIP, SUBDUE};
 	
 	private Classified<UTGraph<String, String>> data;
-	private Comp compressor = Comp.ZIP;
+	private Comp compressor = Comp.SUBDUE;
 
 	@State
 	public double error;
 	@State 
 	public List<List<Double>> confusion = new ArrayList<List<Double>>();
 	private int maxBest = 5;
-	private int beamWidth = 20;
+	private int beamWidth = 10;
 	private boolean sparse = false;
 	private int maxSubSize = 4;
 	private int iterations = 4;
-	private double threshold = 1.0;
+	private double threshold = 2.0;
 	
 	private int fractalOffspring = 3;
 	private int fractalLinks = 1;
@@ -58,7 +59,9 @@ public class CompDistance extends AbstractExperiment
 
 		for(int i : series(perClass))
 		{
-			instances.add(RandomGraphs.preferentialAttachment(nodes, 2));
+			instances.add(
+					Graphs.shuffle(
+							RandomGraphs.preferentialAttachment(nodes, 2)));
 			
 			nodesSum += instances.get(instances.size() - 1).size();
 			sum += instances.get(instances.size() - 1).numLinks();
@@ -77,7 +80,9 @@ public class CompDistance extends AbstractExperiment
 
 		for(int i : series(perClass))
 		{
-			instances.add(RandomGraphs.random(nodes, meanLinksPA/((nodes*nodes-nodes)/2) ));
+			int m = (int) meanLinksPA;
+			instances.add(
+					Graphs.shuffle(RandomGraphs.random(nodes,  m)));
 			
 			nodesSum += instances.get(instances.size() - 1).size();
 			sum += instances.get(instances.size() - 1).numLinks();
@@ -90,41 +95,41 @@ public class CompDistance extends AbstractExperiment
 
 		System.out.println("random " + meanNodesRandom + " " + meanLinksRandom);
 		
-		sum = 0.0;
-		nodesSum = 0.0;
-		for(int i : series(perClass))
-		{
-			instances.add(RandomGraphs.fractal(fractalDepth, fractalOffspring, fractalLinks, 0.0));
-			
-			nodesSum += instances.get(instances.size() - 1).size();
-			sum += instances.get(instances.size() - 1).numLinks();
-		}
-		
-		data.addAll(instances, 2);
-		
-		instances.clear();
-		
-		double meanLinksFractalFP = sum / perClass;
-		double meanNodesFractalFP = nodesSum / perClass;
-
-		System.out.println("fractal (pure) " + meanNodesFractalFP  + " " + meanLinksFractalFP);
-		
-		sum = 0.0;
-		nodesSum = 0.0;
-
-		for(int i : series(perClass))
-		{
-			instances.add(RandomGraphs.fractal(fractalDepth, fractalOffspring, fractalLinks, 1.0));
-			
-			nodesSum += instances.get(instances.size() - 1).size();
-			sum += instances.get(instances.size() - 1).numLinks();
-		}
-		double meanLinksFractalSW = sum/ perClass;
-		double meanNodesFractalSW = nodesSum / perClass;
-
-		System.out.println("fractal (small-world) " + meanNodesFractalSW + " " + meanLinksFractalSW);
-		
-		data.addAll(instances, 3);
+//		sum = 0.0;
+//		nodesSum = 0.0;
+//		for(int i : series(perClass))
+//		{
+//			instances.add(RandomGraphs.fractal(fractalDepth, fractalOffspring, fractalLinks, 0.0));
+//			
+//			nodesSum += instances.get(instances.size() - 1).size();
+//			sum += instances.get(instances.size() - 1).numLinks();
+//		}
+//		
+//		data.addAll(instances, 2);
+//		
+//		instances.clear();
+//		
+//		double meanLinksFractalFP = sum / perClass;
+//		double meanNodesFractalFP = nodesSum / perClass;
+//
+//		System.out.println("fractal (pure) " + meanNodesFractalFP  + " " + meanLinksFractalFP);
+//		
+//		sum = 0.0;
+//		nodesSum = 0.0;
+//
+//		for(int i : series(perClass))
+//		{
+//			instances.add(RandomGraphs.fractal(fractalDepth, fractalOffspring, fractalLinks, 1.0));
+//			
+//			nodesSum += instances.get(instances.size() - 1).size();
+//			sum += instances.get(instances.size() - 1).numLinks();
+//		}
+//		double meanLinksFractalSW = sum/ perClass;
+//		double meanNodesFractalSW = nodesSum / perClass;
+//
+//		System.out.println("fractal (small-world) " + meanNodesFractalSW + " " + meanLinksFractalSW);
+//		
+//		data.addAll(instances, 3);
 	}
 
 	@Override
