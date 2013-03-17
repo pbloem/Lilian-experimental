@@ -320,7 +320,7 @@ public class IFSModelEM extends AbstractExperiment
 			Functions.tic();		
 			
 			// * save the current state of the experiment
-			save();
+			// save();
 						
 			currentGeneration++;
 
