@@ -27,6 +27,7 @@ import org.lilian.graphs.UTNode;
 import org.lilian.graphs.compression.SubdueCompressor;
 import org.lilian.graphs.compression.ZIPGraphCompressor;
 import org.lilian.graphs.data.Data;
+import org.lilian.graphs.data.RDF;
 import org.lilian.graphs.random.RandomGraphs;
 import org.lilian.util.Compressor;
 import org.lilian.util.Permutations;
@@ -235,10 +236,12 @@ public class CompDistance extends AbstractExperiment
 	
 	private void dataNatural()
 	{
-		UTGraph<String, String> ecoli = null, neural = null;		
+		UTGraph<String, String> ecoli = null, neural = null, semantic = null;		
 		try {
-			ecoli  = Data.readString(new File("/home/peter/Documents/datasets/graphs/ecoli/EC.dat"));
-			neural = Data.readString(new File("/home/peter/Documents/datasets/graphs/neural/celegans.txt"));
+			ecoli  = Data.readString(new File("~/datasets/graphs/ecoli/EC.dat"));
+			neural = Data.readString(new File("~/datasets/graphs/neural/celegans.txt"));
+			semantic = Data.readString(new File("~/datasets/graphs/roads/roadNet-CA.txt"));
+
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		} 			
