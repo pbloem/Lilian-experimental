@@ -78,7 +78,9 @@ public class CompDistance extends AbstractExperiment
 			@Parameter(name="max sub size")
 				int maxSubSize,
 			@Parameter(name="iterations")
-				int iterations
+				int iterations,
+			@Parameter(name="threshold")
+				double threshold
 		)
 	{
 		this.matcherBeamWidth = matcherBeamWidth;
@@ -87,6 +89,7 @@ public class CompDistance extends AbstractExperiment
 		this.paToAttach = toAttach;		
 		this.maxSubSize = maxSubSize;
 		this.iterations = iterations;
+		this.threshold = threshold;
 		
 		if(compressor.equals("zip"))
 			this.compressor = Comp.ZIP;
