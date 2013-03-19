@@ -52,8 +52,8 @@ public class CompDistance extends AbstractExperiment
 	private int beamWidth = 5;
 	private int matcherBeamWidth;
 	private boolean sparse = false;
-	private int maxSubSize = 10;
-	private int iterations = 15;
+	private int maxSubSize;
+	private int iterations;
 	private double threshold = 2.0;
 	private int steps = 2;
 	
@@ -73,13 +73,19 @@ public class CompDistance extends AbstractExperiment
 			@Parameter(name="compressor")
 				String compressor,
 			@Parameter(name="data source")
-				String dataSource				
+				String dataSource,
+			@Parameter(name="max sub size")
+				int maxSubSize,
+			@Parameter(name="iterations")
+				int iterations
 		)
 	{
 		this.matcherBeamWidth = matcherBeamWidth;
 		this.nodes = nodes;
 		this.perClass = perClass;
 		this.paToAttach = toAttach;		
+		this.maxSubSize = maxSubSize;
+		this.iterations = iterations;
 		
 		if(compressor.equals("zip"))
 			this.compressor = Comp.ZIP;
