@@ -58,9 +58,9 @@ public class CompDistance extends AbstractExperiment
 	private double threshold = 2.0;
 	private int steps = 2;
 	
-	private int fractalOffspring = 3;
+	private int fractalOffspring = 4;
 	private int fractalLinks = 1;
-	private int fractalDepth = 3;
+	private int fractalDepth = 2;
 	
 	public CompDistance(
 			@Parameter(name="matcher beam width")
