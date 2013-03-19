@@ -438,7 +438,7 @@ public class CompDistance extends AbstractExperiment
 	
 		System.out.print(".");
 		
-		return reduce(subgraph(graph, nodes));
+		return Graphs.blank(subgraph(graph, nodes), "x");
 	}
 	
 	public static class RandomDistance implements Distance<UTGraph<String, String>>
