@@ -239,17 +239,17 @@ public class CompDistance extends AbstractExperiment
 	
 	private void dataNatural()
 	{
-		UTGraph<String, String> ecoli = null, neural = null, semantic = null;		
+		UTGraph<String, String> ecoli = null, neural = null, cop = null;		
 		try {
 			ecoli  = Data.readString(new File("/home/peter-extern/datasets/graphs/ecoli/EC.dat"));
 			neural = Data.readString(new File("/home/peter-extern/datasets/graphs/neural/celegans.txt"));
-			semantic = Data.readString(new File("/home/peter-extern/datasets/graphs/collab/ca-GrQc.txt"));
+			cop = Data.readString(new File("/home/peter-extern/datasets/graphs/collab/ca-GrQc.txt"));
 
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		} 			
 		
-		List<UTGraph<String, String>> masters = Arrays.asList(ecoli, neural);
+		List<UTGraph<String, String>> masters = Arrays.asList(ecoli, neural, cop);
 		data = sample(masters, perClass, nodes);
 	}
 	
