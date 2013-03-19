@@ -238,9 +238,9 @@ public class CompDistance extends AbstractExperiment
 	{
 		UTGraph<String, String> ecoli = null, neural = null, semantic = null;		
 		try {
-			ecoli  = Data.readString(new File("~/datasets/graphs/ecoli/EC.dat"));
-			neural = Data.readString(new File("~/datasets/graphs/neural/celegans.txt"));
-			semantic = Data.readString(new File("~/datasets/graphs/roads/roadNet-CA.txt"));
+			ecoli  = Data.readString(new File("/home/peter-extern/datasets/graphs/ecoli/EC.dat"));
+			neural = Data.readString(new File("/home/peter-extern/datasets/graphs/neural/celegans.txt"));
+			semantic = Data.readString(new File("/home/peter-extern/datasets/graphs/roads/roadNet-CA.txt"));
 
 		} catch (IOException e) {
 			throw new RuntimeException(e);
