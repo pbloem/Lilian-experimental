@@ -240,7 +240,7 @@ public class CompDistance extends AbstractExperiment
 		try {
 			ecoli  = Data.readString(new File("/home/peter-extern/datasets/graphs/ecoli/EC.dat"));
 			neural = Data.readString(new File("/home/peter-extern/datasets/graphs/neural/celegans.txt"));
-			semantic = Data.readString(new File("/home/peter-extern/datasets/graphs/roads/roadNet-CA.txt"));
+			semantic = Data.readString(new File("/home/peter-extern/datasets/graphs/amazon/amazon0302.txt"));
 
 		} catch (IOException e) {
 			throw new RuntimeException(e);
