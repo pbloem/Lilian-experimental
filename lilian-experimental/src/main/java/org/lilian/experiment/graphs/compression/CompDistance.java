@@ -61,6 +61,8 @@ public class CompDistance extends AbstractExperiment
 	private int fractalOffspring = 4;
 	private int fractalLinks = 1;
 	private int fractalDepth = 2;
+	private double bestError;
+	private int[] bestShuffle;
 	
 	public CompDistance(
 			@Parameter(name="matcher beam width")
@@ -241,9 +243,9 @@ public class CompDistance extends AbstractExperiment
 	{
 		UTGraph<String, String> ecoli = null, neural = null, cop = null;		
 		try {
-			ecoli  = Data.readString(new File("/home/peter-extern/datasets/graphs/ecoli/EC.dat"));
-			neural = Data.readString(new File("/home/peter-extern/datasets/graphs/neural/celegans.txt"));
-			cop = Data.readString(new File("/home/peter-extern/datasets/graphs/collab/ca-GrQc.txt"));
+			ecoli  = Data.readString(new File("/Users/Peter/Documents/datasets/graphs/ecoli/EC.dat"));
+			neural = Data.readString(new File("/Users/Peter/Documents/datasets/graphs/neural/celegans.txt"));
+			cop = Data.readString(new File("/Users/Peter/Documents/datasets/graphs/collab/ca-GrQc.txt"));
 
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -308,21 +310,24 @@ public class CompDistance extends AbstractExperiment
 		
 		logger.info("Confusion matrix: " + confusion + ". (rows are gold targets)");
 			
+		bestError = Double.POSITIVE_INFINITY;
+		
+		for(int[] shuffle : new Permutations(confusion.size()))
+		{
+			double error = error(shuffle);
+			if(error < bestError)
+			{
+				bestError = error;
+				bestShuffle = Arrays.copyOf(shuffle, shuffle.length);
+			}
+		}
+		
 	}
 	
 	@Result(name = "Error")
 	public double error()
 	{
-		double best = Double.POSITIVE_INFINITY;
-		
-		for(int[] shuffle : new Permutations(confusion.size()))
-		{
-			double error = error(shuffle);
-			if(error < best)
-				best = error;
-		}
-		
-		return best;
+		return bestError;
 	}
 	
 	private double error(int[] shuffle)
@@ -343,6 +348,31 @@ public class CompDistance extends AbstractExperiment
 	public List<List<Double>> confusion()
 	{
 		return confusion;
+	}
+	
+	@Result(name = "Confusion matrix (re-ordered)")
+	public List<List<Double>> confusionReordered()
+	{
+		List<List<Double>> matrix = new ArrayList<List<Double>>();
+		for(List<Double> row : confusion)
+		{
+			List<Double> newRow = new ArrayList<Double>(row.size());
+			for(int i : Series.series(row.size()))
+				newRow.add(row.get(bestShuffle[i]));
+			matrix.add(newRow);
+		}
+		return matrix;
+	}
+	
+	@Result(name="Best shuffle")
+	public List<Integer> bestShuffle()
+	{
+		List<Integer> list = new ArrayList<Integer>(bestShuffle.length);
+		
+		for(int i : bestShuffle)
+			list.add(i);
+		
+		return list;
 	}
 	
 	@Result(name = "num nodes")

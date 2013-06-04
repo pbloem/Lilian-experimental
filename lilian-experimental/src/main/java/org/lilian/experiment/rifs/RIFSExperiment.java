@@ -1,5 +1,7 @@
 package org.lilian.experiment.rifs;
 
+import static org.lilian.util.Series.series;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -12,11 +14,15 @@ import org.lilian.Global;
 import org.lilian.data.real.Draw;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
+import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.random.ChoiceTree;
 import org.lilian.data.real.fractal.random.DiscreteRIFS;
 import org.lilian.data.real.fractal.random.RIFSEM;
 import org.lilian.data.real.fractal.random.RIFSs;
 import org.lilian.experiment.AbstractExperiment;
+import org.lilian.experiment.Environment;
+import org.lilian.experiment.Experiment;
+import org.lilian.experiment.IFSModelEM;
 import org.lilian.experiment.Parameter;
 import org.lilian.experiment.State;
 import org.lilian.util.Series;
@@ -41,6 +47,7 @@ public class RIFSExperiment extends AbstractExperiment
 	private int componentIFSs;
 	private int mapsPerComponent;
 	private int numSources;
+	private String initStrategy;
 	
 	private File genDir;
 	
@@ -65,7 +72,9 @@ public class RIFSExperiment extends AbstractExperiment
 			@Parameter(name="maps per component")
 				int mapsPerComponent,
 			@Parameter(name="num sources")
-				int numSources
+				int numSources,
+			@Parameter(name="init strategy")
+				String initStrategy
 	)
 	{
 		this.data = data;
@@ -77,6 +86,7 @@ public class RIFSExperiment extends AbstractExperiment
 		this.componentIFSs = componentIFSs;
 		this.mapsPerComponent = mapsPerComponent;
 		this.numSources = numSources;
+		this.initStrategy = initStrategy;
 	}
 	
 	@Override
@@ -100,10 +110,59 @@ public class RIFSExperiment extends AbstractExperiment
 		}
 		
 		// * Set up the EM
-		DiscreteRIFS<Similitude> initial = RIFSs.initialSphere(
-				data.get(0).get(0).dimensionality(), 
-				componentIFSs, mapsPerComponent,
-				1.0, 0.33);
+		DiscreteRIFS<Similitude> initial = null;
+		if(initStrategy.equals("sphere"))
+		{
+			initial = RIFSs.initialSphere(
+					data.get(0).get(0).dimensionality(), 
+					componentIFSs, mapsPerComponent,
+					1.0, 0.33);
+		} else if(initStrategy.equals("learn"))
+		{
+			List<Point> flat = new ArrayList<Point>();
+			for(List<Point> set : data)
+				flat.addAll(set);
+			
+			int compTot = componentIFSs * mapsPerComponent;
+			
+			// TODO: Magic numbers
+			IFSModelEM experiment = new IFSModelEM(flat, 0.0, 
+					5, 100, compTot, 5000, 5000, 0, false, "sphere", 
+					0.001, "none", false);
+			
+			Environment.current().child(experiment);
+			
+			IFS<Similitude> meanModel = experiment.model();
+			
+			int c = 0;
+			DiscreteRIFS<Similitude> rifs = null;
+			for(int i : series(componentIFSs))
+			{
+				IFS<Similitude> compModel = null;
+				double totalPrior = 0.0;
+				
+				for(int j : series(mapsPerComponent))
+				{
+					Similitude sim = meanModel.get(c);
+					double prior = meanModel.probability(c);
+					
+					if(compModel == null)
+						compModel = new IFS<Similitude>(sim, prior);
+					else
+						compModel.addMap(sim, prior);
+					
+					totalPrior += prior;
+					c ++;
+				}
+				
+				if(rifs == null)
+					rifs = new DiscreteRIFS<Similitude>(compModel, totalPrior);
+				else
+					rifs.addModel(compModel, totalPrior);
+			}
+			
+			initial = rifs;
+		}
 	
 		em = new RIFSEM(initial, data, depth, sample, spanningPointsVariance, perturbVar, numSources);
 		
