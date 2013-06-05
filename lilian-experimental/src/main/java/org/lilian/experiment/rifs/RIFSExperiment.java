@@ -11,6 +11,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import org.lilian.Global;
+import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
@@ -25,7 +26,12 @@ import org.lilian.experiment.Experiment;
 import org.lilian.experiment.IFSModelEM;
 import org.lilian.experiment.Parameter;
 import org.lilian.experiment.State;
+import org.lilian.util.Functions;
+import org.lilian.util.Permutations;
 import org.lilian.util.Series;
+import org.lilian.util.distance.Distance;
+import org.lilian.util.distance.EuclideanDistance;
+import org.lilian.util.distance.HausdorffDistance;
 
 public class RIFSExperiment extends AbstractExperiment
 {
@@ -119,49 +125,86 @@ public class RIFSExperiment extends AbstractExperiment
 					1.0, 0.33);
 		} else if(initStrategy.equals("learn"))
 		{
+			// * This is a complicated initialization strategy.
+			//   It trains a regular IFS modle on the flattended dataset, and tries 
+			//   all permutations of its maps to find the best rifs model (by hausdorff distance)
+			//   The process is repeated a number of times.
+			
+			int TRIALS = 10;
+			int SETSAMPLE = 50;
+			int TSAMPLE = 50;
+			int SAMPLEDEPTH = 10;
+			
 			List<Point> flat = new ArrayList<Point>();
 			for(List<Point> set : data)
 				flat.addAll(set);
 			
 			int compTot = componentIFSs * mapsPerComponent;
 			
-			// TODO: Magic numbers
-			IFSModelEM experiment = new IFSModelEM(flat, 0.0, 
-					5, 100, compTot, 5000, 5000, 0, false, "sphere", 
-					0.001, "none", false);
+			List<Similitude> maps = new ArrayList<Similitude>();
+			List<Double> weights = new ArrayList<Double>();
 			
-			Environment.current().child(experiment);
+			DiscreteRIFS bestModel = null;
+			double bestScore = Double.POSITIVE_INFINITY;
+			Distance<List<List<Point>>> hDistance = new HausdorffDistance<List<Point>>(new HausdorffDistance<Point>(new EuclideanDistance()));
 			
-			IFS<Similitude> meanModel = experiment.model();
-			
-			int c = 0;
-			DiscreteRIFS<Similitude> rifs = null;
-			for(int i : series(componentIFSs))
+			for(int t : series(TRIALS))
 			{
-				IFS<Similitude> compModel = null;
-				double totalPrior = 0.0;
 				
-				for(int j : series(mapsPerComponent))
+				// * Learn an IFS for the flattened dataset
+				// TODO: Magic numbers
+				IFSModelEM experiment = new IFSModelEM(flat, 0.0, 
+						5, 40, compTot, 128, 128, 0, false, "sphere", 
+						0.001, "none", false);			
+				Environment.current().child(experiment);
+	
+				IFS<Similitude> meanModel = experiment.model();
+				
+				// * Try all permutations of the maps of the learned IFS
+				for(int[] perm : new Permutations(meanModel.size()))
 				{
-					Similitude sim = meanModel.get(c);
-					double prior = meanModel.probability(c);
+					int c = 0;
+					DiscreteRIFS<Similitude> rifs = null;
+					for(int i : series(componentIFSs))
+					{
+						IFS<Similitude> compModel = null;
+						double totalPrior = 0.0;
+						
+						for(int j : series(mapsPerComponent))
+						{
+							Similitude sim = meanModel.get(perm[c]);
+							double prior = meanModel.probability(perm[c]);
+							
+							if(compModel == null)
+								compModel = new IFS<Similitude>(sim, prior);
+							else
+								compModel.addMap(sim, prior);
+							
+							totalPrior += prior;
+							c ++;
+						}
+						
+						if(rifs == null)
+							rifs = new DiscreteRIFS<Similitude>(compModel, totalPrior);
+						else
+							rifs.addModel(compModel, totalPrior);
+					}
 					
-					if(compModel == null)
-						compModel = new IFS<Similitude>(sim, prior);
-					else
-						compModel.addMap(sim, prior);
+					// * Test the rifs
+					List<List<Point>> dataSample = sample(data, SETSAMPLE, TSAMPLE);
+					List<List<Point>> rifsSample = rifs.randomInstances(TSAMPLE, SETSAMPLE, SAMPLEDEPTH);
 					
-					totalPrior += prior;
-					c ++;
+					double score = hDistance.distance(dataSample, rifsSample);
+					
+					if(score < bestScore)
+					{
+						bestScore = score;
+						bestModel = rifs; 
+					}
 				}
-				
-				if(rifs == null)
-					rifs = new DiscreteRIFS<Similitude>(compModel, totalPrior);
-				else
-					rifs.addModel(compModel, totalPrior);
 			}
 			
-			initial = rifs;
+			initial = bestModel;
 		}
 	
 		em = new RIFSEM(initial, data, depth, sample, spanningPointsVariance, perturbVar, numSources);
@@ -186,6 +229,17 @@ public class RIFSExperiment extends AbstractExperiment
 			
 			em.iteration();	
 		}
+	}
+	
+	private static <T> List<List<T>> sample(List<List<T>> data, int setSample, int tSample)
+	{
+		List<List<T>> result = new ArrayList<List<T>>(setSample);
+		for(int i : series(setSample))
+		{
+			List<T> toSample = data.get(Global.random.nextInt(data.size()));
+			result.add(Datasets.sample(toSample, tSample));
+		}
+		return result;
 	}
 
  
