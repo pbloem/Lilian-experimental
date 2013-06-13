@@ -1,7 +1,7 @@
 package org.lilian.experiment.graphs.compression;
 
 import static org.lilian.graphs.Graphs.reduce;
-import static org.lilian.graphs.Graphs.subgraph;
+import static org.lilian.graphs.Subgraph.subgraph;
 import static org.lilian.util.Series.series;
 
 import java.io.File;
