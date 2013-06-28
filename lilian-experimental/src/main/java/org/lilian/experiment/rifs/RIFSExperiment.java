@@ -56,7 +56,9 @@ public class RIFSExperiment extends AbstractExperiment
 	private String initStrategy;
 	private int initLearnTrials;
 	private int initLearnGenerations;
-	
+	private int initLearnDepth;
+	private int initLearnSample;
+
 	private File genDir;
 	
 	@State
@@ -86,7 +88,11 @@ public class RIFSExperiment extends AbstractExperiment
 			@Parameter(name="init learn trials")
 				int initLearnTrials,	
 			@Parameter(name="init learn generations")
-				int initLearnGenerations	
+				int initLearnGenerations,	
+			@Parameter(name="init learn depth")
+				int initLearnDepth,
+			@Parameter(name="init learn sample")
+				int initLearnSample
 	)
 	{
 		this.data = data;
@@ -101,6 +107,8 @@ public class RIFSExperiment extends AbstractExperiment
 		this.initStrategy = initStrategy;
 		this.initLearnTrials = initLearnTrials;
 		this.initLearnGenerations = initLearnGenerations;
+		this.initLearnDepth = initLearnDepth;
+		this.initLearnSample = initLearnSample;
 	}
 	
 	@Override
@@ -158,7 +166,7 @@ public class RIFSExperiment extends AbstractExperiment
 				// * Learn an IFS for the flattened dataset
 				// TODO: Magic numbers
 				IFSModelEM experiment = new IFSModelEM(flat, 0.0, 
-						6, initLearnGenerations, compTot, 128, 128, 0, false, "sphere", 
+						initLearnDepth, initLearnGenerations, compTot, initLearnSample, initLearnSample, 0, false, "sphere", 
 						0.001, "none", false);			
 				Environment.current().child(experiment);
 	
