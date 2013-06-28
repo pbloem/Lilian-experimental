@@ -54,6 +54,7 @@ public class RIFSExperiment extends AbstractExperiment
 	private int mapsPerComponent;
 	private int numSources;
 	private String initStrategy;
+	private int initLearnTrials;
 	
 	private File genDir;
 	
@@ -80,7 +81,9 @@ public class RIFSExperiment extends AbstractExperiment
 			@Parameter(name="num sources")
 				int numSources,
 			@Parameter(name="init strategy")
-				String initStrategy
+				String initStrategy,
+			@Parameter(name="init learn trials")
+				int initLearnTrials	
 	)
 	{
 		this.data = data;
@@ -93,6 +96,7 @@ public class RIFSExperiment extends AbstractExperiment
 		this.mapsPerComponent = mapsPerComponent;
 		this.numSources = numSources;
 		this.initStrategy = initStrategy;
+		this.initLearnTrials = initLearnTrials;
 	}
 	
 	@Override
@@ -130,7 +134,6 @@ public class RIFSExperiment extends AbstractExperiment
 			//   all permutations of its maps to find the best rifs model (by hausdorff distance)
 			//   The process is repeated a number of times.
 			
-			int TRIALS = 10;
 			int SETSAMPLE = 50;
 			int TSAMPLE = 50;
 			int SAMPLEDEPTH = 10;
@@ -141,20 +144,17 @@ public class RIFSExperiment extends AbstractExperiment
 			
 			int compTot = componentIFSs * mapsPerComponent;
 			
-			List<Similitude> maps = new ArrayList<Similitude>();
-			List<Double> weights = new ArrayList<Double>();
-			
-			DiscreteRIFS bestModel = null;
+			DiscreteRIFS<Similitude> bestModel = null;
 			double bestScore = Double.POSITIVE_INFINITY;
 			Distance<List<List<Point>>> hDistance = new HausdorffDistance<List<Point>>(new HausdorffDistance<Point>(new EuclideanDistance()));
 			
-			for(int t : series(TRIALS))
+			for(int t : series(initLearnTrials))
 			{
 				
 				// * Learn an IFS for the flattened dataset
 				// TODO: Magic numbers
 				IFSModelEM experiment = new IFSModelEM(flat, 0.0, 
-						5, 40, compTot, 128, 128, 0, false, "sphere", 
+						6, 40, compTot, 128, 128, 0, false, "sphere", 
 						0.001, "none", false);			
 				Environment.current().child(experiment);
 	

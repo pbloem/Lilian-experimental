@@ -21,9 +21,12 @@ import org.lilian.experiment.Parameter;
 import org.lilian.experiment.Result;
 import org.lilian.graphs.Graph;
 import org.lilian.graphs.Graphs;
+import org.lilian.graphs.MapUTGraph;
+import org.lilian.graphs.Node;
 import org.lilian.graphs.UTGraph;
 import org.lilian.graphs.draw.CircleLayout;
 import org.lilian.graphs.draw.SpectralLayout;
+import org.lilian.util.Series;
 import org.w3c.dom.Document;
 
 public class Draw<L> extends AbstractExperiment
@@ -36,7 +39,7 @@ public class Draw<L> extends AbstractExperiment
 	
 	private BufferedImage circleLayout;
 	
-	private BufferedImage spectralLayout;
+	private BufferedImage spectralLayout = null;
 	
 //	@Factory
 //	public static <L> Draw<L> draw(Graph<L> data)
@@ -44,7 +47,7 @@ public class Draw<L> extends AbstractExperiment
 //		return new Draw<L>(data);	
 //	}
 	
-	private Draw(@Parameter(name="data") Graph<L> data)
+	public Draw(@Parameter(name="data") Graph<L> data)
 	{
 		this.data = data;
 	}
@@ -52,6 +55,8 @@ public class Draw<L> extends AbstractExperiment
 	@Override
 	protected void body()
 	{
+		data = toUndirected(data);
+		
 		circleLayout = org.lilian.graphs.draw.Draw.draw(data, new CircleLayout<L>(data), WIDTH, HEIGHT);
 		
 		spectralLayout = org.lilian.graphs.draw.Draw.draw(data, new SpectralLayout<L>(data), WIDTH, HEIGHT);
@@ -106,5 +111,29 @@ public class Draw<L> extends AbstractExperiment
 		{
 			throw new RuntimeException(e);
 		}			
+	}
+	
+	/**
+	 * Creates a copy of the graph which removes directions and tags 
+	 * @param graph
+	 * @return
+	 */
+	private UTGraph<L, Object> toUndirected(Graph<L> graph)
+	{
+		if(graph instanceof UTGraph<?, ?>)
+			return (UTGraph<L, Object>)graph;
+		
+		UTGraph<L, Object> copy = new MapUTGraph<L, Object>();
+		
+		for(Node<L> node : graph.nodes())
+			copy.add(node.label());
+		
+		for(int i : Series.series(graph.size()))
+			for(int j : Series.series(i, graph.size()))
+				if(graph.nodes().get(i).connected(graph.nodes().get(j)) 
+						|| graph.nodes().get(j).connected(graph.nodes().get(i)))
+					copy.nodes().get(i).connect(copy.nodes().get(j));
+		
+		return copy;
 	}
 }
