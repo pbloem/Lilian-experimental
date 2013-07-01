@@ -506,6 +506,9 @@ public class IFSModelEM extends AbstractExperiment
 	@Result(name="best model")
 	public BufferedImage bestModelImage()
 	{
+		if(bestModel == null)
+			return null;
+		
 		BufferedImage image = Draw.draw(
 				bestModel.generator(depth, em.basis()).generate(100000), 
 				1000, true, false);
