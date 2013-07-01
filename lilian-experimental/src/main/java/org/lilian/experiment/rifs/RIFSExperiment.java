@@ -150,11 +150,11 @@ public class RIFSExperiment extends AbstractExperiment
 			int TSAMPLE = 50;
 			int SAMPLEDEPTH = 10;
 			
-			List<Point> flat = new ArrayList<Point>();
-			for(List<Point> set : data)
-				flat.addAll(set);
+//			List<Point> flat = new ArrayList<Point>();
+//			for(List<Point> set : data)
+//				flat.addAll(set);
 			
-			int compTot = componentIFSs * mapsPerComponent;
+//			int compTot = componentIFSs * mapsPerComponent;
 			
 			DiscreteRIFS<Similitude> bestModel = null;
 			double bestScore = Double.POSITIVE_INFINITY;
@@ -162,16 +162,29 @@ public class RIFSExperiment extends AbstractExperiment
 			
 			for(int t : series(initLearnTrials))
 			{
+				IFS<Similitude> meanModel = null;
 				
-				// * Learn an IFS for the flattened dataset
-				// TODO: Magic numbers
-				IFSModelEM experiment = new IFSModelEM(flat, 0.0, 
-						initLearnDepth, initLearnGenerations, compTot, initLearnSample, initLearnSample, 0, false, "sphere", 
-						0.001, "none", false);			
-				Environment.current().child(experiment);
-	
-				IFS<Similitude> meanModel = experiment.model();
-				
+				for(int j : series(componentIFSs))
+				{
+					List<Point> sample = data.get(Global.random.nextInt(data.size()));
+					
+					// * Learn an IFS for the flattened dataset
+					// TODO: Magic numbers
+					IFSModelEM experiment = new IFSModelEM(sample, 0.0, 
+							initLearnDepth, initLearnGenerations, mapsPerComponent, initLearnSample, initLearnSample, 0, false, "sphere", 
+							0.001, "none", false);			
+					Environment.current().child(experiment);
+		
+					IFS<Similitude> model = experiment.model();
+					for(int c : series(model.size()))
+					{
+						if(meanModel == null)
+							meanModel = new IFS<Similitude>(model.get(c), model.probability(c));
+						else
+							meanModel.addMap(model.get(c), model.probability(c));
+					}
+				}
+					
 				// * Try all permutations of the maps of the learned IFS
 				for(int[] perm : new Permutations(meanModel.size()))
 				{
