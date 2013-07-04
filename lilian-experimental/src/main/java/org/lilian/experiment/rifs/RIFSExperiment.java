@@ -172,10 +172,11 @@ public class RIFSExperiment extends AbstractExperiment
 					// TODO: Magic numbers
 					IFSModelEM experiment = new IFSModelEM(sample, 0.0, 
 							initLearnDepth, initLearnGenerations, mapsPerComponent, initLearnSample, initLearnSample, 0, false, "sphere", 
-							0.001, "none", false);			
+							0.001, "haussdorff", false);			
 					Environment.current().child(experiment);
 		
-					IFS<Similitude> model = experiment.model();
+					IFS<Similitude> model = experiment.bestModel();
+					
 					for(int c : series(model.size()))
 					{
 						if(meanModel == null)
@@ -231,6 +232,8 @@ public class RIFSExperiment extends AbstractExperiment
 			
 			initial = bestModel;
 		}
+		
+		logger.info("Initial model found");
 	
 		em = new RIFSEM(initial, data, depth, sample, spanningPointsVariance, perturbVar, numSources);
 		

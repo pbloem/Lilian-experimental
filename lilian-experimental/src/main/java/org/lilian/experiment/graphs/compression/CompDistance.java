@@ -243,9 +243,9 @@ public class CompDistance extends AbstractExperiment
 	{
 		UTGraph<String, String> ecoli = null, neural = null, cop = null;		
 		try {
-			ecoli  = Data.readString(new File("/Users/Peter/Documents/datasets/graphs/ecoli/EC.dat"));
-			neural = Data.readString(new File("/Users/Peter/Documents/datasets/graphs/neural/celegans.txt"));
-			cop = Data.readString(new File("/Users/Peter/Documents/datasets/graphs/collab/ca-GrQc.txt"));
+			ecoli  = Data.edgeList(new File("/Users/Peter/Documents/datasets/graphs/ecoli/EC.dat"));
+			neural = Data.edgeList(new File("/Users/Peter/Documents/datasets/graphs/neural/celegans.txt"));
+			cop = Data.edgeList(new File("/Users/Peter/Documents/datasets/graphs/collab/ca-GrQc.txt"));
 
 		} catch (IOException e) {
 			throw new RuntimeException(e);
