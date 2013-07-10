@@ -18,7 +18,7 @@ import org.lilian.graphs.random.RandomGraphs;
 public class Q3 extends AbstractExperiment
 {
 
-	private static String base = "/Users/Peter/Documents/datasets/graphs/";
+	private static String base = "/home/peter-extern/datasets/graphs/";
 	private List<Graph<?>> datasets = new ArrayList<Graph<?>>();
 	
 	@SuppressWarnings("unchecked")
