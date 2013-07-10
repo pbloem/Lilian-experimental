@@ -35,46 +35,46 @@ public class Q3 extends AbstractExperiment
 //			logger.info("Loaded pokec (n="+livejournal.size()+", l="+livejournal.numLinks()+")");
 			Graph<?> data;
 //			
-			data = null;
-			data = RandomGraphs.random(10000, 0.001);
-			logger.info("Loaded ER graph");
-			go((Graph<Object>)data);		
-			
-			data = null;
-			data = RandomGraphs.preferentialAttachment(10000, 2);
-			logger.info("Loaded BA graph");
-			go((Graph<Object>)data);		
-						
-			data = null;
-			data = Resources.gmlGraph(new File(base + "internet-newman/as.gml"));
-			logger.info("Loaded internet");
-			go((Graph<Object>)data);
-			
-			data = null;
-			data = RDF.readTurtle(new File(base + "commit/commit-contacts.ttl"));
-			logger.info("Loaded commit (n="+data.size()+", l="+data.numLinks()+")");
-			go((Graph<Object>)data);
-
-			data = null;
-			data = RDF.read(new File(base + "aifb/aifb.owl"));
-			logger.info("Loaded aifb (n="+data.size()+", l="+data.numLinks()+")");
-			go((Graph<Object>)data);
-		
-			data = null;
-			data = Data.edgeListDirectedUnlabeled(new File(base + "epinions/epinions.txt"), false);
-			logger.info("Loaded epinions (n="+data.size()+", l="+data.numLinks()+")");
-			go((Graph<Object>)data);				
-
-			data = null;
-			data = Data.edgeListDirectedUnlabeled(new File(base + "www-barabasi/www.dat"), true);
-			logger.info("Loaded web (n="+data.size()+", l="+data.numLinks()+")");
-			go((Graph<Object>)data);
-
-			data = null;
-			data = Data.edgeListDirectedUnlabeled(new File(base + "internet/as-skitter.txt"), false);
-			logger.info("Loaded internet big (n="+data.size()+", l="+data.numLinks()+")");
-			go((Graph<Object>)data);
-			
+//			data = null;
+//			data = RandomGraphs.random(10000, 0.001);
+//			logger.info("Loaded ER graph");
+//			go((Graph<Object>)data);		
+//			
+//			data = null;
+//			data = RandomGraphs.preferentialAttachment(10000, 2);
+//			logger.info("Loaded BA graph");
+//			go((Graph<Object>)data);		
+//						
+//			data = null;
+//			data = Resources.gmlGraph(new File(base + "internet-newman/as.gml"));
+//			logger.info("Loaded internet");
+//			go((Graph<Object>)data);
+//			
+//			data = null;
+//			data = RDF.readTurtle(new File(base + "commit/commit-contacts.ttl"));
+//			logger.info("Loaded commit (n="+data.size()+", l="+data.numLinks()+")");
+//			go((Graph<Object>)data);
+//
+//			data = null;
+//			data = RDF.read(new File(base + "aifb/aifb.owl"));
+//			logger.info("Loaded aifb (n="+data.size()+", l="+data.numLinks()+")");
+//			go((Graph<Object>)data);
+//		
+//			data = null;
+//			data = Data.edgeListDirectedUnlabeled(new File(base + "epinions/epinions.txt"), false);
+//			logger.info("Loaded epinions (n="+data.size()+", l="+data.numLinks()+")");
+//			go((Graph<Object>)data);				
+//
+//			data = null;
+//			data = Data.edgeListDirectedUnlabeled(new File(base + "www-barabasi/www.dat"), true);
+//			logger.info("Loaded web (n="+data.size()+", l="+data.numLinks()+")");
+//			go((Graph<Object>)data);
+//
+//			data = null;
+//			data = Data.edgeListDirectedUnlabeled(new File(base + "internet/as-skitter.txt"), false);
+//			logger.info("Loaded internet big (n="+data.size()+", l="+data.numLinks()+")");
+//			go((Graph<Object>)data);
+//			
 			data = null;
 			data = Data.edgeListDirectedUnlabeled(new File(base + "patents/cit-Patents.txt"), false);
 			logger.info("Loaded patent citations (n="+data.size()+", l="+data.numLinks()+")");
