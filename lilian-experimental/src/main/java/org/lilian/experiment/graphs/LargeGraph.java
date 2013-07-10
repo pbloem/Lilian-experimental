@@ -168,17 +168,17 @@ public class LargeGraph<N> extends HugeGraph<N>
 		return largestComponentSize / (double) numNodes();
 	}
 	
-	@Result(name="Vertex labels")
-	public List<Pair> vertexLabels()
-	{
-		return Collections.unmodifiableList(vertexLabelFrequencies);
-	}
-	
-	@Result(name="Edge labels")
-	public List<Pair> edgeLabels()
-	{
-		return Collections.unmodifiableList(edgeLabelFrequencies);
-	}	
+//	@Result(name="Vertex labels")
+//	public List<Pair> vertexLabels()
+//	{
+//		return Collections.unmodifiableList(vertexLabelFrequencies);
+//	}
+//	
+//	@Result(name="Edge labels")
+//	public List<Pair> edgeLabels()
+//	{
+//		return Collections.unmodifiableList(edgeLabelFrequencies);
+//	}	
 	
 	@Result(name="Degrees")
 	public List<Integer> degrees()
