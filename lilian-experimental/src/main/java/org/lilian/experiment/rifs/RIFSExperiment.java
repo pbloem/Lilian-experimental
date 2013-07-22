@@ -172,7 +172,7 @@ public class RIFSExperiment extends AbstractExperiment
 					// TODO: Magic numbers
 					IFSModelEM experiment = new IFSModelEM(sample, 0.0, 
 							initLearnDepth, initLearnGenerations, mapsPerComponent, initLearnSample, initLearnSample, 0, false, "sphere", 
-							0.001, "haussdorff", false);			
+							0.001, "hausdorff", false);			
 					Environment.current().child(experiment);
 		
 					IFS<Similitude> model = experiment.bestModel();
