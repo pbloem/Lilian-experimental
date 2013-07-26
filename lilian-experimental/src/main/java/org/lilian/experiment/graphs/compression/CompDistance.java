@@ -22,6 +22,7 @@ import org.lilian.experiment.Parameter;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
 import org.lilian.graphs.Graphs;
+import org.lilian.graphs.Subgraph;
 import org.lilian.graphs.UTGraph;
 import org.lilian.graphs.UTNode;
 import org.lilian.graphs.compression.SubdueCompressor;
@@ -448,7 +449,7 @@ public class CompDistance extends AbstractExperiment
 		
 		System.out.print(".");
 		
-		return reduce(subgraph(graph, neighborhood));
+		return reduce(Subgraph.utSubgraph(graph, neighborhood));
 	}
 	
 	public static UTGraph<String, String> sampleRW(UTGraph<String, String> graph, int steps)
@@ -471,7 +472,7 @@ public class CompDistance extends AbstractExperiment
 	
 		System.out.print(".");
 		
-		return Graphs.blank(subgraph(graph, nodes), "x");
+		return Graphs.blank(Subgraph.utSubgraph(graph, nodes), "x");
 	}
 	
 	public static class RandomDistance implements Distance<UTGraph<String, String>>
