@@ -81,7 +81,7 @@ public class HugeGraph<N> extends AbstractExperiment
 	@Override
 	protected void body()
 	{
-//		int n = graph.size();
+		int n = graph.size();
 //		
 //		// * Calculate mean degree
 //		meanDegree = 0.0;
@@ -123,14 +123,14 @@ public class HugeGraph<N> extends AbstractExperiment
 //		matrixNatural = Draw.matrix(graph, 500, 500);
 //		logger.info("Finished adjacency natural.");
 //
-//		logger.info("Starting adjacency degree.");
-//		orderDeg = Draw.degreeOrdering(graph);
-//		matrixDegree = Draw.matrix(graph, 500, 500, orderDeg);
-//		logger.info("Finished adjacency degree. ");
+		logger.info("Starting adjacency degree.");
+		orderDeg = Draw.degreeOrdering(graph);
+		matrixDegree = Draw.matrix(graph, 500, 500, orderDeg);
+		logger.info("Finished adjacency degree. ");
 //
-//		logger.info("Starting adjacency random.");
-//		List<Integer> orderRand = new ArrayList<Integer>(series(graph.size()));
-//		Collections.shuffle(orderRand);	
+		logger.info("Starting adjacency random.");
+		List<Integer> orderRand = new ArrayList<Integer>(series(graph.size()));
+		Collections.shuffle(orderRand);	
 //		
 //		orderDeg = Draw.degreeOrdering(graph);
 //		matrixRandom = Draw.matrix(graph, 500, 500, orderRand);
@@ -157,46 +157,46 @@ public class HugeGraph<N> extends AbstractExperiment
 //
 //		logger.info("Finished adjacency slashburn. ");	
 		
-//		AbstractGraphCompressor<N> el = new EdgeListCompressor<N>(),
-//		                           nl = new NeighborListCompressor<N>(),
-//		                           am = new MatrixZIPCompressor<N>(),
-//		                           uniform = new UniformCompressor<N>(),
-//		                           binom = new BinomialCompressor<N>(),
-//				                   binomRow = new BinomialRowCompressor<N>();
-//
-//								
-//		uniformCompression = uniform.compressedSize(graph);
-//		
-//		binomialCompression = binom.compressedSize(graph);
-//		
-//		binomialRowCompression = binomRow.compressedSize(graph);
-//		
-//		logger.info("EL Compression. ");	
-//		elCompression = el.compressedSize(graph);
-//		
-//		logger.info("NL Compression. ");	
-//		nlCompression = nl.compressedSize(graph);
-//		
-//		logger.info("AM compression. ");	
-//		amCompression = n > 5000 ? 0.0 : am.compressedSize(graph);
-//		
-//		logger.info("random ordering");
-//		
-//		randCompression = Arrays.asList(
-//				el.structureBits(graph, orderRand),
-//				nl.structureBits(graph, orderRand),
-//				n > 5000 ? 0.0 : am.structureBits(graph, orderRand),
-//				binomRow.structureBits(graph, orderRand)
-//		);
-//		
-//		logger.info("degree ordering");
-//
-//		degCompression = Arrays.asList(
-//				el.structureBits(graph, orderDeg),
-//				nl.structureBits(graph, orderDeg),
-//				n > 5000 ? 0.0 : am.structureBits(graph, orderDeg),
-//				binomRow.structureBits(graph, orderDeg)
-//		);
+		AbstractGraphCompressor<N> el = new EdgeListCompressor<N>(),
+		                           nl = new NeighborListCompressor<N>(),
+		                           am = new MatrixZIPCompressor<N>(),
+		                           uniform = new UniformCompressor<N>(),
+		                           binom = new BinomialCompressor<N>(),
+				                   binomRow = new BinomialRowCompressor<N>();
+
+								
+		uniformCompression = uniform.compressedSize(graph);
+		
+		binomialCompression = binom.compressedSize(graph);
+		
+		binomialRowCompression = binomRow.compressedSize(graph);
+		
+		logger.info("EL Compression. ");	
+		elCompression = el.compressedSize(graph);
+		
+		logger.info("NL Compression. ");	
+		nlCompression = nl.compressedSize(graph);
+		
+		logger.info("AM compression. ");	
+		amCompression = n > 100 ? 0.0 : am.compressedSize(graph);
+		
+		logger.info("random ordering");
+		
+		randCompression = Arrays.asList(
+				el.structureBits(graph, orderRand),
+				nl.structureBits(graph, orderRand),
+				n > 5000 ? 0.0 : am.structureBits(graph, orderRand),
+				binomRow.structureBits(graph, orderRand)
+		);
+		
+		logger.info("degree ordering");
+
+		degCompression = Arrays.asList(
+				el.structureBits(graph, orderDeg),
+				nl.structureBits(graph, orderDeg),
+				n > 100 ? 0.0 : am.structureBits(graph, orderDeg),
+				binomRow.structureBits(graph, orderDeg)
+		);
 //		
 //		logger.info("Reverse degree ordering");
 //		
@@ -218,17 +218,17 @@ public class HugeGraph<N> extends AbstractExperiment
 //				binomRow.structureBits(graph, orderSB)
 //		);
 		
-		logger.info("Link sampling test");
-		
-		tic();
-		LinkGenerator<N> gen = new LinkGenerator<N>(graph);
-		tMakeGenerator = toc();
-		
-		int sampleSize = 5000;
-		tic();
-		for(int i : Series.series(sampleSize))
-			gen.generate();
-		tSample = toc()/(double)sampleSize;
+//		logger.info("Link sampling test");
+//		
+//		tic();
+//		LinkGenerator<N> gen = new LinkGenerator<N>(graph);
+//		tMakeGenerator = toc();
+//		
+//		int sampleSize = 5000;
+//		tic();
+//		for(int i : Series.series(sampleSize))
+//			gen.generate();
+//		tSample = toc()/(double)sampleSize;
 	}
 	
 	@Result(name="Mean degree")

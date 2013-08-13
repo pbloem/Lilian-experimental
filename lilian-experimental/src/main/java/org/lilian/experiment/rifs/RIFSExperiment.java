@@ -48,6 +48,7 @@ public class RIFSExperiment extends AbstractExperiment
 	private int sample;
 	private int depth;
 	private int generations;
+	private int treeIterations;
 	private double spanningPointsVariance;
 	private double perturbVar;
 	private int componentIFSs;
@@ -73,6 +74,8 @@ public class RIFSExperiment extends AbstractExperiment
 				int depth,
 			@Parameter(name="generations")
 				int generations,
+			@Parameter(name="tree iterations", description="The number of tree/code iterations per generation.")
+				int treeIterations, 
 			@Parameter(name="spanning points variance")
 				double spanningPointsVariance,
 			@Parameter(name="perturb var")
@@ -99,6 +102,7 @@ public class RIFSExperiment extends AbstractExperiment
 		this.depth = depth;
 		this.sample = sample;
 		this.generations = generations;
+		this.treeIterations = treeIterations;
 		this.spanningPointsVariance = spanningPointsVariance;
 		this.perturbVar = perturbVar;
 		this.componentIFSs = componentIFSs;
@@ -142,7 +146,7 @@ public class RIFSExperiment extends AbstractExperiment
 		} else if(initStrategy.equals("learn"))
 		{
 			// * This is a complicated initialization strategy.
-			//   It trains a regular IFS modle on the flattended dataset, and tries 
+			//   It trains a regular IFS model on the flattended dataset, and tries 
 			//   all permutations of its maps to find the best rifs model (by hausdorff distance)
 			//   The process is repeated a number of times.
 			
@@ -255,7 +259,7 @@ public class RIFSExperiment extends AbstractExperiment
 				
 			} catch (IOException e) { throw new RuntimeException(e); }
 			
-			em.iteration();	
+			em.iteration(treeIterations);	
 		}
 	}
 	
