@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.data2semantics.tools.graphs.Edge;
-import org.data2semantics.tools.graphs.Vertex;
 import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Environment;
 import org.lilian.experiment.Factory;

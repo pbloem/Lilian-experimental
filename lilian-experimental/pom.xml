@@ -51,20 +51,15 @@
   		<artifactId>jung-visualization</artifactId>
   		<version>2.0.1</version>
   	</dependency>
-  	<dependency>
-  		<groupId>peterboem.nl</groupId>
-  		<artifactId>powerlaws</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
-  	</dependency>
 
   	<dependency>
   		<groupId>data2semantics</groupId>
-  		<artifactId>d2s-platform</artifactId>
+  		<artifactId>nodes</artifactId>
   		<version>0.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>data2semantics</groupId>
-  		<artifactId>d2stools</artifactId>
+  		<artifactId>d2s-platform</artifactId>
   		<version>0.0.1-SNAPSHOT</version>
   	</dependency>
   </dependencies>
@@ -90,6 +85,11 @@
 	    <repository>
           <id>peterbloem.nl</id>
           <url>http://peterbloem.nl/maven2</url>
+        </repository>  
+
+	    <repository>
+          <id>wongiseng</id>
+          <url>http://ducktape.wongiseng.com/jenkins/plugin/repository</url>
         </repository>  
 	</repositories>	
 </project>
