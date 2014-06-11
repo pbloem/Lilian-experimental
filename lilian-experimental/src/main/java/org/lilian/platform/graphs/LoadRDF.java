@@ -6,9 +6,8 @@ import java.util.List;
 import org.data2semantics.platform.annotation.In;
 import org.data2semantics.platform.annotation.Main;
 import org.data2semantics.platform.annotation.Module;
-import org.lilian.graphs.DTGraph;
-import org.lilian.graphs.MapDTGraph;
-import org.lilian.graphs.data.RDF;
+import org.nodes.DTGraph;
+import org.nodes.data.RDF;
 
 @Module(name="Load RDF")
 public class LoadRDF
@@ -23,16 +22,25 @@ public class LoadRDF
 	@In(name="whitelist")
 	public List<String> nodeWhitelist;
 	
+	@In(name="simplify")
+	public boolean simplify = true;
+	
 	@Main(name="data", print=false)
 	public DTGraph<String, String> load()
 	{
+		DTGraph<String, String> graph; 
+		
 		if(type.toLowerCase().equals("turtle"))
-			return RDF.readTurtle(new File(file), nodeWhitelist);
+			graph = RDF.readTurtle(new File(file), nodeWhitelist);		
+		else if(type.toLowerCase().equals("xml"))
+			graph = RDF.read(new File(file), nodeWhitelist);
+		else
+			throw new RuntimeException("RDF type "+type+" not recognized");
 		
-		if(type.toLowerCase().equals("xml"))
-			return RDF.read(new File(file), nodeWhitelist);
+		if(simplify)
+			graph = RDF.simplify(graph);
 		
-		throw new RuntimeException("RDF type "+type+" not recognized");
+		return graph;
 	}
 	
 }

@@ -7,10 +7,9 @@ import java.util.List;
 import org.data2semantics.platform.annotation.In;
 import org.data2semantics.platform.annotation.Main;
 import org.data2semantics.platform.annotation.Module;
-import org.lilian.graphs.DTGraph;
-import org.lilian.graphs.MapDTGraph;
-import org.lilian.graphs.data.Data;
-import org.lilian.graphs.data.RDF;
+import org.nodes.DTGraph;
+import org.nodes.data.Data;
+
 
 @Module(name="Load graph")
 public class LoadGraph

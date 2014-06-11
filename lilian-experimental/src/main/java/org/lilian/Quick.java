@@ -34,9 +34,14 @@ import org.lilian.data.real.fractal.random.ChoiceTree;
 import org.lilian.data.real.fractal.random.DiscreteRIFS;
 import org.lilian.data.real.fractal.random.RIFSs;
 import org.lilian.experiment.Resources;
-import org.lilian.graphs.Graph;
-import org.lilian.graphs.data.GML;
 import org.lilian.util.Series;
+import org.nodes.Graph;
+import org.nodes.Graphs;
+import org.nodes.Node;
+import org.nodes.data.Dot;
+import org.nodes.gephi.Gephi;
+import org.w3c.dom.Document;
+import org.w3c.dom.svg.SVGDocument;
 
 public class Quick
 {
@@ -47,12 +52,30 @@ public class Quick
 	 */
 	public static void main(String[] args) throws IOException
 	{
-		File file = new File("/Users/Peter/Documents/datasets/graphs/commit/commit.gml");
 		
-		Graph<String> graph = GML.read(file);
+		Graph<String> data = Dot.read("digraph {id620instance -> Victoria Uren [label=test]; Victoria Uren -> id620instance; Victoria Uren -> id632instance; id632instance -> Victoria Uren}");
+		// Graph<String> data = Graphs.ladder(15, "x");
 		
-		System.out.println(graph.size());
-		System.out.println(graph.numLinks());
+		for(Node<String> node : data.nodes())
+			System.out.println("_" + node.label() + "_");
+		
+		System.out.println(data.get(0));
+		
+		SVGDocument svg = Gephi.svg(Gephi.gephiGraph(data));
+		BufferedImage dataImage = org.nodes.draw.Draw.draw(svg, 800);
+
+		org.nodes.draw.Draw.write(svg, new File("/Users/Peter/Documents/out.svg"));
+		ImageIO.write(dataImage, "PNG", new File("/Users/Peter/Documents/out.png"));
+		
+		System.out.println("done drawing data");
+		
+		
+//		File file = new File("/Users/Peter/Documents/datasets/graphs/commit/commit.gml");
+//		
+//		Graph<String> graph = GML.read(file);
+//		
+//		System.out.println(graph.size());
+//		System.out.println(graph.numLinks());
 		
 //		DiscreteRIFS<Similitude> model = RIFSs.koch2UpDown();
 //		ChoiceTree tree = model.randomInstance(8);
