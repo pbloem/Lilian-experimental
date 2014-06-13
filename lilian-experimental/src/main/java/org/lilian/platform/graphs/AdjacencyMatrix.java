@@ -1,9 +1,6 @@
 package org.lilian.platform.graphs;
 
-import static org.lilian.util.Series.series;
-
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
@@ -13,9 +10,8 @@ import org.data2semantics.platform.annotation.In;
 import org.data2semantics.platform.annotation.Main;
 import org.data2semantics.platform.annotation.Module;
 import org.data2semantics.platform.annotation.Out;
-import org.lilian.graphs.Graph;
-import org.lilian.graphs.algorithms.SlashBurn;
-import org.lilian.graphs.draw.Draw;
+import org.nodes.Graph;
+import org.nodes.draw.Draw;
 
 @Module(name="adjacency", description="Visualizes a graph as a density plot of the adjacency matrix")
 public class AdjacencyMatrix<T>
@@ -61,14 +57,14 @@ public class AdjacencyMatrix<T>
 		int k = (int)(0.005 * graph.size());
 		k = Math.max(k, 1);
 
-		SlashBurn<T> sb = new SlashBurn<T>(graph, k);
-		sb.finish();		
-		slashburn = Draw.matrix(graph, SIZE, SIZE, sb.order());
-		order = sb.order();
+//		SlashBurn<T> sb = new SlashBurn<T>(graph, k);
+//		sb.finish();		
+//		slashburn = Draw.matrix(graph, SIZE, SIZE, sb.order());
+//		order = sb.order();
 
-		wingWidthRatio = sb.wingWidthRatio();
-		logger.info("-- Slashburn finished in "+sb.iterations()+" iterations (k at "+k+")");
-		logger.info("Finished adjacency slashburn. ");	
-		
+//		wingWidthRatio = sb.wingWidthRatio();
+//		logger.info("-- Slashburn finished in "+sb.iterations()+" iterations (k at "+k+")");
+//		logger.info("Finished adjacency slashburn. ");	
+//		
 	}
 }

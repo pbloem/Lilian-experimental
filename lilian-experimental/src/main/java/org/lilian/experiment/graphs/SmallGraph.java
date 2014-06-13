@@ -4,10 +4,10 @@ import java.awt.image.BufferedImage;
 
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
-import org.lilian.graphs.Graph;
-import org.lilian.graphs.Measures;
-import org.lilian.graphs.UTGraph;
-import org.lilian.graphs.jung.Graphs;
+import org.nodes.Graph;
+import org.nodes.Graphs;
+import org.nodes.Measures;
+import org.nodes.UTGraph;
 
 
 public class SmallGraph<N> extends LargeGraph<N>
@@ -33,12 +33,12 @@ public class SmallGraph<N> extends LargeGraph<N>
 		
 		// * Rendering visualization
 		logger.info("Rendering visualization.");
-		if(graph instanceof UTGraph)
-		{
-			image = Graphs.image(
-				Graphs.toJUNG((UTGraph<?,?>)graph), 800, 494);	
-		}
-		
+//		if(graph instanceof UTGraph)
+//		{
+//			image = Graphs.image(
+//				Graphs.toJUNG((UTGraph<?,?>)graph), 800, 494);	
+//		}
+//		
 		logger.info("Calculating global Clustering Coefficient");
 		globalClusteringCoefficient = Measures.clusteringCoefficient(graph);
 	}	

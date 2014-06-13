@@ -7,27 +7,25 @@ import java.io.File;
 import java.io.FileOutputStream;
 
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
 
 import org.lilian.Global;
 import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Factory;
 import org.lilian.experiment.Parameter;
 import org.lilian.experiment.Result;
-import org.lilian.graphs.Graph;
-import org.lilian.graphs.Graphs;
-import org.lilian.graphs.MapUTGraph;
-import org.lilian.graphs.Node;
-import org.lilian.graphs.UTGraph;
-import org.lilian.graphs.draw.CircleLayout;
 import org.lilian.graphs.draw.SpectralLayout;
 import org.lilian.util.Series;
+import org.nodes.Graph;
+import org.nodes.Graphs;
+import org.nodes.MapUTGraph;
+import org.nodes.Node;
+import org.nodes.UTGraph;
 import org.w3c.dom.Document;
+
+import edu.uci.ics.jung.algorithms.layout.CircleLayout;
 
 public class Draw<L> extends AbstractExperiment
 {
@@ -57,9 +55,9 @@ public class Draw<L> extends AbstractExperiment
 	{
 		data = toUndirected(data);
 		
-		circleLayout = org.lilian.graphs.draw.Draw.draw(data, new CircleLayout<L>(data), WIDTH, HEIGHT);
-		
-		spectralLayout = org.lilian.graphs.draw.Draw.draw(data, new SpectralLayout<L>(data), WIDTH, HEIGHT);
+//		circleLayout = org.lilian.graphs.draw.Draw.draw(data, new CircleLayout<L>(data), WIDTH, HEIGHT);
+//		
+//		spectralLayout = org.lilian.graphs.draw.Draw.draw(data, new SpectralLayout<L>(data), WIDTH, HEIGHT);
 
 	}
 	

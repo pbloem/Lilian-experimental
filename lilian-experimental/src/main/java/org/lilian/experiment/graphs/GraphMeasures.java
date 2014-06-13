@@ -10,9 +10,8 @@ import org.lilian.experiment.Experiment;
 import org.lilian.experiment.Parameter;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.Results;
-import org.lilian.graphs.DGraph;
-import org.lilian.graphs.Graph;
-
+import org.nodes.DGraph;
+import org.nodes.Graph;
 
 public class GraphMeasures<N> extends AbstractExperiment
 {

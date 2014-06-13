@@ -6,21 +6,13 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import nl.peterbloem.powerlaws.Discrete;
-import nl.peterbloem.powerlaws.DiscreteApproximate;
 
-import org.apache.commons.collections15.Transformer;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
-import org.lilian.graphs.Graph;
-import org.lilian.graphs.Node;
-import org.lilian.models.BasicFrequencyModel;
-import org.lilian.util.Functions;
-import org.lilian.util.Series;
-import org.lilian.util.graphs.jung.FloydWarshall;
+import org.nodes.Graph;
+import org.nodes.Node;
 
 
 /**

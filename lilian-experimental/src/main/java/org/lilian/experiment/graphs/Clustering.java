@@ -3,10 +3,10 @@ package org.lilian.experiment.graphs;
 import org.lilian.data.real.classification.Classified;
 import org.lilian.data.real.clustering.SpectralClustering;
 import org.lilian.experiment.AbstractExperiment;
-import org.lilian.graphs.Graph;
-import org.lilian.graphs.Node;
-import org.lilian.graphs.clustering.Clusterer;
-import org.lilian.graphs.clustering.GraphSpectral;
+import org.nodes.Graph;
+import org.nodes.Node;
+import org.nodes.clustering.Clusterer;
+
 
 public class Clustering<N> extends AbstractExperiment
 {
@@ -18,8 +18,8 @@ public class Clustering<N> extends AbstractExperiment
 	protected void body()
 	{
 		
-		Clusterer<N> clusterer = new GraphSpectral<N>(k);
-		Classified<Node<N>> clusters = clusterer.cluster(data);
+//		Clusterer<N> clusterer = new GraphSpectral<N>(k);
+//		Classified<Node<N>> clusters = clusterer.cluster(data);
 		
 		
 	}

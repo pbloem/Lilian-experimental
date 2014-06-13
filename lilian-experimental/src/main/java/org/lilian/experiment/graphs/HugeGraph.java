@@ -1,8 +1,6 @@
 package org.lilian.experiment.graphs;
 
 
-import static org.lilian.util.Functions.tic;
-import static org.lilian.util.Functions.toc;
 import static org.lilian.util.Series.series;
 
 import java.awt.image.BufferedImage;
@@ -14,24 +12,15 @@ import java.util.List;
 import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Result;
 import org.lilian.experiment.State;
-import org.lilian.graphs.Graph;
-import org.lilian.graphs.Measures;
-import org.lilian.graphs.Node;
-import org.lilian.graphs.algorithms.SlashBurn;
-import org.lilian.graphs.clustering.ConnectionClusterer.ConnectionClustering;
-import org.lilian.graphs.compression.AbstractGraphCompressor;
-import org.lilian.graphs.compression.BinomialCompressor;
-import org.lilian.graphs.compression.BinomialRowCompressor;
-import org.lilian.graphs.compression.EdgeListCompressor;
-import org.lilian.graphs.compression.MatrixZIPCompressor;
-import org.lilian.graphs.compression.NeighborListCompressor;
-import org.lilian.graphs.compression.UniformCompressor;
-import org.lilian.graphs.draw.Draw;
-import org.lilian.graphs.random.LinkGenerators;
-import static org.lilian.graphs.random.LinkGenerators.LinkGenerator;
-import org.lilian.util.Compressor;
-import org.lilian.util.Functions;
-import org.lilian.util.Series;
+import org.nodes.Graph;
+import org.nodes.compression.AbstractGraphCompressor;
+import org.nodes.compression.BinomialCompressor;
+import org.nodes.compression.BinomialRowCompressor;
+import org.nodes.compression.EdgeListCompressor;
+import org.nodes.compression.MatrixZIPCompressor;
+import org.nodes.compression.NeighborListCompressor;
+import org.nodes.compression.UniformCompressor;
+import org.nodes.draw.Draw;
 
 /**
  * Graphs measures that will work on huge graphs. Generally, these are linear in 
