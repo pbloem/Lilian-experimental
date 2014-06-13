@@ -218,7 +218,7 @@ public class Masking
 						occurrences.get(sub), occOut, labels);
 
 				bits = MotifCompressor.sizeSymbols(data, VAR_SYMBOL, motif,
-						occOut, new EdgeListCompressor<String>());
+						occOut);
 				
 				if(bits < currentTopBits)
 				{
