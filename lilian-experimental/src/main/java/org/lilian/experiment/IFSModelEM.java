@@ -538,8 +538,6 @@ public class IFSModelEM extends AbstractExperiment
 		File genDir = new File(dir, "generations");
 		genDir.mkdirs();
 		
-//		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true, depth, basis);
-//		BufferedImage image = Draw.draw(ifs, its, xrange, yrange, 1920/div, 1080/div, true);
 		BufferedImage image;
 		
 		image= Draw.draw(ifs, its, new double[]{-1.1, 1.1}, new double[]{-1.1, 1.1}, 1000/div, 1000/div, true, depth, em.basis());

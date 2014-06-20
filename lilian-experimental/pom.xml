@@ -59,7 +59,7 @@
   	</dependency>
   	<dependency>
   		<groupId>data2semantics</groupId>
-  		<artifactId>d2s-platform</artifactId>
+  		<artifactId>ducktape</artifactId>
   		<version>0.0.1-SNAPSHOT</version>
   	</dependency>
   </dependencies>
@@ -87,9 +87,5 @@
           <url>http://peterbloem.nl/maven2</url>
         </repository>  
 
-	    <repository>
-          <id>wongiseng</id>
-          <url>http://ducktape.wongiseng.com/jenkins/plugin/repository</url>
-        </repository>  
 	</repositories>	
 </project>

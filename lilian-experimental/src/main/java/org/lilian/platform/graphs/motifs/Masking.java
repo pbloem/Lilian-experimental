@@ -59,6 +59,8 @@ public class Masking
 
 	private static final String MOTIF_SYMBOL = "%M";
 	private static final String VAR_SYMBOL = "%V";
+	
+	private static final int MIN_OCCURRENCES = 10;
 
 	private DGraph<String> data;
 	private DGraph<String> top, second, third;
@@ -194,8 +196,11 @@ public class Masking
 		
 		for (DGraph<String> sub : tokens)
 		{
-			System.out.println("Starting motif " + sub);
+			System.out.println("Starting motif (" + fm.frequency(sub) + ")" + sub);
 			int n = sub.size();
+			
+			if(fm.frequency(sub) < MIN_OCCURRENCES)
+				break;
 			
 			double currentTopBits = Double.MAX_VALUE;
 			DGraph<String> motif = null;
