@@ -1,6 +1,8 @@
 package org.lilian.data.real.fractal.fin;
 
+import static java.lang.Math.ceil;
 import static org.lilian.util.Functions.tic;
+import static org.lilian.util.Functions.toc;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
@@ -47,7 +49,12 @@ public class Visual
 	private static final double SCALE = 0.1;
 	private static final double IDENTITY_INIT_VAR = 0.1;
 	private static final int NUM_SOURCES = 1;
+	
+	private static final double DEPTH_RANGE = 0.1;
+	private static final double DEPTH_STEP = 0.05;
 
+
+	public static double STARTING_DEPTH = 6.0;
 	
 	@In(name="data", print=false)
 	public List<Point> data;	
@@ -112,24 +119,34 @@ public class Visual
 		images = new ArrayList<RenderedImage>(generations);
 		imagesDeep = new ArrayList<RenderedImage>(generations);
 		
+		double currentDepth = depth;
+		
 		// * BODY
 		tic();
 		for(int generation : Series.series(generations))
 		{
+			int totalSamples = (int)ceil(emSampleSize / Math.pow(numComponents, currentDepth));
+			
 			model = em.model();
 
 			if(dim == 2)
-				write(em.model(), Global.getWorkingDir(), String.format("generation%04d", generation), em.basis());
-			
-			Global.log().info("generation " + generation + ": " + Functions.toc() + " seconds.");
-			Functions.tic();		
-			
-			em.iterate(emSampleSize, depth);
+				write(em.model(), Global.getWorkingDir(), String.format("generation%04d", generation), currentDepth, em.basis());
 						
+			tic();
+			em.iterate(totalSamples, currentDepth);
+			Global.log().info(generation + ") finished ("+toc() +" seconds, total samples: "+totalSamples+")");
+			
+			if(generation > 0 && generation % 20 == 0)
+			{
+				tic();
+				currentDepth = EM.bestDepth(em.model(), 0.0, 0.5, 8.0, 1000, data);
+				Global.log().info(generation + ") found depth "+currentDepth+" in "+toc()+" seconds.");
+			}
+			
 		}
 	}
 	
-	private <M extends Map & Parametrizable> void write(IFS<M> ifs, File dir, String name, MVN basis) throws IOException
+	private <M extends Map & Parametrizable> void write(IFS<M> ifs, File dir, String name, double currentDepth, MVN basis) throws IOException
 	{		
 		int div = highQuality ? 1 : 4;
 		int its = highQuality ? (int) 10000000 : 10000;
@@ -139,7 +156,7 @@ public class Visual
 		
 		BufferedImage image;
 		
-		image= Draw.draw(ifs, its, new double[]{-1.1, 1.1}, new double[]{-1.1, 1.1}, 1000/div, 1000/div, true, depth, basis);
+		image= Draw.draw(ifs, its, new double[]{-1.1, 1.1}, new double[]{-1.1, 1.1}, 1000/div, 1000/div, true, currentDepth, basis);
 		images.add(image);
 		ImageIO.write(image, "PNG", new File(genDir, name+"png"));
 		
