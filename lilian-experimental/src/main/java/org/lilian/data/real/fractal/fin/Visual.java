@@ -55,11 +55,8 @@ public class Visual
 	@In(name="data", print=false)
 	public List<Point> data;	
 	
-	@In(name="starting depth")
-	public double startingDepth;
-	
-	@In(name="max depth")
-	public double depthMax;
+	@In(name="depth")
+	public double depth;
 	
 	@In(name="generations")
 	public int generations;
@@ -78,6 +75,9 @@ public class Visual
 	
 	@In(name="high quality")
 	public boolean highQuality;
+	
+	@Out(name="best depth")
+	public double bestDepth;
 	
 	private List<RenderedImage> images;
 	@Out(name="images")
@@ -119,31 +119,30 @@ public class Visual
 		
 		images = new ArrayList<RenderedImage>(generations);
 		imagesDeep = new ArrayList<RenderedImage>(generations);
-		
-		double currentDepth = startingDepth;
-		
+				
 		// * BODY
 		tic();
 		for(int generation : Series.series(generations))
 		{
-			int totalSamples = (int)ceil(emSampleSize / Math.pow(numComponents, currentDepth));
+			int totalSamples = (int)ceil(emSampleSize / Math.pow(numComponents, depth));
 			
 			model = em.model();
 
 			if(dim == 2)
-				write(em.model(), Global.getWorkingDir(), String.format("generation%04d", generation), currentDepth, em.basis());
+				write(em.model(), Global.getWorkingDir(), String.format("generation%04d", generation), depth, em.basis());
 						
 			tic();
-			em.iterate(totalSamples, currentDepth);
+			em.iterate(totalSamples, depth);
 			Global.log().info(generation + ") finished ("+toc() +" seconds, total samples: "+totalSamples+")");
 			
-			if(generation > 0 && generation % 20 == 0)
-			{
-				tic();
-				currentDepth = EM.bestDepth(em.model(), 0.0, DEPTH_STEP, depthMax, 1000, data);
-				Global.log().info(generation + ") found depth "+currentDepth+" in "+toc()+" seconds.");
-			}
+//			if(generation > 0 && generation % 20 == 0)
+//			{
+//				tic();
+//				currentDepth = EM.bestDepth(em.model(), 0.0, DEPTH_STEP, depthMax, 1000, data);
+//				Global.log().info(generation + ") found depth "+currentDepth+" in "+toc()+" seconds.");
+//			}
 			
+			bestDepth = EM.bestDepth(em.model(), 0.0, 0.5, 8.0, depthSampleSize, data);
 		}
 	}
 	

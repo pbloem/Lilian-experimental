@@ -3,6 +3,7 @@ package org.lilian.experiment.graphs;
 import org.data2semantics.platform.annotation.In;
 import org.data2semantics.platform.annotation.Main;
 import org.data2semantics.platform.annotation.Module;
+import org.data2semantics.platform.annotation.Out;
 import org.nodes.Graph;
 import org.nodes.compression.BinomialCompressor;
 import org.nodes.compression.BinomialRowCompressor;
@@ -17,16 +18,16 @@ public class CompressionTest
 	@In(name="graph", print=false)
 	public Graph<String> graph;
 	
-	@In(name="neighbour list compression")
+	@Out(name="neighbour list compression")
 	public double nlCompression;
 	
-	@In(name="edge list comprssion")
+	@Out(name="edge list comprssion")
 	public double elCompression;
 	
-	@In(name="Binomial (row) compression")
+	@Out(name="Binomial (row) compression")
 	public double binRowCompression;
 	
-	@In(name="Binomial compression")
+	@Out(name="Binomial compression")
 	public double binCompression;
 
 	
