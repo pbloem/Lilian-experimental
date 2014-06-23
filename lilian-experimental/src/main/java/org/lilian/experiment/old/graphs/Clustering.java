@@ -1,4 +1,4 @@
-package org.lilian.experiment.graphs;
+package org.lilian.experiment.old.graphs;
 
 import org.lilian.data.real.classification.Classified;
 import org.lilian.data.real.clustering.SpectralClustering;

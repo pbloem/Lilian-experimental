@@ -1,4 +1,4 @@
-package org.lilian.experiment.graphs;
+package org.lilian.experiment.old.graphs;
 
 import static java.util.Collections.reverseOrder;
 
