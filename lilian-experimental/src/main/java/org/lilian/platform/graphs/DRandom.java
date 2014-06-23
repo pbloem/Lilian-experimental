@@ -14,7 +14,7 @@ public class DRandom
 	@In(name="probability")
 	public double p;
 	
-	@Main(print=false)
+	@Main(name="data", print=false)
 	public DTGraph<String, String> randomGraph()
 	{
 		return RandomGraphs.randomDirected(n, p);

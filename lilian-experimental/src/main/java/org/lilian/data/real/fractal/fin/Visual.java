@@ -140,8 +140,9 @@ public class Visual
 //				Global.log().info(generation + ") found depth "+currentDepth+" in "+toc()+" seconds.");
 //			}
 			
-			bestDepth = EM.bestDepth(em.model(), 0.0, 0.5, 8.0, depthSampleSize, data);
 		}
+		bestDepth = EM.bestDepth(em.model(), 0.0, 0.5, 8.0, depthSampleSize, data);
+
 	}
 	
 	private <M extends Map & Parametrizable> void write(IFS<M> ifs, File dir, String name, double currentDepth, MVN basis) throws IOException
