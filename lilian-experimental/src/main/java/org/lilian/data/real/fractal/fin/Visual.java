@@ -58,7 +58,7 @@ public class Visual
 	@In(name="starting depth")
 	public double startingDepth;
 	
-	@In(name="depth max")
+	@In(name="max depth")
 	public double depthMax;
 	
 	@In(name="generations")
