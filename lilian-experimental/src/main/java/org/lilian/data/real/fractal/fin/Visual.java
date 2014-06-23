@@ -156,11 +156,11 @@ public class Visual
 		BufferedImage image;
 		
 		image= Draw.draw(ifs, its, new double[]{-1.1, 1.1}, new double[]{-1.1, 1.1}, 1000/div, 1000/div, true, currentDepth, basis);
-		images.add(image);
+		// images.add(image);
 		ImageIO.write(image, "PNG", new File(genDir, name+"png"));
 		
 		image= Draw.draw(ifs.generator(), its, 1000/div, true);
-		imagesDeep.add(image);
+		// imagesDeep.add(image);
 		ImageIO.write(image, "PNG", new File(genDir, name+".deep.png"));
 
 		
