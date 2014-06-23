@@ -123,17 +123,15 @@ public class Visual
 		// * BODY
 		tic();
 		for(int generation : Series.series(generations))
-		{
-			int totalSamples = (int)ceil(emSampleSize / Math.pow(numComponents, depth));
-			
+		{			
 			model = em.model();
 
 			if(dim == 2)
 				write(em.model(), Global.getWorkingDir(), String.format("generation%04d", generation), depth, em.basis());
 						
 			tic();
-			em.iterate(totalSamples, depth);
-			Global.log().info(generation + ") finished ("+toc() +" seconds, total samples: "+totalSamples+")");
+			em.iterate(emSampleSize, depth);
+			Global.log().info(generation + ") finished ("+toc() +" seconds, total samples: "+emSampleSize+")");
 			
 //			if(generation > 0 && generation % 20 == 0)
 //			{
