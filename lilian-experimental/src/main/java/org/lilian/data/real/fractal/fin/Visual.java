@@ -49,18 +49,17 @@ public class Visual
 	private static final double SCALE = 0.1;
 	private static final double IDENTITY_INIT_VAR = 0.1;
 	private static final int NUM_SOURCES = 1;
-	
-	private static final double DEPTH_RANGE = 0.1;
-	private static final double DEPTH_STEP = 0.05;
 
-
-	public static double STARTING_DEPTH = 6.0;
+	private static final double DEPTH_STEP = 0.5;
 	
 	@In(name="data", print=false)
 	public List<Point> data;	
 	
-	@In(name="depth")
-	public double depth;
+	@In(name="starting depth")
+	public double startingDepth;
+	
+	@In(name="depth max")
+	public double depthMax;
 	
 	@In(name="generations")
 	public int generations;
@@ -71,12 +70,14 @@ public class Visual
 	@In(name="em sample size", description="How many points to use in each iteration of the EM algorithm.") 
 	public int emSampleSize;
 	
+	@In(name="depth sample size", description="How many points to use when determining depth.") 
+	public int depthSampleSize;
+	
 	@In(name="spanning variance")
 	public double spanningVariance;
 	
 	@In(name="high quality")
 	public boolean highQuality;
-	
 	
 	private List<RenderedImage> images;
 	@Out(name="images")
@@ -119,7 +120,7 @@ public class Visual
 		images = new ArrayList<RenderedImage>(generations);
 		imagesDeep = new ArrayList<RenderedImage>(generations);
 		
-		double currentDepth = depth;
+		double currentDepth = startingDepth;
 		
 		// * BODY
 		tic();
@@ -139,7 +140,7 @@ public class Visual
 			if(generation > 0 && generation % 20 == 0)
 			{
 				tic();
-				currentDepth = EM.bestDepth(em.model(), 0.0, 0.5, 8.0, 1000, data);
+				currentDepth = EM.bestDepth(em.model(), 0.0, DEPTH_STEP, depthMax, 1000, data);
 				Global.log().info(generation + ") found depth "+currentDepth+" in "+toc()+" seconds.");
 			}
 			
