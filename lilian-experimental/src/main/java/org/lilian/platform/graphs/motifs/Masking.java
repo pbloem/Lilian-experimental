@@ -189,7 +189,8 @@ public class Masking
 		List<List<Integer>> topOccurrences = null;
 		List<List<String>> topLabels = null;
 		
-		CSVWriter writer = new CSVWriter(new FileWriter(new File("motifs.csv")));
+		CSVWriter writer = new CSVWriter(new FileWriter(
+				new File(Global.getWorkingDir(), "motifs.csv")));
 		
 		for (DGraph<String> sub : tokens)
 		{
@@ -327,31 +328,6 @@ public class Masking
 	}
 
 	/**
-	 * Computes the number of times the most frequently occurring node occurs in
-	 * the given motif occurrences.
-	 * 
-	 * @param graph
-	 * @param occurrences
-	 * @return
-	 */
-	public static List<Double> degrees(DGraph<String> graph,
-			DGraph<String> sub, List<List<Integer>> occurrences)
-	{
-		List<Double> means = new ArrayList<Double>(sub.size());
-
-		for (int i : Series.series(sub.size()))
-		{
-			double sum = 0.0;
-			for (List<Integer> occ : occurrences)
-				sum += graph.get(occ.get(i)).degree();
-
-			means.add(sum / (double) occurrences.size());
-		}
-
-		return means;
-	}
-
-	/**
 	 * Applies mask to substring.
 	 * 
 	 * For the nonmasked nodes, it chooses the labels from the occurrences that
@@ -416,6 +392,31 @@ public class Masking
 		}
 
 		return copy;
+	}
+
+	/**
+	 * Computes the number of times the most frequently occurring node occurs in
+	 * the given motif occurrences.
+	 * 
+	 * @param graph
+	 * @param occurrences
+	 * @return
+	 */
+	public static List<Double> degrees(DGraph<String> graph,
+			DGraph<String> sub, List<List<Integer>> occurrences)
+	{
+		List<Double> means = new ArrayList<Double>(sub.size());
+	
+		for (int i : Series.series(sub.size()))
+		{
+			double sum = 0.0;
+			for (List<Integer> occ : occurrences)
+				sum += graph.get(occ.get(i)).degree();
+	
+			means.add(sum / (double) occurrences.size());
+		}
+	
+		return means;
 	}
 
 	private static boolean matches(List<String> choice, List<Integer> indices,
