@@ -37,6 +37,7 @@ import org.nodes.TGraph;
 import org.nodes.algorithms.Nauty;
 import org.nodes.compression.EdgeListCompressor;
 import org.nodes.compression.MotifCompressor;
+import org.nodes.compression.MotifVar;
 import org.nodes.compression.NeighborListCompressor;
 import org.nodes.data.Data;
 import org.nodes.data.GML;
@@ -55,11 +56,7 @@ import au.com.bytecode.opencsv.CSVWriter;
 
 @Module(name = "Masking Motif extraction", description = "Tests different methods of Motif extraction to avoid overlap")
 public class Masking
-{
-
-	private static final String MOTIF_SYMBOL = "%M";
-	private static final String VAR_SYMBOL = "%V";
-	
+{	
 	private static final int MIN_OCCURRENCES = 10;
 
 	private DGraph<String> data;
@@ -222,8 +219,8 @@ public class Masking
 				motif = mask(sub, mask, data,
 						occurrences.get(sub), occOut, labels);
 
-				bits = MotifCompressor.sizeSymbols(data, VAR_SYMBOL, motif,
-						occOut);
+				MotifVar mv = new MotifVar(data, motif,occOut);
+				bits = mv.size();
 				
 				if(bits < currentTopBits)
 				{
@@ -407,7 +404,7 @@ public class Masking
 		Iterator<String> it = choice.iterator();
 		for (int j : Series.series(sub.size()))
 			if (mask.get(j))
-				copy.add(VAR_SYMBOL);
+				copy.add(MotifVar.VARIABLE_SYMBOL);
 			else
 				copy.add(it.next());
 
