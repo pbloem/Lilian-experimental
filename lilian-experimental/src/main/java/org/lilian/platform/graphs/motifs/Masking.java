@@ -451,12 +451,16 @@ public class Masking
 		{
 			List<String> sequence = labels(data, occurrence);
 			
+			boolean matches = true;
 			for(int i : series(sequence.size()))
+				if(! (choice.get(i).equals(MotifVar.VARIABLE_SYMBOL) || choice.get(i).equals(sequence.get(i))))
+				{
+					matches = false;
+					break;
+				}
 			
-			if(! (choice.get(i).equals(MotifVar.VARIABLE_SYMBOL) || choice.get(i).equals(sequence.get(i))))
-				continue;
-			
-			occurrencesOut.add(occurrence);
+			if(matches)
+				occurrencesOut.add(occurrence);
 		}
 		
 		System.out.print(occurrencesOut.size());
