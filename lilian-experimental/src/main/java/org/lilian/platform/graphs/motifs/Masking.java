@@ -174,7 +174,7 @@ public class Masking
 		// * Masking
 		
 		double topBits = Double.MAX_VALUE;
-		DGraph<String> topMotif = null;
+		DTGraph<String, String> topMotif = null;
 		List<List<Integer>> topOccurrences = null;
 		List<List<String>> topLabels = null;
 		
@@ -191,12 +191,12 @@ public class Masking
 				break;
 			
 			double currentTopBits = Double.MAX_VALUE;
-			DGraph<String> motif = null;
+			DTGraph<String, String> motif = null;
 			List<List<Integer>> occOut = null;
 			List<List<String>> labels = null;
 			double bits = -1.0;
 			
-			DGraph<String> currentTopMotif = null;
+			DTGraph<String, String> currentTopMotif = null;
 			List<List<Integer>> currentTopOccurrences = null;
 			List<List<String>> currentTopLabels = null;
 			
@@ -263,15 +263,18 @@ public class Masking
 		}
 		writer.close();
 		
-		System.out.println("top motif " + topMotif);
+		Global.log().info("top motif " + topMotif);
+		
+		MotifVarTags mv = new MotifVarTags(data, topMotif, topOccurrences);
+		Global.log().info("size with motif: " + mv.size());
 		
 		Compressor<Graph<String>> compressor = new EdgeListCompressor<String>();
 		
-		System.out.println("baseline (edge list) " + compressor.compressedSize(data));
+		Global.log().info("baseline (edge list) " + compressor.compressedSize(data));
 		
 		compressor = new NeighborListCompressor<String>();
 		
-		System.out.println("baseline (neighbor list)" + compressor.compressedSize(data));
+		Global.log().info("baseline (neighbor list)" + compressor.compressedSize(data));
 	}
 
 	@Out(name = "tokens")
