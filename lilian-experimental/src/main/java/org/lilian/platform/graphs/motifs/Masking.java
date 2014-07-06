@@ -222,6 +222,11 @@ public class Masking
 				}				
 			}
 			
+			System.out.println("\nfinished: best size " + currentTopBits);
+			System.out.println("          best motif " + currentTopMotif);
+
+
+			
 			List<Integer> occChoice = Functions.choose(currentTopOccurrences);
 			DGraph<String> randomOcc = Subgraph.dSubgraphIndices(data, occChoice);
 			
