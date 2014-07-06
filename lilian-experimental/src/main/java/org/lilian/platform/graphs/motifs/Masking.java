@@ -210,7 +210,7 @@ public class Masking
 				motif = mask(sub, mask, data,
 						occurrences.get(sub), occOut, labels);
 				
-				MotifVar mv = new MotifVar(data, motif,occOut);
+				MotifVarTags mv = new MotifVarTags(data, motif,occOut);
 				bits = mv.size();
 				
 				if(bits < currentTopBits)
