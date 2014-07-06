@@ -227,24 +227,20 @@ public class Masking
 			
 			writer.writeNext(new String[]{i+"", currentTopOccurrences.size()+"", currentTopBits+"", currentTopMotif+"", randomOcc+""});
 			
-			// * write the occurrences to a CSV file
+			// * Write the occurrences to a CSV file
 			CSVWriter motifWriter = new CSVWriter(new FileWriter(
 					new File(Global.getWorkingDir(), "occurrences.motif"+i+".csv")));
 			
-			String[] motifLabels = new String[currentTopMotif.size()];
-			for(int k : series(currentTopMotif.size()))
-				motifLabels[k] = currentTopMotif.get(k).label();
+			List<String> lbs = labels(currentTopMotif);
 			
-			motifWriter.writeNext(motifLabels);
+			motifWriter.writeNext((String[])lbs.toArray());
 			
 			for(List<Integer> occurrenceIndices : currentTopOccurrences)
 			{
-				DGraph<String> occurrence = Subgraph.dSubgraphIndices(data, occurrenceIndices);
-				String[] occLabels = new String[occurrence.size()];
-				for(int k : series(occurrence.size()))
-					occLabels[k] = occurrence.get(k).label();
-				
-				motifWriter.writeNext(occLabels);
+				DTGraph<String, String> occurrence = Subgraph.dtSubgraphIndices(data, occurrenceIndices);
+
+				List<String> occLabels = labels(occurrence);
+				motifWriter.writeNext((String[])occLabels.toArray());
 			}
 			
 			motifWriter.close();
@@ -388,6 +384,41 @@ public class Masking
 		
 		return labels;
 	}
+	
+	private static List<String> labels(DTGraph<String, String> graph)
+	{
+		List<String> labels = new ArrayList<String>();
+						
+		for(Node<String> node : graph.nodes())
+			labels.add(node.label());
+		
+		// * We create our own loop through the links, to make sure that it doesn't 
+		//   depend on the graph implementation.
+		for(DTNode<String, String> node : graph.nodes())
+		{
+			int from = node.index();
+			
+			Set<Integer> tos = new HashSet<Integer>();
+			for(DTLink<String, String> link : node.linksOut())
+				tos.add(link.to().index());
+			
+			List<Integer> listTos = new ArrayList<Integer>(tos);
+			Collections.sort(listTos);
+			
+			for(int to : listTos)
+			{
+				List<String> tags = new ArrayList<String>();
+				for(DTLink<String, String> link : graph.get(from).linksOut(graph.get(to)))
+					tags.add(link.tag());
+				
+				Collections.sort(tags);
+				
+				labels.addAll(tags);
+			}	
+		}
+		
+		return labels;
+	}	
 	
 	private static DTGraph<String, String> motif(DGraph<String> subgraph, List<String> labels)
 	{	
