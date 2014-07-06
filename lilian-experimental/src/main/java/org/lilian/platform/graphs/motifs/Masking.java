@@ -233,14 +233,14 @@ public class Masking
 			
 			List<String> lbs = labels(currentTopMotif);
 			
-			motifWriter.writeNext((String[])lbs.toArray());
+			motifWriter.writeNext(lbs.toArray(new String[0]));
 			
 			for(List<Integer> occurrenceIndices : currentTopOccurrences)
 			{
 				DTGraph<String, String> occurrence = Subgraph.dtSubgraphIndices(data, occurrenceIndices);
 
 				List<String> occLabels = labels(occurrence);
-				motifWriter.writeNext((String[])occLabels.toArray());
+				motifWriter.writeNext(occLabels.toArray(new String[0]));
 			}
 			
 			motifWriter.close();
