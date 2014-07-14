@@ -103,6 +103,9 @@ public class Visual
 			
 		data = new MappedList(data, map);
 
+		BufferedImage image= Draw.draw(data, 1000, true);
+		// imagesDeep.add(image);
+		ImageIO.write(image, "PNG", new File(Global.getWorkingDir(), "data.png"));
 		
 		Global.log().info("Data size: " + data.size());
 		
@@ -132,13 +135,7 @@ public class Visual
 			tic();
 			em.iterate(emSampleSize, depth);
 			Global.log().info(generation + ") finished ("+toc() +" seconds, total samples: "+emSampleSize+")");
-			
-//			if(generation > 0 && generation % 20 == 0)
-//			{
-//				tic();
-//				currentDepth = EM.bestDepth(em.model(), 0.0, DEPTH_STEP, depthMax, 1000, data);
-//				Global.log().info(generation + ") found depth "+currentDepth+" in "+toc()+" seconds.");
-//			}
+	
 			
 		}
 		bestDepth = EM.bestDepth(em.model(), 0.0, 0.5, 8.0, depthSampleSize, data);
