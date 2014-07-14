@@ -70,6 +70,7 @@ public class Masking
 	private boolean correct;
 	private int numMotifs;
 	private int remHubs;
+	private boolean specifySubs; 
 
 	private NaturalComparator<String> comp;
 
@@ -88,7 +89,8 @@ public class Masking
 			@In(name = "max size") int maxSize,
 			@In(name = "correct frequency", description = "whether to correct the sampling prob") boolean correct,
 			@In(name = "num motifs") int numMotifs,
-			@In(name = "remove hubs") int remHubs) throws IOException
+			@In(name = "remove hubs") int remHubs,
+			@In(name = "specify subs") boolean specifySubs) throws IOException
 	{
 		this.data = data;
 		this.samples = samples;
@@ -99,6 +101,8 @@ public class Masking
 		this.minSize = minSize;
 		this.maxSize = maxSize;
 
+		this.specifySubs = specifySubs;
+		
 		comp = new Functions.NaturalComparator<String>();
 		intGen = new Iterative.UniformGenerator(minSize, maxSize);
 	}
@@ -210,7 +214,7 @@ public class Masking
 				motif = mask(sub, mask, data,
 						occurrences.get(sub), occOut, labels);
 				
-				MotifVarTags mv = new MotifVarTags(data, motif,occOut);
+				MotifVarTags mv = new MotifVarTags(data, motif,occOut, specifySubs);
 				bits = mv.size();
 				
 				if(bits < currentTopBits)
@@ -266,7 +270,7 @@ public class Masking
 		
 		Global.log().info("top motif " + topMotif);
 		
-		MotifVarTags mv = new MotifVarTags(data, topMotif, topOccurrences);
+		MotifVarTags mv = new MotifVarTags(data, topMotif, topOccurrences, specifySubs);
 		Global.log().info("size with motif: " + mv.size());
 		
 		Compressor<Graph<String>> compressor = new EdgeListCompressor<String>();
@@ -463,6 +467,7 @@ public class Masking
 	 *            1s (true) are masked
 	 * @param occurrences
 	 * @param occurrencesOut
+	 * @param The labels of matching occurrence will be added to this
 	 * @return
 	 */
 	public static DTGraph<String, String> mask(DGraph<String> sub, BitString mask,
@@ -474,7 +479,7 @@ public class Masking
 		for (List<Integer> occurrence : occurrences)
 		{
 			List<String> sequence = labels(data, occurrence);
-			
+						
 			assert(sequence.size() == mask.size());
 			for(int i : series(mask.size()))
 				if(mask.get(i))
@@ -499,7 +504,10 @@ public class Masking
 				}
 			
 			if(matches)
+			{
 				occurrencesOut.add(occurrence);
+				labels.add(sequence);
+			}
 		}
 		
 		System.out.print(occurrencesOut.size());
