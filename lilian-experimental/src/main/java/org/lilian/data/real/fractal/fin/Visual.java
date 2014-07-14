@@ -138,7 +138,7 @@ public class Visual
 	
 			
 		}
-		bestDepth = EM.bestDepth(em.model(), 0.0, 0.5, 8.0, depthSampleSize, data);
+		bestDepth = EM.bestDepth(em.model(), 0.0, 0.5, depth, depthSampleSize, data);
 
 	}
 	
