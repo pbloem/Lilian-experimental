@@ -2,6 +2,7 @@ package org.lilian.data.real.fractal.fin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.data2semantics.platform.annotation.In;
@@ -10,10 +11,16 @@ import org.data2semantics.platform.annotation.Module;
 import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Generators;
 import org.lilian.data.real.Histogram2D;
+import org.lilian.data.real.MOG;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
+import org.lilian.data.real.classification.Classification;
+import org.lilian.data.real.classification.Classified;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSs;
+import org.lilian.experiment.Name;
+import org.lilian.experiment.Resource;
+import org.lilian.search.Builder;
 
 public class Data
 {
@@ -126,6 +133,78 @@ public class Data
 		public List<Point> body()
 		{
 			return Datasets.ball(dim).generate(size);
+		}
+	}
+	
+	@Module(name="csv")
+	public static class CSV
+	{
+		@In(name="file") public String file;
+		
+		@Main(print=false)
+		public List<Point> read()
+			throws IOException
+		{
+			return Datasets.readCSV(new File(file));
+		}
+	}
+	
+	@Module(name="class points")
+	public static class ClassPoints
+	{
+		@In(name="file") public String file;
+		@In(name="class") public int cls;
+		
+		@Main(print=false)
+		public List<Point> read()
+			throws IOException
+		{
+			Classified<Point> data = Classification.readCSV(new File(file));
+			return data.points(cls);
+		}
+	}
+	
+	@Module(name="three")
+	public static class Three
+	{
+		@In(name="size") public int size;
+		
+		@Main(print=false)
+		public List<Point> read()
+			throws IOException
+		{
+			
+			Builder<IFS<Similitude>> builder = 
+					IFS.builder(3, Similitude.similitudeBuilder(2));
+			IFS<Similitude> ifs = builder.build(Arrays.asList(
+					0.1,  0.0, 0.5, 0.0, 1.0, 
+					0.1,  0.5,-0.5, 0.0, 1.0, 
+					0.1, -0.5,-0.5, 0.0, 1.0
+				));
+			
+			MOG mog = null;
+			for(Similitude map : ifs)
+				if(mog == null)
+					mog = new MOG(map, 1.0);
+				else
+					mog.addMap(map, 1.0);
+				
+			return mog.generate(size);
+		}
+	}
+	
+	@Module(name="sample")
+	public static class Sample
+	{
+		@In(name="in")
+		public List<Point> data;
+		@In(name="size")
+		public int size;
+		
+		@Main(print=false)
+		public List<Point> sample()
+		{
+			return Datasets.sampleWithoutReplacement(data, size); 
 		}
 	}
 }
