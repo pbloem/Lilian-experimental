@@ -201,6 +201,12 @@ public class IFSvsMOG
 		return ifsLLs;
 	}
 	
+	@Out(name="ifs depths")
+	public List<Double> depths()
+	{
+		return bestDepths;
+	}
+	
 	@Out(name="p-value", description="p-value for the null hypothesis that the MOG and IFS likelihoods come from different distributions")
 	public double pValue()
 	{
