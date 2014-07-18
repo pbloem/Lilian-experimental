@@ -1,6 +1,7 @@
 package org.lilian.data.real.fractal.fin;
 
 import static java.lang.String.format;
+import static org.data2semantics.platform.util.Statistics.toArray;
 import static org.lilian.util.Functions.log2;
 import static org.lilian.util.Series.series;
 
@@ -13,10 +14,12 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.math3.stat.inference.TTest;
 import org.data2semantics.platform.annotation.In;
 import org.data2semantics.platform.annotation.Main;
 import org.data2semantics.platform.annotation.Module;
 import org.data2semantics.platform.annotation.Out;
+import org.data2semantics.platform.util.Statistics;
 import org.lilian.Global;
 import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
@@ -40,10 +43,12 @@ public class IFSvsMOG
 	private static final int NUM_SOURCES = 1;
 	
 	private List<Point> data;
-	private int iterations;
+	private int iterations, repeats;
 	private double depth;
 	private double spanningVariance;
 	private int sampleSize;
+	
+	private List<Double> mogLLs, ifsLLs, bestDepths; 
 	
 	private int numComponents;
 	
@@ -61,7 +66,8 @@ public class IFSvsMOG
 			@In(name="spanning variance") double spanningVariance, 
 			@In(name="sample size") int sampleSize, 
 			@In(name="num components") int numComponents,
-			@In(name="test ratio") double testRatio)
+			@In(name="test ratio") double testRatio,
+			@In(name="reps") int repeats) 
 	{
 		this.data = data;
 		this.iterations = iterations;
@@ -73,6 +79,7 @@ public class IFSvsMOG
 		
 		this.dataSize = data.size();
 		this.dataDim = data.get(0).dimensionality();
+		this.repeats = repeats;
 	}
 	
 	@Main
@@ -80,6 +87,10 @@ public class IFSvsMOG
 		throws IOException
 	{
 		int dim = data.get(0).dimensionality();
+		
+		ifsLLs = new ArrayList<Double>(repeats);
+		mogLLs = new ArrayList<Double>(repeats);
+		bestDepths = new ArrayList<Double>(repeats);
 		
 		if(dim == 2) // draw the data
 		{
@@ -107,70 +118,63 @@ public class IFSvsMOG
 		// * MOG EM model
 		MogEM mogEM = new MogEM(train, numComponents);
 		
-		for(int iteration : Series.series(iterations))
+		for(int repeat: series(repeats))
 		{
-			Global.log().info("Starting iteration " + iteration);
-			
-			ifsEM.iterate(sampleSize, depth);
-			Global.log().info("ifs done");
-			
-			mogEM.iterate();
-			Global.log().info("mog done");
-			
-			double mogLL =  mogEM.model().logDensity(test);
-			Global.log().info("likelihood MOG: " + mogLL);
-			if(Double.isNaN(mogLL))
-				System.out.println(mogEM.model());
-			
-			if(dim == 2) // draw the data
+			for(int iteration : Series.series(iterations))
 			{
-				BufferedImage im;
+				Global.log().info("Starting iteration " + iteration);
 				
-				im = Draw.draw(ifsEM.model().generator(depth, ifsEM.basis()), 100000, 1000, true);
-				ImageIO.write(im, "PNG", new File(org.data2semantics.platform.Global.getWorkingDir(), format("ifs.%04d.png", iteration)));
+				ifsEM.iterate(sampleSize, depth);
+				Global.log().info("ifs done");
 				
-				im = Draw.draw(mogEM.model(), 100000, 1000, true);
-				ImageIO.write(im, "PNG", new File(org.data2semantics.platform.Global.getWorkingDir(), format("mog.%04d.png", iteration)));
+				mogEM.iterate();
+				Global.log().info("mog done");
+				
+				double mogLL =  mogEM.model().logDensity(test);
+				Global.log().info("likelihood MOG: " + mogLL);
+				if(Double.isNaN(mogLL))
+					System.out.println(mogEM.model());
+				
+				if(dim == 2) // draw the data
+				{
+					BufferedImage im;
+					
+					im = Draw.draw(ifsEM.model().generator(depth, ifsEM.basis()), 100000, 1000, true);
+					ImageIO.write(im, "PNG", new File(org.data2semantics.platform.Global.getWorkingDir(), format("ifs.%04d.png", iteration)));
+					
+					im = Draw.draw(mogEM.model(), 100000, 1000, true);
+					ImageIO.write(im, "PNG", new File(org.data2semantics.platform.Global.getWorkingDir(), format("mog.%04d.png", iteration)));
+				}
+				
 			}
 			
-		}
-		
-		Global.log().info("Calculating MOG likelihood");
-		mogLikelihoodFinal = mogEM.model().logDensity(test);
-		
-		Global.log().info("Calculating IFS likelihood");
-		bestDepthFinal = Double.NaN;
-		ifsLikelihoodFinal = Double.NEGATIVE_INFINITY;
-		
-		for(double d : Series.series(0.0, 0.5, depth+0.1))
-		{
-			double ll = 0.0;
+			Global.log().info("Calculating MOG likelihood");
+			double mogLikelihood = mogEM.model().logDensity(test);
 			
-			for(Point p : test)
-				ll += log2(IFS.density(ifsEM.model(), p, d, ifsEM.basis()));
+			Global.log().info("Calculating IFS likelihood");
+			double bestDepth = Double.NaN;
+			double ifsLikelihood = Double.NEGATIVE_INFINITY;
 			
-			if(ll > ifsLikelihoodFinal)
+			for(double d : Series.series(0.0, 0.5, depth+0.1))
 			{
-				ifsLikelihoodFinal = ll;
-				bestDepthFinal = d;
+				double ll = 0.0;
+				
+				for(Point p : test)
+					ll += log2(IFS.density(ifsEM.model(), p, d, ifsEM.basis()));
+				
+				if(ll > ifsLikelihood)
+				{
+					ifsLikelihood = ll;
+					bestDepth = d;
+				}
+				
+				System.out.print(d + " ("+format("%.1f", ll)+") ");
 			}
 			
-			System.out.print(d + " ("+format("%.1f", ll)+") ");
+			mogLLs.add(mogLikelihood);
+			ifsLLs.add(ifsLikelihood);
+			bestDepths.add(bestDepth);
 		}
-		System.out.println();
-		
-		if(mogLikelihoodFinal > mogLikelihoodBest)
-			mogLikelihoodBest = mogLikelihoodFinal;
-		
-		if(ifsLikelihoodFinal > ifsLikelihoodBest)
-		{
-			ifsLikelihoodBest = ifsLikelihoodFinal;
-			bestDepthBest = bestDepthFinal;
-		}
-		
-		Global.log().info("likelihood IFS: " + ifsLikelihoodFinal + " ("+bestDepthFinal+")");
-		Global.log().info("likelihood MOG: " + mogLikelihoodFinal);	
-
 	}
 	
 	@Out(name="data size")
@@ -185,51 +189,23 @@ public class IFSvsMOG
 		return dataDim;
 	}
 	
-	private double ifsLikelihoodFinal;
-	
-	@Out(name="ifs likelihood final")
-	public double ifsLikelihood()
+	@Out(name="mog likelihoods")
+	public List<Double> mogLLs()
 	{
-		return ifsLikelihoodFinal;
-	}
-
-	private double bestDepthFinal;
-	
-	@Out(name="best depth final")
-	public double bestDepthFinal()
-	{
-		return bestDepthFinal;
+		return mogLLs;
 	}
 	
-	private double mogLikelihoodFinal;
-	 
-	@Out(name="mog likelihoodFinal")
-	public double mogLikelihoodFinal()
+	@Out(name="ifs likelihoods")
+	public List<Double> ifsLLs()
 	{
-		return mogLikelihoodFinal;
+		return ifsLLs;
 	}
 	
-	private double ifsLikelihoodBest = Double.NEGATIVE_INFINITY;
-	
-	@Out(name="ifs likelihood best")
-	public double ifsLikelihoodBest()
+	@Out(name="p-value", description="p-value for the null hypothesis that the MOG and IFS likelihoods come from different distributions")
+	public double pValue()
 	{
-		return ifsLikelihoodBest;
-	}
-
-	private double bestDepthBest;
-	
-	@Out(name="best depth best")
-	public double bestDepthBest()
-	{
-		return bestDepthBest;
-	}
-	
-	private double mogLikelihoodBest = Double.NEGATIVE_INFINITY;
-	 
-	@Out(name="mog likelihoodBest")
-	public double mogLikelihoodBest()
-	{
-		return mogLikelihoodBest;
+		TTest test = new TTest();
+		
+		return test.tTest(toArray(mogLLs), toArray(ifsLLs));
 	}
 }
