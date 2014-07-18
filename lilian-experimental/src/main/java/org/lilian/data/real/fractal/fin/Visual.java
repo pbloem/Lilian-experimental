@@ -55,8 +55,8 @@ public class Visual
 	@In(name="data", print=false)
 	public List<Point> data;	
 	
-	@In(name="depth")
-	public double depth;
+	@In(name="max depth")
+	public double maxDepth;
 	
 	@In(name="generations")
 	public int generations;
@@ -123,6 +123,8 @@ public class Visual
 		images = new ArrayList<RenderedImage>(generations);
 		imagesDeep = new ArrayList<RenderedImage>(generations);
 				
+		double depth = 1.0;
+		
 		// * BODY
 		tic();
 		for(int generation : Series.series(generations))
@@ -136,7 +138,22 @@ public class Visual
 			em.iterate(emSampleSize, depth);
 			Global.log().info(generation + ") finished ("+toc() +" seconds, total samples: "+emSampleSize+")");
 	
+			double bestLL = Double.NEGATIVE_INFINITY;
+			depth = Double.NaN;
 			
+			for(double d : Series.series(1.0, 0.5, maxDepth))
+			{
+				double ll = 0.0;
+				
+				for(Point p : data)
+					ll += IFS.density(em.model(), p, d, em.basis());
+				
+				if(ll > bestLL)
+				{
+					bestLL = ll;
+					depth = d;
+				}
+			}
 		}
 		bestDepth = EM.bestDepth(em.model(), 0.0, 0.5, depth, depthSampleSize, data);
 
