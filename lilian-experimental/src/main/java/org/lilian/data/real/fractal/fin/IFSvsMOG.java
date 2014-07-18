@@ -14,6 +14,7 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.math3.stat.inference.MannWhitneyUTest;
 import org.apache.commons.math3.stat.inference.TTest;
 import org.data2semantics.platform.annotation.In;
 import org.data2semantics.platform.annotation.Main;
@@ -120,6 +121,9 @@ public class IFSvsMOG
 		
 		for(int repeat: series(repeats))
 		{
+			File dir = new File(org.data2semantics.platform.Global.getWorkingDir(), format("%02d/", repeat));
+			dir.mkdirs();
+			
 			for(int iteration : Series.series(iterations))
 			{
 				Global.log().info("Starting iteration " + iteration);
@@ -140,10 +144,10 @@ public class IFSvsMOG
 					BufferedImage im;
 					
 					im = Draw.draw(ifsEM.model().generator(depth, ifsEM.basis()), 100000, 1000, true);
-					ImageIO.write(im, "PNG", new File(org.data2semantics.platform.Global.getWorkingDir(), format("ifs.%04d.png", iteration)));
+					ImageIO.write(im, "PNG", new File(dir, format("ifs.%04d.png", iteration)));
 					
 					im = Draw.draw(mogEM.model(), 100000, 1000, true);
-					ImageIO.write(im, "PNG", new File(org.data2semantics.platform.Global.getWorkingDir(), format("mog.%04d.png", iteration)));
+					ImageIO.write(im, "PNG", new File(dir, format("mog.%04d.png", iteration)));
 				}
 				
 			}
@@ -207,11 +211,19 @@ public class IFSvsMOG
 		return bestDepths;
 	}
 	
-	@Out(name="p-value", description="p-value for the null hypothesis that the MOG and IFS likelihoods come from different distributions")
-	public double pValue()
+	@Out(name="p-value (t test)", description="T test p-value for the null hypothesis that the MOG and IFS likelihoods come from different distributions")
+	public double pValueTTest()
 	{
 		TTest test = new TTest();
 		
 		return test.tTest(toArray(mogLLs), toArray(ifsLLs));
+	}
+	
+	@Out(name="p-value (mwu)", description="MWU p-value for the null hypothesis that the MOG and IFS likelihoods come from different distributions")
+	public double pValueMWU()
+	{
+		MannWhitneyUTest test = new MannWhitneyUTest();
+		
+		return test.mannWhitneyUTest(toArray(mogLLs), toArray(ifsLLs));
 	}
 }
