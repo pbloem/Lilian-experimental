@@ -1,6 +1,8 @@
 package org.lilian.data.real.fractal.fin;
 
 import static java.lang.Math.ceil;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static org.lilian.util.Functions.tic;
 import static org.lilian.util.Functions.toc;
 
@@ -133,29 +135,16 @@ public class Visual
 
 			if(dim == 2)
 				write(em.model(), Global.getWorkingDir(), String.format("generation%04d", generation), depth, em.basis());
-						
+			
 			tic();
 			em.iterate(emSampleSize, depth);
 			Global.log().info(generation + ") finished ("+toc() +" seconds, total samples: "+emSampleSize+")");
 	
-			double bestLL = Double.NEGATIVE_INFINITY;
-			depth = Double.NaN;
-			
-			for(double d : Series.series(1.0, 0.5, maxDepth))
-			{
-				double ll = 0.0;
-				
-				for(Point p : data)
-					ll += IFS.density(em.model(), p, d, em.basis());
-				
-				if(ll > bestLL)
-				{
-					bestLL = ll;
-					depth = d;
-				}
-			}
+			depth = EM.bestDepth(em.model(), max(0.0, depth - 1.5), 0.1, min(maxDepth, depth + 1.5), depthSampleSize, data);
+			Global.log().info("(new depth: " + depth);
 		}
-		bestDepth = EM.bestDepth(em.model(), 0.0, 0.5, depth, depthSampleSize, data);
+		
+		bestDepth = EM.bestDepth(em.model(), 0.0, 0.5, maxDepth, depthSampleSize, data);
 
 	}
 	
