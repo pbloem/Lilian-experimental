@@ -57,20 +57,20 @@ public class Visual
 	@In(name="data", print=false)
 	public List<Point> data;	
 	
-	@In(name="max depth")
-	public double maxDepth;
-	
 	@In(name="generations")
 	public int generations;
 	
 	@In(name="num components", description="The number of components in the IFS model")
 	public int numComponents;
 
-	@In(name="em sample size", description="How many points to use in each iteration of the EM algorithm.") 
-	public int emSampleSize;
+	@In(name="d1 sample size", description="How many points to sample if depth = 1. At other depths, this value is divided by comp^3.")
+	public int d1SampleSize;
 	
-	@In(name="depth sample size", description="How many points to use when determining depth.") 
-	public int depthSampleSize;
+	@In(name="min sample size")
+	public int minSampleSize;	
+	
+	@In(name="depth sample size")
+	public int depthSampleSize;	
 	
 	@In(name="spanning variance")
 	public double spanningVariance;
@@ -136,15 +136,19 @@ public class Visual
 			if(dim == 2)
 				write(em.model(), Global.getWorkingDir(), String.format("generation%04d", generation), depth, em.basis());
 			
+			
+			int sampleSize = (int) (d1SampleSize / Math.pow(numComponents, depth));
+			sampleSize = Math.max(minSampleSize, sampleSize);
+			
 			tic();
-			em.iterate(emSampleSize, depth);
-			Global.log().info(generation + ") finished ("+toc() +" seconds, total samples: "+emSampleSize+")");
+			em.iterate(sampleSize, depth);
+			Global.log().info(generation + ") finished ("+toc() +" seconds, total samples: "+sampleSize+")");
 	
-			depth = EM.bestDepth(em.model(), max(0.0, depth - 1.5), 0.1, min(maxDepth, depth + 1.5), depthSampleSize, data);
-			Global.log().info("(new depth: " + depth);
+			depth = EM.bestDepth(em.model(), max(0.0, depth - 0.5), 0.5, depth + 0.51, depthSampleSize, data);
+			Global.log().info("new depth: " + depth);
 		}
 		
-		bestDepth = EM.bestDepth(em.model(), 0.0, 0.5, maxDepth, depthSampleSize, data);
+		bestDepth = EM.bestDepth(em.model(), 0.0, 0.5, 10.0, depthSampleSize, data);
 
 	}
 	
