@@ -30,6 +30,7 @@ import org.lilian.data.real.MappedList;
 import org.lilian.data.real.Maps;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
+import org.lilian.data.real.fractal.AffineEM;
 import org.lilian.data.real.fractal.BranchingEM;
 import org.lilian.data.real.fractal.EM;
 import org.lilian.data.real.fractal.IFS;
@@ -41,7 +42,7 @@ import org.lilian.search.Parametrizable;
 import org.lilian.util.Functions;
 
 @Module(name="Visual")
-public class Visual
+public class AffinevsSim
 {
 	private static final boolean CENTER_UNIFORM = true;
 	private static final boolean HIGH_QUALITY = true;
@@ -62,15 +63,9 @@ public class Visual
 	
 	@In(name="num components", description="The number of components in the IFS model")
 	public int numComponents;
-
-	@In(name="d1 sample size", description="How many points to sample if depth = 1. At other depths, this value is divided by comp^3.")
-	public int d1SampleSize;
 	
-	@In(name="min sample size")
-	public int minSampleSize;	
-	
-	@In(name="depth sample size")
-	public int depthSampleSize;	
+	@In(name="sample size")
+	public int sampleSize;	
 	
 	@In(name="spanning variance")
 	public double spanningVariance;
@@ -114,42 +109,41 @@ public class Visual
 		int dim = data.get(0).dimensionality();
 		
 		// * We use the "sphere" initialization strategy
-		IFS<Similitude> model = null;
-		model = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE);
+		IFS<Similitude> modelSim = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE);
+		IFS<AffineMap> modelAffine = IFSs.toAffine(modelSim);
 			
-		EM<Similitude> em = new SimEM(model, data, NUM_SOURCES, 
+		EM<Similitude> simEM = new SimEM(modelSim, data, NUM_SOURCES, 
 					Similitude.similitudeBuilder(dim), spanningVariance);
 		
-		MVN basis = em.basis();
-		
+		EM<AffineMap> affEM = new AffineEM(modelAffine, data, NUM_SOURCES, 
+				AffineMap.affineMapBuilder(dim), spanningVariance);
+				
 		images = new ArrayList<RenderedImage>(generations);
 		imagesDeep = new ArrayList<RenderedImage>(generations);
-				
-		double depth = 1.0;
+						
+		double simDepth = 1.0, affDepth = 1.0;
 		
-		// * BODY
-		tic();
 		for(int generation : Series.series(generations))
 		{			
-			model = em.model();
-
 			if(dim == 2)
-				write(em.model(), Global.getWorkingDir(), String.format("generation%04d", generation), depth, em.basis());
-			
-			
-			int sampleSize = (int) (d1SampleSize / Math.pow(numComponents, depth));
-			sampleSize = Math.max(minSampleSize, sampleSize);
+				write(simEM.model(), new File(Global.getWorkingDir(), "sim/"), String.format("generation%04d", generation), simDepth, simEM.basis());
+			if(dim == 2)
+				write(affEM.model(), new File(Global.getWorkingDir(), "aff/"), String.format("generation%04d", generation), affDepth, affEM.basis());
 			
 			tic();
-			em.iterate(sampleSize, depth);
-			Global.log().info(generation + ") finished ("+toc() +" seconds, total samples: "+sampleSize+")");
-	
-			depth = EM.bestDepth(em.model(), max(0.0, depth - 0.5), 0.5, depth + 0.51, depthSampleSize, data);
-			Global.log().info("new depth: " + depth);
-		}
-		
-		bestDepth = EM.bestDepth(em.model(), 0.0, 0.5, 10.0, depthSampleSize, data);
+			simEM.iterate(sampleSize, simDepth);
+			Global.log().info(generation + ") Sim finished ("+toc() +" seconds)");
 
+			tic();
+			affEM.iterate(sampleSize, affDepth);
+			Global.log().info(generation + ") Aff finished ("+toc() +" seconds)");		
+			
+			simDepth = EM.bestDepth(simEM.model(), max(0.5, simDepth - 0.5), 0.5, simDepth + 0.51, 4000, data);
+			Global.log().info("new sim depth: " + simDepth);
+			
+			affDepth = EM.bestDepth(affEM.model(), max(0.5, affDepth - 0.5), 0.5, affDepth + 0.51, 4000, data);
+			Global.log().info("new aff depth: " + affDepth);
+		}
 	}
 	
 	private <M extends Map & Parametrizable> void write(IFS<M> ifs, File dir, String name, double currentDepth, MVN basis) throws IOException
@@ -157,16 +151,15 @@ public class Visual
 		int div = highQuality ? 1 : 4;
 		int its = highQuality ? (int) 10000000 : 10000;
 		
-		File genDir = new File(dir, "generations");
-		genDir.mkdirs();
+		dir.mkdirs();
 		
 		BufferedImage image;
 		
 		image= Draw.draw(ifs, its, new double[]{-1.1, 1.1}, new double[]{-1.1, 1.1}, 1000/div, 1000/div, true, currentDepth, basis);
-		ImageIO.write(image, "PNG", new File(genDir, name+"png"));
+		ImageIO.write(image, "PNG", new File(dir, name+"png"));
 		
 		image= Draw.draw(ifs.generator(), its, 1000/div, true);
-		ImageIO.write(image, "PNG", new File(genDir, name+".deep.png"));
+		ImageIO.write(image, "PNG", new File(dir, name+".deep.png"));
 
 		
 	}
