@@ -53,7 +53,7 @@ public class Triangles
 		File dir = new File("/Users/Peter/Documents/PhD/output/triangles/");
 		dir.mkdirs();
 		
-		List<Maps.MapResult> top = new ArrayList<Maps.MapResult>(TOP_SIZE * 2);
+		List<Maps.FindSimilitudeResult> top = new ArrayList<Maps.FindSimilitudeResult>(TOP_SIZE * 2);
 		
 		for(int i : Series.series(ITS))
 		{
@@ -98,11 +98,11 @@ public class Triangles
 				new Point[]{big[2], big[1], big[0]}
 			};
 			
-			Maps.MapResult best = null;
+			Maps.FindSimilitudeResult best = null;
 			
 			for(Point[] b : perms)
 			{
-				Maps.MapResult result = Maps.findMapResult(Arrays.asList(b), Arrays.asList(small));
+				Maps.FindSimilitudeResult result = Maps.findSimilitudeResult(Arrays.asList(b), Arrays.asList(small));
 				
 				if(best == null || best.error() > result.error())
 					best = result;
@@ -127,7 +127,7 @@ public class Triangles
 
 		List<Point> out = new ArrayList<Point>();
 		
-		for(Maps.MapResult res : top)
+		for(Maps.FindSimilitudeResult res : top)
 			out.add(new Point(
 					abs(res.scale()),
 					abs(res.similitude().angles().get(0)/Math.PI)
@@ -159,7 +159,7 @@ public class Triangles
 
 		System.out.println("Created Locality");
 		
-		List<Maps.MapResult> top = new ArrayList<Maps.MapResult>(TOP_SIZE * 2);
+		List<Maps.FindSimilitudeResult> top = new ArrayList<Maps.FindSimilitudeResult>(TOP_SIZE * 2);
 		
 		BufferedImage image = Draw.draw(data, 1000, false);
 		
@@ -214,11 +214,11 @@ public class Triangles
 				new Point[]{big.get(2), big.get(1), big.get(0)}
 			};                                   
 			
-			Maps.MapResult best = null;
+			Maps.FindSimilitudeResult best = null;
 			
 			for(Point[] b : perms)
 			{
-				Maps.MapResult result = Maps.findMapResult(Arrays.asList(b), small);
+				Maps.FindSimilitudeResult result = Maps.findSimilitudeResult(Arrays.asList(b), small);
 				
 				if(best == null || best.error() > result.error())
 					best = result;
@@ -241,7 +241,7 @@ public class Triangles
 
 		List<Point> out = new ArrayList<Point>();
 		
-		for(Maps.MapResult res : top)
+		for(Maps.FindSimilitudeResult res : top)
 			out.add(new Point(
 					abs(res.translation().getEntry(0)),
 					abs(res.similitude().angles().get(0)/Math.PI)

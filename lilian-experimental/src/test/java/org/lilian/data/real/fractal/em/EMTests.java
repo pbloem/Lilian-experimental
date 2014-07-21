@@ -64,7 +64,7 @@ public class EMTests
 			Point as = noise(ifs.compose(codeAS).map(source), NOISE);
 			Point bs = noise(ifs.compose(codeBS).map(source), NOISE);
 			
-			Similitude sim = Maps.findMap(
+			Similitude sim = Maps.findSimilitude(
 					Arrays.asList(a, b), 
 					Arrays.asList(as, bs));
 			

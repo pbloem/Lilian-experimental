@@ -65,7 +65,7 @@ public class Tests
 			e.printStackTrace();
 		}
 		
-		Map map = Maps.findMap(in, out);
+		Map map = Maps.findSimilitude(in, out);
 		List<Point> outFixed = map.map(in);
 
 		try

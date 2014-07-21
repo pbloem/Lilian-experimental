@@ -46,7 +46,7 @@ public class SimilarityOld
 		      b0 = data.get(Global.random.nextInt(data.size())),
 		      b1 = data.get(Global.random.nextInt(data.size()));  
 		
-		Map map = Maps.findMap(
+		Map map = Maps.findSimilitude(
 				Arrays.asList(a0, a1),
 				Arrays.asList(b0, b1));
 		
