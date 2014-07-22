@@ -276,7 +276,7 @@ public class IFSModelEM extends AbstractExperiment
 		else if(initStrategy.toLowerCase().equals("spread"))
 			model = IFSs.initialSpread(dim, components, RADIUS, SCALE);
 		else if(initStrategy.toLowerCase().equals("points"))
-			model = IFSs.initialPoints(SCALE, Datasets.sample(trainingData, components));
+			model = IFSs.initialPoints(SCALE, Datasets.sample(trainingData, components), false);
 		else if(initStrategy.toLowerCase().equals("identity"))
 			model = IFSs.initialIdentity(dim, components, IDENTITY_INIT_VAR);
 		else if(initStrategy.toLowerCase().equals("koch"))

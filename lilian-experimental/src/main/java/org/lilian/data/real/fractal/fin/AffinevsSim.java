@@ -138,10 +138,10 @@ public class AffinevsSim
 			affEM.iterate(sampleSize, affDepth);
 			Global.log().info(generation + ") Aff finished ("+toc() +" seconds)");		
 			
-			simDepth = EM.bestDepth(simEM.model(), max(0.5, simDepth - 0.5), 0.5, simDepth + 0.51, 4000, data);
+			simDepth = EM.depth(simEM, max(0.5, simDepth - 0.5), 0.5, simDepth + 0.51, 4000, data);
 			Global.log().info("new sim depth: " + simDepth);
 			
-			affDepth = EM.bestDepth(affEM.model(), max(0.5, affDepth - 0.5), 0.5, affDepth + 0.51, 4000, data);
+			affDepth = EM.depth(affEM, max(0.5, affDepth - 0.5), 0.5, affDepth + 0.51, 4000, data);
 			Global.log().info("new aff depth: " + affDepth);
 		}
 	}

@@ -3,6 +3,9 @@ package org.lilian.data.real.fractal.fin;
 import static java.lang.Math.ceil;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static org.data2semantics.platform.util.Series.series;
+import static org.data2semantics.platform.util.Statistics.toArray;
+import static org.lilian.util.Functions.log2;
 import static org.lilian.util.Functions.tic;
 import static org.lilian.util.Functions.toc;
 
@@ -15,6 +18,7 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.math3.stat.inference.TTest;
 import org.data2semantics.platform.Global;
 import org.data2semantics.platform.annotation.In;
 import org.data2semantics.platform.annotation.Main;
@@ -41,36 +45,27 @@ import org.lilian.search.Parametrizable;
 import org.lilian.util.Functions;
 
 @Module(name="Visual")
-public class Visual
+public class Convergence
 {
 	private static final boolean CENTER_UNIFORM = true;
-	private static final boolean HIGH_QUALITY = true;
 
-	private static final double VAR = 0.1;
 	private static final double RADIUS = 0.7;
 	private static final double SCALE = 0.1;
-	private static final double IDENTITY_INIT_VAR = 0.1;
 	private static final int NUM_SOURCES = 1;
-
-	private static final double DEPTH_STEP = 0.5;
 	
-	@In(name="data", print=false)
-	public List<Point> data;	
+	@In(name="model")
+	public String modelName;
 	
 	@In(name="generations")
 	public int generations;
 	
-	@In(name="num components", description="The number of components in the IFS model")
 	public int numComponents;
 
-	@In(name="d1 sample size", description="How many points to sample if depth = 1. At other depths, this value is divided by comp^3.")
-	public int d1SampleSize;
+	@In(name="depth")
+	public double depth;
 	
-	@In(name="min sample size")
-	public int minSampleSize;	
-	
-	@In(name="depth sample size")
-	public int depthSampleSize;	
+	@In(name="sample size")
+	public int sampleSize;	
 	
 	@In(name="spanning variance")
 	public double spanningVariance;
@@ -78,27 +73,41 @@ public class Visual
 	@In(name="high quality")
 	public boolean highQuality;
 	
-	@Out(name="best depth")
-	public double bestDepth;
+	@In(name="test samples")
+	public int testSamples;
 	
-	private List<RenderedImage> images;
-	@Out(name="images")
-	public List<RenderedImage> images()
-	{
-		return images;
-	}
+	@In(name="test sample size")
+	public int testSampleSize;
 	
-	private List<RenderedImage> imagesDeep;
-	@Out(name="images deep")
-	public List<RenderedImage> imagesDeep()
-	{
-		return imagesDeep;
-	}
+	
+	public IFS<Similitude> model;
+	
+	public double p;
 	
 	@Main()
 	public void main() throws IOException
 	{
-		// * SETUP
+		
+		if(modelName.equals("sierpinski"))
+		{
+			model = IFSs.sierpinskiSim();
+		} else if(modelName.equals("sierpinski-off"))
+		{
+			model = IFSs.sierpinskiOffSim();
+		} else if(modelName.equals("koch-two"))
+		{
+			model = IFSs.koch2Sim();
+		} else if(modelName.equals("koch-four"))
+		{
+			model = IFSs.koch4Sim();
+		} 
+		else
+			throw new IllegalArgumentException("Model name ("+modelName+") not recognized");
+		
+		numComponents = model.size();
+		
+		List<Point> data = model.generator().generate(100000);
+		
 		AffineMap map = CENTER_UNIFORM ? 
 			Maps.centerUniform(data) :
 			Maps.centered(data) ;
@@ -115,18 +124,11 @@ public class Visual
 		
 		// * We use the "sphere" initialization strategy
 		IFS<Similitude> model = null;
-		model = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE);
+		model = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE, true);
 			
 		EM<Similitude> em = new SimEM(model, data, NUM_SOURCES, 
 					Similitude.similitudeBuilder(dim), spanningVariance);
-		
-		MVN basis = em.basis();
-		
-		images = new ArrayList<RenderedImage>(generations);
-		imagesDeep = new ArrayList<RenderedImage>(generations);
-				
-		double depth = 1.0;
-		
+								
 		// * BODY
 		tic();
 		for(int generation : Series.series(generations))
@@ -136,20 +138,43 @@ public class Visual
 			if(dim == 2)
 				write(em.model(), Global.getWorkingDir(), String.format("generation%04d", generation), depth, em.basis());
 			
-			
-			int sampleSize = (int) (d1SampleSize / Math.pow(numComponents, depth));
-			sampleSize = Math.max(minSampleSize, sampleSize);
-			
 			tic();
 			em.iterate(sampleSize, depth);
 			Global.log().info(generation + ") finished ("+toc() +" seconds, total samples: "+sampleSize+")");
-	
-			depth = EM.depth(em, max(0.0, depth - 0.5), 0.5, depth + 0.51, depthSampleSize, data);
-			Global.log().info("new depth: " + depth);
 		}
 		
-		bestDepth = EM.depth(em, 0.0, 0.5, 10.0, depthSampleSize, data);
-
+		List<Double> llsGolden = new ArrayList<Double>(testSamples);
+		List<Double> llsTrained = new ArrayList<Double>(testSamples);
+		
+		for(int i : series(testSamples))
+		{
+			List<Point> sample = Datasets.sample(data, testSampleSize);
+			
+			double llGolden = 0.0, llTrained = 0.0;
+			for(Point p : sample)
+			{
+				llGolden  += log2(IFS.density(model, p, depth));
+				llTrained += log2(IFS.density(em.model(), p, depth));
+			}
+			
+			llsGolden.add(llGolden);
+			llsTrained.add(llTrained);
+		}
+		
+		TTest test = new TTest();
+			
+		p =  test.tTest(toArray(llsGolden), toArray(llsTrained));
+		
+		Global.log().info("p value: " + p);
+	}
+	
+	@Out(name="converged")
+	public int converged()
+	{
+		if(p < 1.0/(20.0 * testSamples))
+			return 1;
+		
+		return 0;
 	}
 	
 	private <M extends Map & Parametrizable> void write(IFS<M> ifs, File dir, String name, double currentDepth, MVN basis) throws IOException
@@ -167,7 +192,5 @@ public class Visual
 		
 		image= Draw.draw(ifs.generator(), its, 1000/div, true);
 		ImageIO.write(image, "PNG", new File(genDir, name+".deep.png"));
-
-		
 	}
 }

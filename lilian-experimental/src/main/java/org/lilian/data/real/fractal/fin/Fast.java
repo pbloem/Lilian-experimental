@@ -41,18 +41,13 @@ import org.lilian.search.Parametrizable;
 import org.lilian.util.Functions;
 
 @Module(name="Visual")
-public class Visual
+public class Fast
 {
 	private static final boolean CENTER_UNIFORM = true;
-	private static final boolean HIGH_QUALITY = true;
 
-	private static final double VAR = 0.1;
 	private static final double RADIUS = 0.7;
 	private static final double SCALE = 0.1;
-	private static final double IDENTITY_INIT_VAR = 0.1;
 	private static final int NUM_SOURCES = 1;
-
-	private static final double DEPTH_STEP = 0.5;
 	
 	@In(name="data", print=false)
 	public List<Point> data;	
@@ -63,14 +58,11 @@ public class Visual
 	@In(name="num components", description="The number of components in the IFS model")
 	public int numComponents;
 
-	@In(name="d1 sample size", description="How many points to sample if depth = 1. At other depths, this value is divided by comp^3.")
-	public int d1SampleSize;
+	@In(name="depth")
+	public double depth;
 	
-	@In(name="min sample size")
-	public int minSampleSize;	
-	
-	@In(name="depth sample size")
-	public int depthSampleSize;	
+	@In(name="sample size")
+	public int sampleSize;	
 	
 	@In(name="spanning variance")
 	public double spanningVariance;
@@ -78,27 +70,9 @@ public class Visual
 	@In(name="high quality")
 	public boolean highQuality;
 	
-	@Out(name="best depth")
-	public double bestDepth;
-	
-	private List<RenderedImage> images;
-	@Out(name="images")
-	public List<RenderedImage> images()
-	{
-		return images;
-	}
-	
-	private List<RenderedImage> imagesDeep;
-	@Out(name="images deep")
-	public List<RenderedImage> imagesDeep()
-	{
-		return imagesDeep;
-	}
-	
 	@Main()
 	public void main() throws IOException
 	{
-		// * SETUP
 		AffineMap map = CENTER_UNIFORM ? 
 			Maps.centerUniform(data) :
 			Maps.centered(data) ;
@@ -115,18 +89,11 @@ public class Visual
 		
 		// * We use the "sphere" initialization strategy
 		IFS<Similitude> model = null;
-		model = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE);
+		model = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE, true);
 			
 		EM<Similitude> em = new SimEM(model, data, NUM_SOURCES, 
 					Similitude.similitudeBuilder(dim), spanningVariance);
-		
-		MVN basis = em.basis();
-		
-		images = new ArrayList<RenderedImage>(generations);
-		imagesDeep = new ArrayList<RenderedImage>(generations);
-				
-		double depth = 1.0;
-		
+								
 		// * BODY
 		tic();
 		for(int generation : Series.series(generations))
@@ -136,20 +103,11 @@ public class Visual
 			if(dim == 2)
 				write(em.model(), Global.getWorkingDir(), String.format("generation%04d", generation), depth, em.basis());
 			
-			
-			int sampleSize = (int) (d1SampleSize / Math.pow(numComponents, depth));
-			sampleSize = Math.max(minSampleSize, sampleSize);
-			
 			tic();
 			em.iterate(sampleSize, depth);
 			Global.log().info(generation + ") finished ("+toc() +" seconds, total samples: "+sampleSize+")");
-	
-			depth = EM.depth(em, max(0.0, depth - 0.5), 0.5, depth + 0.51, depthSampleSize, data);
-			Global.log().info("new depth: " + depth);
-		}
-		
-		bestDepth = EM.depth(em, 0.0, 0.5, 10.0, depthSampleSize, data);
 
+		}
 	}
 	
 	private <M extends Map & Parametrizable> void write(IFS<M> ifs, File dir, String name, double currentDepth, MVN basis) throws IOException
@@ -167,7 +125,5 @@ public class Visual
 		
 		image= Draw.draw(ifs.generator(), its, 1000/div, true);
 		ImageIO.write(image, "PNG", new File(genDir, name+".deep.png"));
-
-		
 	}
 }
