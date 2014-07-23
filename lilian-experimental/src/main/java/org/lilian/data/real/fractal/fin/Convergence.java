@@ -4,6 +4,7 @@ import static java.lang.Math.ceil;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static org.data2semantics.platform.util.Series.series;
+import static org.data2semantics.platform.util.Statistics.mean;
 import static org.data2semantics.platform.util.Statistics.toArray;
 import static org.lilian.util.Functions.log2;
 import static org.lilian.util.Functions.tic;
@@ -25,6 +26,7 @@ import org.data2semantics.platform.annotation.Main;
 import org.data2semantics.platform.annotation.Module;
 import org.data2semantics.platform.annotation.Out;
 import org.data2semantics.platform.util.Series;
+import org.data2semantics.platform.util.Statistics;
 import org.lilian.data.real.AffineMap;
 import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
@@ -80,9 +82,10 @@ public class Convergence
 	public int testSampleSize;
 	
 	
-	public IFS<Similitude> model;
+	public IFS<Similitude> target;
 	
-	public double p;
+	@Out(name="difference")
+	public double difference;
 	
 	@Main()
 	public void main() throws IOException
@@ -90,23 +93,23 @@ public class Convergence
 		
 		if(modelName.equals("sierpinski"))
 		{
-			model = IFSs.sierpinskiSim();
+			target = IFSs.sierpinskiSim();
 		} else if(modelName.equals("sierpinski-off"))
 		{
-			model = IFSs.sierpinskiOffSim();
+			target = IFSs.sierpinskiOffSim();
 		} else if(modelName.equals("koch-two"))
 		{
-			model = IFSs.koch2Sim();
+			target = IFSs.koch2Sim();
 		} else if(modelName.equals("koch-four"))
 		{
-			model = IFSs.koch4Sim();
+			target = IFSs.koch4Sim();
 		} 
 		else
 			throw new IllegalArgumentException("Model name ("+modelName+") not recognized");
 		
-		numComponents = model.size();
+		numComponents = target.size();
 		
-		List<Point> data = model.generator().generate(100000);
+		List<Point> data = target.generator().generate(100000);
 		
 		AffineMap map = CENTER_UNIFORM ? 
 			Maps.centerUniform(data) :
@@ -123,18 +126,15 @@ public class Convergence
 		int dim = data.get(0).dimensionality();
 		
 		// * We use the "sphere" initialization strategy
-		IFS<Similitude> model = null;
-		model = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE, true);
+		IFS<Similitude> initial = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE, true);
 			
-		EM<Similitude> em = new SimEM(model, data, NUM_SOURCES, 
+		EM<Similitude> em = new SimEM(initial, data, NUM_SOURCES, 
 					Similitude.similitudeBuilder(dim), spanningVariance);
 								
 		// * BODY
 		tic();
 		for(int generation : Series.series(generations))
 		{			
-			model = em.model();
-
 			if(dim == 2)
 				write(em.model(), Global.getWorkingDir(), String.format("generation%04d", generation), depth, em.basis());
 			
@@ -153,7 +153,7 @@ public class Convergence
 			double llGolden = 0.0, llTrained = 0.0;
 			for(Point p : sample)
 			{
-				llGolden  += log2(IFS.density(model, p, depth));
+				llGolden  += log2(IFS.density(target, p, depth));
 				llTrained += log2(IFS.density(em.model(), p, depth));
 			}
 			
@@ -161,19 +161,16 @@ public class Convergence
 			llsTrained.add(llTrained);
 		}
 		
-		TTest test = new TTest();
-			
-		p =  test.tTest(toArray(llsGolden), toArray(llsTrained));
+		difference = mean(llsGolden) - mean(llsTrained);
 		
-		Global.log().info("p value: " + p);
+		Global.log().info(" golden: " + llsGolden);
+		Global.log().info("trained: " + llsTrained);
+		
 	}
 	
 	@Out(name="converged")
 	public int converged()
-	{
-		if(p < 1.0/(20.0 * testSamples))
-			return 1;
-		
+	{	
 		return 0;
 	}
 	
