@@ -163,8 +163,9 @@ public class Convergence
 		
 		difference = mean(llsGolden) - mean(llsTrained);
 		
-		Global.log().info(" golden: " + llsGolden);
-		Global.log().info("trained: " + llsTrained);
+		Global.log().info("    golden: " + llsGolden);
+		Global.log().info("   trained: " + llsTrained);
+		Global.log().info("difference: " + difference);
 		
 	}
 	
