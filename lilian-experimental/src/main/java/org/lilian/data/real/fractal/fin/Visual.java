@@ -144,7 +144,11 @@ public class Visual
 			em.iterate(sampleSize, depth);
 			Global.log().info(generation + ") finished ("+toc() +" seconds, total samples: "+sampleSize+")");
 	
-			depth = EM.depth(em, max(0.0, depth - 0.5), 0.5, depth + 0.51, depthSampleSize, data);
+			if(Global.random().nextDouble() < 0.5)
+				depth += 0.5;
+			else
+				depth = EM.depth(em, max(0.0, depth - 0.5), 0.5, depth + 0.51, depthSampleSize, data);
+			
 			Global.log().info("new depth: " + depth);
 		}
 		

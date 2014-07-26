@@ -36,6 +36,7 @@ import org.lilian.data.real.MappedList;
 import org.lilian.data.real.Maps;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
+import org.lilian.data.real.fractal.AffineEM;
 import org.lilian.data.real.fractal.BranchingEM;
 import org.lilian.data.real.fractal.EM;
 import org.lilian.data.real.fractal.IFS;
@@ -110,26 +111,35 @@ public class Convergence
 		numComponents = target.size();
 		
 		List<Point> data = target.generator().generate(100000);
-		
-		AffineMap map = CENTER_UNIFORM ? 
-			Maps.centerUniform(data) :
-			Maps.centered(data) ;
-			
-		data = new MappedList(data, map);
+//		
+////		AffineMap map = CENTER_UNIFORM ? 
+////			Maps.centerUniform(data) :
+////			Maps.centered(data) ;
+//			
+//		data = new MappedList(data, map);
 
-		BufferedImage image= Draw.draw(data, 1000, true);
+		BufferedImage image = Draw.draw(data, 1000, true);
 		// imagesDeep.add(image);
 		ImageIO.write(image, "PNG", new File(Global.getWorkingDir(), "data.png"));
 		
+//		image = Draw.drawCodes(target, new double[]{-1.0, 1.0}, new double[]{-1.0, 1.0}, 100, 6, -1);
+//		ImageIO.write(image, "PNG", new File(Global.getWorkingDir(), "codes.png"));
+//
+//		
 		Global.log().info("Data size: " + data.size());
 		
 		int dim = data.get(0).dimensionality();
 		
 		// * We use the "sphere" initialization strategy
 		IFS<Similitude> initial = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE, true);
-			
-		EM<Similitude> em = new SimEM(initial, data, NUM_SOURCES, 
+		
+		EM<Similitude> em = new SimEM(target, data, NUM_SOURCES, 
 					Similitude.similitudeBuilder(dim), spanningVariance);
+		
+//		EM<AffineMap> em = new AffineEM(IFSs.toAffine(target), data, NUM_SOURCES, 
+//					AffineMap.affineMapBuilder(dim), spanningVariance);
+		
+		em.DEBUG_DIR = new File(Global.getWorkingDir(), "debug/");
 								
 		// * BODY
 		tic();
