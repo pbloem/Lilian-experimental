@@ -46,7 +46,6 @@ public class IFSvsMOG
 	private List<Point> data;
 	private int iterations, repeats;
 	private double depth;
-	private double spanningVariance;
 	private int sampleSize;
 	
 	private List<Double> mogLLs, ifsLLs, bestDepths; 
@@ -64,7 +63,6 @@ public class IFSvsMOG
 			@In(name="data", print=false) List<Point> data, 
 			@In(name="iterations") int iterations, 
 			@In(name="depth") double depth,
-			@In(name="spanning variance") double spanningVariance, 
 			@In(name="sample size") int sampleSize, 
 			@In(name="num components") int numComponents,
 			@In(name="test ratio") double testRatio,
@@ -73,7 +71,6 @@ public class IFSvsMOG
 		this.data = data;
 		this.iterations = iterations;
 		this.depth = depth;
-		this.spanningVariance = spanningVariance;
 		this.sampleSize = sampleSize;
 		this.numComponents = numComponents;
 		this.testRatio = testRatio;
@@ -115,7 +112,7 @@ public class IFSvsMOG
 			
 		// * IFS EM model
 		EM<Similitude> ifsEM = new SimEM(model, train, NUM_SOURCES, 
-					Similitude.similitudeBuilder(dim), spanningVariance);
+					Similitude.similitudeBuilder(dim), 1.0);
 		// * MOG EM model
 		MogEM mogEM = new MogEM(train, numComponents);
 		

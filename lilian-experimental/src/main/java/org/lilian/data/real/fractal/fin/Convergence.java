@@ -70,9 +70,6 @@ public class Convergence
 	@In(name="sample size")
 	public int sampleSize;	
 	
-	@In(name="spanning variance")
-	public double spanningVariance;
-	
 	@In(name="high quality")
 	public boolean highQuality;
 	
@@ -92,20 +89,31 @@ public class Convergence
 	public void main() throws IOException
 	{
 		
+		System.out.println(Global.random().nextInt());
+		
 		if(modelName.equals("sierpinski"))
 		{
 			target = IFSs.sierpinskiSim();
 		} else if(modelName.equals("sierpinski-off"))
 		{
-			target = IFSs.sierpinskiOffSim();
+			target = IFSs.sierpinskiOffSim(1.0, 4.0, 16.0);
+		} else if(modelName.equals("sierpinski-small"))
+		{
+			target = IFSs.sierpinskiSmall();
 		} else if(modelName.equals("koch-two"))
 		{
 			target = IFSs.koch2Sim();
+		} else if(modelName.equals("koch-two-off"))
+		{
+			target = IFSs.koch2SimOff(1.0, 16.0);
 		} else if(modelName.equals("koch-four"))
 		{
 			target = IFSs.koch4Sim();
+		} else if(modelName.equals("koch-four-off"))
+		{
+			target = IFSs.koch4SimOff(1.0, 2.0, 4.0, 8.0);
 		} 
-		else
+		else 
 			throw new IllegalArgumentException("Model name ("+modelName+") not recognized");
 		
 		numComponents = target.size();
@@ -133,8 +141,8 @@ public class Convergence
 		// * We use the "sphere" initialization strategy
 		IFS<Similitude> initial = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE, true);
 		
-		EM<Similitude> em = new SimEM(target, data, NUM_SOURCES, 
-					Similitude.similitudeBuilder(dim), spanningVariance);
+		EM<Similitude> em = new SimEM(initial, data, NUM_SOURCES, 
+					Similitude.similitudeBuilder(dim), 1.0);
 		
 //		EM<AffineMap> em = new AffineEM(IFSs.toAffine(target), data, NUM_SOURCES, 
 //					AffineMap.affineMapBuilder(dim), spanningVariance);
