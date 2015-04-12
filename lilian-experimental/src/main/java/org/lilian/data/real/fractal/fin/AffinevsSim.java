@@ -31,8 +31,7 @@ import org.lilian.data.real.Maps;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
 import org.lilian.data.real.fractal.AffineEM;
-import org.lilian.data.real.fractal.BranchingEM;
-import org.lilian.data.real.fractal.EM;
+import org.lilian.data.real.fractal.EMOld;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSs;
 import org.lilian.data.real.fractal.SimEM;
@@ -112,10 +111,10 @@ public class AffinevsSim
 		IFS<Similitude> modelSim = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE);
 		IFS<AffineMap> modelAffine = IFSs.toAffine(modelSim);
 			
-		EM<Similitude> simEM = new SimEM(modelSim, data, NUM_SOURCES, 
+		EMOld<Similitude> simEM = new SimEM(modelSim, data, NUM_SOURCES, 
 					Similitude.similitudeBuilder(dim), spanningVariance);
 		
-		EM<AffineMap> affEM = new AffineEM(modelAffine, data, NUM_SOURCES, 
+		EMOld<AffineMap> affEM = new AffineEM(modelAffine, data, NUM_SOURCES, 
 				AffineMap.affineMapBuilder(dim), spanningVariance);
 				
 		images = new ArrayList<RenderedImage>(generations);
@@ -138,10 +137,10 @@ public class AffinevsSim
 			affEM.iterate(sampleSize, affDepth);
 			Global.log().info(generation + ") Aff finished ("+toc() +" seconds)");		
 			
-			simDepth = EM.depth(simEM, max(0.5, simDepth - 0.5), 0.5, simDepth + 0.51, 4000, data);
+			simDepth = EMOld.depth(simEM, max(0.5, simDepth - 0.5), 0.5, simDepth + 0.51, 4000, data);
 			Global.log().info("new sim depth: " + simDepth);
 			
-			affDepth = EM.depth(affEM, max(0.5, affDepth - 0.5), 0.5, affDepth + 0.51, 4000, data);
+			affDepth = EMOld.depth(affEM, max(0.5, affDepth - 0.5), 0.5, affDepth + 0.51, 4000, data);
 			Global.log().info("new aff depth: " + affDepth);
 		}
 	}

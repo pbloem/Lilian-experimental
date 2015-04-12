@@ -30,8 +30,7 @@ import org.lilian.data.real.MappedList;
 import org.lilian.data.real.Maps;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
-import org.lilian.data.real.fractal.BranchingEM;
-import org.lilian.data.real.fractal.EM;
+import org.lilian.data.real.fractal.EMOld;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSs;
 import org.lilian.data.real.fractal.SimEM;
@@ -117,7 +116,7 @@ public class Visual
 		IFS<Similitude> model = null;
 		model = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE);
 			
-		EM<Similitude> em = new SimEM(model, data, NUM_SOURCES, 
+		EMOld<Similitude> em = new SimEM(model, data, NUM_SOURCES, 
 					Similitude.similitudeBuilder(dim), spanningVariance);
 		
 		MVN basis = em.basis();
@@ -147,12 +146,12 @@ public class Visual
 			if(Global.random().nextDouble() < 0.5)
 				depth += 0.5;
 			else
-				depth = EM.depth(em, max(0.0, depth - 0.5), 0.5, depth + 0.51, depthSampleSize, data);
+				depth = EMOld.depth(em, max(0.0, depth - 0.5), 0.5, depth + 0.51, depthSampleSize, data);
 			
 			Global.log().info("new depth: " + depth);
 		}
 		
-		bestDepth = EM.depth(em, 0.0, 0.5, 10.0, depthSampleSize, data);
+		bestDepth = EMOld.depth(em, 0.0, 0.5, 10.0, depthSampleSize, data);
 
 	}
 	

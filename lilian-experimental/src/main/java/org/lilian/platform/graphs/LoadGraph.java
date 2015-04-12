@@ -7,6 +7,7 @@ import java.util.List;
 import org.data2semantics.platform.annotation.In;
 import org.data2semantics.platform.annotation.Main;
 import org.data2semantics.platform.annotation.Module;
+import org.nodes.DGraph;
 import org.nodes.DTGraph;
 import org.nodes.data.Data;
 
@@ -17,11 +18,17 @@ public class LoadGraph
 
 	@In(name="file")
 	public String file;
+	
+	@In(name="fast")
+	public boolean fast;
 
 	@Main(name="data", print=false)
-	public DTGraph<String, String> load() throws IOException
+	public DGraph<String> load() throws IOException
 	{
-		return Data.edgeListDirected(new File(file));
+		if(! fast)
+			return Data.edgeListDirected(new File(file));
+		
+		return Data.edgeListDirectedUnlabeled(new File(file), true);
 	}
 	
 }

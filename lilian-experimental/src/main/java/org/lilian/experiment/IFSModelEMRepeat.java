@@ -10,7 +10,7 @@ import org.lilian.data.real.AffineMap;
 import org.lilian.data.real.MVN;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
-import org.lilian.data.real.fractal.EM;
+import org.lilian.data.real.fractal.EMOld;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.util.Series;
 import org.lilian.util.distance.Distance;

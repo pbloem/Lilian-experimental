@@ -52,7 +52,7 @@ public class Generate extends AbstractExperiment
 			List<Point> data = Datasets.ball(2).generate(10000000);
 			for(int i : Series.series(100))
 			{
-				mvn = org.lilian.data.real.fractal.EM.learn(data, 2, 5, 1000, 10000);
+				mvn = org.lilian.data.real.fractal.EMOld.learn(data, 2, 5, 1000, 10000);
 				image = Draw.draw(mvn.generator(), ITS, RES, true);
 		
 				ImageIO.write(invert(image), "PNG", new File(measures, "ball."+i+".new.png"));

@@ -28,7 +28,7 @@ import org.lilian.data.real.MVN;
 import org.lilian.data.real.MogEM;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
-import org.lilian.data.real.fractal.EM;
+import org.lilian.data.real.fractal.EMOld;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSs;
 import org.lilian.data.real.fractal.SimEM;
@@ -111,7 +111,7 @@ public class IFSvsMOG
 		model = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE);
 			
 		// * IFS EM model
-		EM<Similitude> ifsEM = new SimEM(model, train, NUM_SOURCES, 
+		EMOld<Similitude> ifsEM = new SimEM(model, train, NUM_SOURCES, 
 					Similitude.similitudeBuilder(dim), 1.0);
 		// * MOG EM model
 		MogEM mogEM = new MogEM(train, numComponents);

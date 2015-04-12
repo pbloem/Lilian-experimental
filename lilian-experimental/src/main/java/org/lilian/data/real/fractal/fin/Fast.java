@@ -30,8 +30,7 @@ import org.lilian.data.real.MappedList;
 import org.lilian.data.real.Maps;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
-import org.lilian.data.real.fractal.BranchingEM;
-import org.lilian.data.real.fractal.EM;
+import org.lilian.data.real.fractal.EMOld;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSs;
 import org.lilian.data.real.fractal.SimEM;
@@ -91,7 +90,7 @@ public class Fast
 		IFS<Similitude> model = null;
 		model = IFSs.initialSphere(dim, numComponents, RADIUS, SCALE, true);
 			
-		EM<Similitude> em = new SimEM(model, data, NUM_SOURCES, 
+		EMOld<Similitude> em = new SimEM(model, data, NUM_SOURCES, 
 					Similitude.similitudeBuilder(dim), spanningVariance);
 								
 		// * BODY

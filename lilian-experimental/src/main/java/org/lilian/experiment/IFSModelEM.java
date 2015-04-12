@@ -20,10 +20,8 @@ import org.lilian.data.real.MappedList;
 import org.lilian.data.real.Maps;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
-// import org.lilian.data.real.fractal.BranchingEM;
-import org.lilian.data.real.fractal.BranchingEM;
 import org.lilian.data.real.fractal.IFS;
-import org.lilian.data.real.fractal.EM;
+import org.lilian.data.real.fractal.EMOld;
 import org.lilian.data.real.fractal.SimEM;
 import org.lilian.data.real.fractal.IFSTarget;
 import org.lilian.data.real.fractal.IFSs;
@@ -74,7 +72,7 @@ public class IFSModelEM extends AbstractExperiment
 	 * State information
 	 */
 	public @State int currentGeneration;
-	public @State EM<Similitude> em;
+	public @State EMOld<Similitude> em;
 	public @State List<Double> scores;
 	public @State IFS<Similitude> bestModel, model;
 	public @State boolean usingApproximation = true; // for the likelihood gof test (true so long as all non-approximated tests score 0.0)
@@ -287,13 +285,7 @@ public class IFSModelEM extends AbstractExperiment
 		if(model == null)
 			throw new IllegalArgumentException("Initialization strategy \""+initStrategy+"\" not recognized.");
 				
-		// * Create the EM model
-		if(branching)
-			em = new BranchingEM(model, trainingData, numSources, 
-					Similitude.similitudeBuilder(dim), branchingVariance, 
-					beamWidth, trainSampleSize, spanningPointsVariance);
-		else
-			em = new SimEM(model, trainingData, numSources, 
+		em = new SimEM(model, trainingData, numSources, 
 					Similitude.similitudeBuilder(dim), spanningPointsVariance);
 		
 		basis = em.basis();
