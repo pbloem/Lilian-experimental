@@ -70,19 +70,19 @@ public class SearchComparison
 			datasets.add(
 				Graphs.blank(	
 					Data.edgeListDirected(
-							new File("/Users/Peter/Documents/datasets/graphs/ecoli/EC.dat"))
+							new File("/home/peter-extern/datasets/graphs/ecoli/EC.dat"))
 							, ""));
 
 			datasets.add(
 					Graphs.blank(	
 						Data.edgeListDirected(
-								new File("/Users/Peter/Documents/datasets/graphs/neural/celegans.txt"))
+								new File("/home/peter-extern/datasets/graphs/neural/celegans.txt"))
 								, ""));
 			
 			datasets.add(
 					Graphs.blank(	
 						Data.edgeListDirected(
-								new File("/Users/Peter/Documents/datasets/graphs/collab/collab.txt"))
+								new File("/home/peter-extern/datasets/graphs/collab/collab.txt"))
 								, ""));
 			
 			
