@@ -70,7 +70,7 @@ public class SearchComparison
 			datasets.add(
 				Graphs.blank(	
 					Data.edgeListDirected(
-							new File("/home/peter-extern/datasets/graphs/ecoli/EC.dat"))
+							new File("/Users/Peter/Documents/datasets/graphs/p2p/p2p.txt"))
 							, ""));
 
 			datasets.add(
@@ -234,13 +234,12 @@ public class SearchComparison
 			System.out.println("\n motif " + i + " depth " + depth + ", " + occurrences.get(sub).size() + " occurrences \n");
 			tic();
 			Pair<Integer, Double> linear = findLinear (data, sub, sortedOccurrences, baseline);
-			System.out.println("\nlinear " + toc()); tic();
-			Pair<Integer, Double> phi    = findPhi    (data, sub, sortedOccurrences, baseline);
-			System.out.println("\nphi" + toc());
+			double linearTime = toc();
 			
-			System.out.println(i + ", " + d + ", " + depth + ", " + linear.first() + ", " + linear.second() + ", " + phi.first() + ", " + phi.second() + ".");
-
-			out.write(i + ", " + d + ", " + depth + ", " + linear.second() + ", " + phi.second() + "\n");
+			Pair<Integer, Double> phi = findPhi(data, sub, sortedOccurrences, baseline);
+			double phiTime = toc();
+			
+			out.write(i + ", " + d + ", " + depth + ", " + linear.second() + ", " + phi.second() + ", " +  linearTime + ", " + phiTime + "\n");
 			out.flush();
 			
 			i++;
