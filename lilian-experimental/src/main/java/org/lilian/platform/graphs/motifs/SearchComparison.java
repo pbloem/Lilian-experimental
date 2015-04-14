@@ -70,13 +70,13 @@ public class SearchComparison
 			datasets.add(
 				Graphs.blank(	
 					Data.edgeListDirected(
-							new File("/Users/Peter/Documents/datasets/graphs/p2p/p2p.txt"))
+							new File("/home/peter-extern/datasets/graphs/p2p/p2p.txt"))
 							, ""));
 
 			datasets.add(
 					Graphs.blank(	
 						Data.edgeListDirected(
-								new File("/home/peter-extern/datasets/graphs/neural/celegans.txt"))
+								new File("/home/peter-extern/datasets/graphs/ecoli/EC.dat"))
 								, ""));
 			
 			datasets.add(
