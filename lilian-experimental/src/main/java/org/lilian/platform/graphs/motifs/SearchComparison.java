@@ -85,7 +85,6 @@ public class SearchComparison
 								new File("/home/peter-extern/datasets/graphs/collab/collab.txt"))
 								, ""));
 			
-			
 //			datasets.add(Data.edgeListDirectedUnlabeled(new File("/Users/Peter/Documents/datasets/graphs/amazon/amazon0302.txt"), true));
 //			
 //			datasets.add(Data.edgeListDirectedUnlabeled(new File("/Users/Peter/Documents/datasets/graphs/email/email.eu.txt"), true));
@@ -143,8 +142,12 @@ public class SearchComparison
 
 	public void iteration(int d, int depth, BufferedWriter out) throws IOException
 	{
+		// TODO occurrence should be in canonical ordering
+		// TODO remove overlapping occurrences based on exdegree
+		//      (this may be an interesting problem, ie. NP complete)
+		
 		DGraph<String> data = datasets.get(d);
-;
+
 		
 		FrequencyModel<DGraph<String>> fm = new FrequencyModel<DGraph<String>>();
 
@@ -300,7 +303,6 @@ public class SearchComparison
 		throws IOException
 	{
 		// * Find the first fibonacci number that is bigger than the number of occurrences 
-		// TODO: there's a small chance that rounding errors will fuck this up.
 		int n = occurrences.size();
 		int to = Fibonacci.isFibonacci(n) ? n : (int)Fibonacci.get((int) Math.ceil(Fibonacci.getIndexApprox(n)));
 
