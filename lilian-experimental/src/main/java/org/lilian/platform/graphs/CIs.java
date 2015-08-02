@@ -135,7 +135,7 @@ public class CIs
 		
 		model = new USequenceModel<String>(data);
 
-		for(int samples : series(bigSample+1))
+		for(int samples : series(3, bigSample+1))
 		{
 			model.nonuniform();
 			if(samples % stepSize == 0)
