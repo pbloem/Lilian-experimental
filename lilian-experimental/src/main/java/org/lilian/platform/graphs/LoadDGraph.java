@@ -13,7 +13,7 @@ import org.nodes.data.Data;
 
 
 @Module(name="Load graph")
-public class LoadGraph
+public class LoadDGraph
 {
 
 	@In(name="file")
