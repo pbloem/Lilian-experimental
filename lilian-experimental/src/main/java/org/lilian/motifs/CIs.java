@@ -1,4 +1,4 @@
-package org.lilian.platform.graphs;
+package org.lilian.motifs;
 
 import static org.nodes.util.Series.series;
 import static org.nodes.models.USequenceModel.CIMethod;

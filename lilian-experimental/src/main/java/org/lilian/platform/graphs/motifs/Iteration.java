@@ -16,8 +16,8 @@ import org.lilian.util.Functions.NaturalComparator;
 import org.nodes.DGraph;
 import org.nodes.DTGraph;
 import org.nodes.Global;
-import org.nodes.compression.MotifExtractor;
 import org.nodes.data.GML;
+import org.nodes.motifs.DTMotifExtractor;
 import org.nodes.util.Generator;
 
 @Module(name = "Masking Motif extraction")
@@ -60,7 +60,7 @@ public class Iteration
 			tic();
 			
 			Global.log().info("Starting interation " + iteration);
-			MotifExtractor me = new MotifExtractor(current, samples, minSize, maxSize);
+			DTMotifExtractor me = new DTMotifExtractor(current, samples, minSize, maxSize);
 			
 			me.run();
 			if(me.result() == null)

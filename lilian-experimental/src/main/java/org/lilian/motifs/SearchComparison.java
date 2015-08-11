@@ -1,4 +1,4 @@
-package org.lilian.platform.graphs.motifs;
+package org.lilian.motifs;
 
 import static java.util.Collections.reverseOrder;
 import static org.data2semantics.platform.util.Series.series;
@@ -40,12 +40,15 @@ import org.nodes.MapDTGraph;
 import org.nodes.Node;
 import org.nodes.Subgraph;
 import org.nodes.TGraph;
+import org.nodes.UGraph;
+import org.nodes.UNode;
 import org.nodes.algorithms.Nauty;
 import org.nodes.compression.EdgeListCompressor;
-import org.nodes.compression.MotifCompressor;
 import org.nodes.data.Data;
 import org.nodes.data.GML;
 import org.nodes.data.RDF;
+import org.nodes.motifs.MotifCompressor;
+import org.nodes.motifs.UPlainMotifExtractor;
 import org.nodes.random.RandomGraphs;
 import org.nodes.random.SubgraphGenerator;
 import org.nodes.util.Compressor;
@@ -62,39 +65,9 @@ import au.com.bytecode.opencsv.CSVWriter;
 @Module(name = "Plot Optima", description = "")
 public class SearchComparison
 {
-	private static List<DGraph<String>> datasets = new ArrayList<DGraph<String>>(3);
-	
-	static {
-		try
-		{
-			datasets.add(
-				Graphs.blank(	
-					Data.edgeListDirected(
-							new File("/home/peter-extern/datasets/graphs/p2p/p2p.txt"))
-							, ""));
+	private static List<UGraph<String>> datasets = new ArrayList<UGraph<String>>(3);
 
-			datasets.add(
-					Graphs.blank(	
-						Data.edgeListDirected(
-								new File("/home/peter-extern/datasets/graphs/ecoli/EC.dat"))
-								, ""));
-			
-			datasets.add(
-					Graphs.blank(	
-						Data.edgeListDirected(
-								new File("/home/peter-extern/datasets/graphs/collab/collab.txt"))
-								, ""));
-			
-//			datasets.add(Data.edgeListDirectedUnlabeled(new File("/Users/Peter/Documents/datasets/graphs/amazon/amazon0302.txt"), true));
-//			
-//			datasets.add(Data.edgeListDirectedUnlabeled(new File("/Users/Peter/Documents/datasets/graphs/email/email.eu.txt"), true));
-//			
-		} catch (IOException e)
-		{
-			throw new RuntimeException(e);
-		}
-	}
-
+	private UGraph<String> data;
 	private int samples;
 	private int minDepth, maxDepth;
 	private boolean correct, blank;
@@ -106,6 +79,7 @@ public class SearchComparison
 	private boolean resetWiring;
 
 	public SearchComparison(
+			@In(name = "data") UGraph<String> data,
 			@In(name = "samples") int samples,
 			@In(name = "min depth") int minDepth,
 			@In(name = "max depth") int maxDepth,
@@ -113,6 +87,7 @@ public class SearchComparison
 			@In(name = "num motifs") int numMotifs,
 			@In(name = "reset wiring") boolean resetWiring) throws IOException
 	{
+		this.data = data;
 		this.samples = samples;
 		this.correct = correct;
 		this.numMotifs = numMotifs;
@@ -125,118 +100,36 @@ public class SearchComparison
 	}
 
 	@Main()
-	public void body() throws IOException
+	public void body(int d, int depth, BufferedWriter out) throws IOException
 	{
-		File dir = new File(Global.getWorkingDir(), "plot");
-		dir.mkdirs();
-		File outFile = new File(dir, "plot.csv");
+		UPlainMotifExtractor<String> ex = new UPlainMotifExtractor<String>(data, samples, minDepth, maxDepth);
 
-		BufferedWriter out = new BufferedWriter(new FileWriter(outFile));
+		List<UGraph<String>> subgraphs = ex.subgraphs();
 
-		for(int d : Series.series(datasets.size()))
-			for (int depth : Series.series(minDepth, maxDepth + 1))
-				iteration(d, depth, out);
-
-		out.close();
-	}
-
-	public void iteration(int d, int depth, BufferedWriter out) throws IOException
-	{
-		// TODO occurrence should be in canonical ordering
-		// TODO remove overlapping occurrences based on exdegree
-		//      (this may be an interesting problem, ie. NP complete)
-		
-		DGraph<String> data = datasets.get(d);
-
-		
-		FrequencyModel<DGraph<String>> fm = new FrequencyModel<DGraph<String>>();
-
-		// * The non-overlapping instances
-		Map<DGraph<String>, List<List<Integer>>> occurrences = new LinkedHashMap<DGraph<String>, List<List<Integer>>>();
-
-		// * The nodes that are occupied by instances
-		Map<DGraph<String>, Set<Integer>> nodes = new LinkedHashMap<DGraph<String>, Set<Integer>>();
-
-		SubgraphGenerator<String> gen = new SubgraphGenerator<String>(data,
-				depth, Collections.EMPTY_LIST);
-
-		int skipped = 0;
-		for (int i : Series.series(samples))
-		{
-			if (i % 10000 == 0)
-				System.out.println("Samples finished: " + i);
-
-			SubgraphGenerator<String>.Result result = gen.generate();
-			DGraph<String> sub = Subgraph.dSubgraphIndices(data,
-					result.indices());
-
-			// * Reorder nodes to canonical ordering
-			sub = Graphs.reorder(sub, Nauty.order(sub, comparator));
-
-			fm.add(sub, correct ? result.invProbability() : 1.0);
-			List<Integer> occurrence = result.indices(); // * NB: not in correct
-													     // order. is this a
-													     // problem?
-
-			// * check for overlap
-			boolean overlap = false;
-
-			if (nodes.containsKey(sub))
-			{
-				Set<Integer> taken = nodes.get(sub);
-				for (int index : occurrence)
-					if (taken.contains(index))
-					{
-						overlap = true;
-						break;
-					}
-			}
-
-			// * record the occurrence
-			if (!overlap)
-			{
-				if (!occurrences.containsKey(sub))
-					occurrences.put(sub, new ArrayList<List<Integer>>());
-
-				occurrences.get(sub).add(occurrence);
-
-				if (!nodes.containsKey(sub))
-					nodes.put(sub, new HashSet<Integer>());
-
-				Set<Integer> subNodes = nodes.get(sub);
-				for (int index : occurrence)
-					subNodes.add(index);
-			} else
-				skipped++;
-		}
-
-		System.out.println(skipped + " occurrences skipped due to overlap ");
-
-		List<DGraph<String>> tokens = fm.sorted();
-
-		numMotifs = Math.min(numMotifs, tokens.size());
-		tokens = tokens.subList(0, numMotifs);
+		numMotifs = Math.min(numMotifs, subgraphs.size());
+		subgraphs = subgraphs.subList(0, numMotifs);
 
 		double baseline = compressor.compressedSize(data);
 
 		Global.log().info("Starting compression test");
 
 		int i = 0;
-		for (DGraph<String> sub : tokens)
+		for (UGraph<String> sub : subgraphs)
 		{
 			// * Sort the occurrences by exdegree (ascending)
-			List<List<Integer>> sortedOccurrences = new ArrayList<List<Integer>>(occurrences.get(sub));
+			List<List<Integer>> sortedOccurrences 
+				= new ArrayList<List<Integer>>(ex.occurrences(sub));
 			List<Integer> exDegrees = new ArrayList<Integer>(sortedOccurrences.size());
 
 			for (List<Integer> occurrence : sortedOccurrences)
-				exDegrees.add(exDegree(data, occurrence));
+				exDegrees.add(MotifCompressor.exDegree(data, occurrence));
 
 			Comparator<Integer> nat = Functions.natural();
 			Functions.sort(sortedOccurrences, exDegrees, nat);
 		
-			System.out.println("\n motif " + i + " depth " + depth + ", " + occurrences.get(sub).size() + " occurrences \n");
+			System.out.println("\n motif " + i + " depth " + depth + ", " + ex.occurrences(sub).size() + " occurrences \n");
 			tic();
-			Pair<Integer, Double> linear = findLinear (data, sub, sortedOccurrences, baseline);
+			Pair<Integer, Double> linear = findLinear(data, sub, sortedOccurrences, baseline);
 			double linearTime = toc();
 			
 			Pair<Integer, Double> phi = findPhi(data, sub, sortedOccurrences, baseline);
@@ -259,8 +152,8 @@ public class SearchComparison
 	 * @return
 	 * @throws IOException
 	 */
-	private Pair<Integer, Double> findLinear(DGraph<String> data,
-			DGraph<String> motif, List<List<Integer>> occurrences, double baseline) throws IOException
+	private Pair<Integer, Double> findLinear(UGraph<String> data,
+			UGraph<String> motif, List<List<Integer>> occurrences, double baseline) throws IOException
 	{		
 		System.out.println("\n" + occurrences.size());
 		
@@ -297,8 +190,8 @@ public class SearchComparison
 	 * @throws IOException
 	 */
 	private Pair<Integer, Double> findPhi(
-			DGraph<String> data,
-			DGraph<String> motif, List<List<Integer>> occurrences, 
+			UGraph<String> data,
+			UGraph<String> motif, List<List<Integer>> occurrences, 
 			double baseline) 
 		throws IOException
 	{
@@ -316,12 +209,12 @@ public class SearchComparison
 	}	
 	
 	private class FindPhi {
-		DGraph<String> data; 
-		DGraph<String> motif;
+		UGraph<String> data; 
+		UGraph<String> motif;
 		List<List<Integer>> occurrences; 
 		double baseline;
 		
-		public FindPhi(DGraph<String> data, DGraph<String> motif,
+		public FindPhi(UGraph<String> data, UGraph<String> motif,
 				List<List<Integer>> occurrences, double baseline)
 		{
 			this.data = data;
@@ -424,23 +317,6 @@ public class SearchComparison
 		return means;
 	}
 
-	public static int exDegree(DGraph<String> graph, List<Integer> occurrence)
-	{
-		int sum = 0;
-
-		for (int i : Series.series(occurrence.size()))
-		{
-			int nodeIndex = occurrence.get(i);
-			Node<String> node = graph.get(nodeIndex);
-
-			for (Node<String> neighbor : node.neighbors())
-				if (!occurrence.contains(neighbor.index()))
-					sum++;
-		}
-
-		return sum;
-	}
-
 	public static List<String> degreesSample(DGraph<String> graph,
 			DGraph<String> sub, List<List<Integer>> occurrences, int sampleSize)
 	{
@@ -479,12 +355,12 @@ public class SearchComparison
 		return sample;
 	}
 
-	public double size(DGraph<String> graph, DGraph<String> sub,
+	public double size(UGraph<String> graph, UGraph<String> sub,
 			List<List<Integer>> occurrences, Compressor<Graph<String>> comp,
 			boolean resetWiring)
 	{
 		List<List<Integer>> wiring = new ArrayList<List<Integer>>();
-		DGraph<String> copy = MotifCompressor.subbedGraph(graph, sub,
+		UGraph<String> copy = MotifCompressor.subbedGraph(graph, sub,
 				occurrences, wiring);
 
 		double graphsBits = 0.0;
@@ -501,7 +377,7 @@ public class SearchComparison
 		return graphsBits;
 	}
 
-	public double silhouetteSize(DGraph<String> subbed)
+	public double silhouetteSize(UGraph<String> subbed)
 	{
 		double bits = 0.0;
 
@@ -509,17 +385,16 @@ public class SearchComparison
 		bits += compressor.compressedSize(subbed);
 
 		// * Store the labels
-		OnlineModel<Integer> model = new OnlineModel<Integer>(Arrays.asList(
-				new Integer(0), new Integer(1)));
+		OnlineModel<Integer> model = new OnlineModel<Integer>(Arrays.asList(0, 1));
 
-		for (DNode<String> node : subbed.nodes())
+		for (UNode<String> node : subbed.nodes())
 			bits += -Functions.log2(model.observe(node.label().equals(
 					MotifCompressor.MOTIF_SYMBOL) ? 0 : 1));
 
 		return bits;
 	}
 
-	public double wiringBits(DGraph<String> sub, List<List<Integer>> wiring,
+	public double wiringBits(UGraph<String> sub, List<List<Integer>> wiring,
 			boolean reset)
 	{
 		OnlineModel<Integer> om = new OnlineModel<Integer>(Series.series(sub
@@ -538,7 +413,7 @@ public class SearchComparison
 		return bits;
 	}
 
-	public double motifSize(DGraph<String> sub)
+	public double motifSize(UGraph<String> sub)
 	{
 		double bits = 0.0;
 
