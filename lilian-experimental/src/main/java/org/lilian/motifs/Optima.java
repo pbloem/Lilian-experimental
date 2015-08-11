@@ -133,9 +133,7 @@ public class Optima
 			File csv = new File(Global.getWorkingDir(), format("motif.%02d.%02d.csv", depth, i));
 			BufferedWriter out = new BufferedWriter(new FileWriter(csv));
 			
-			int step = (int)Math.ceil(occurrences.size() / 10.0);
-			
-			for(int cap : series(0, step, occurrences.size()))
+			for(int cap : series(0, occurrences.size()))
 			{
 				double profitWithReset = baseline - size(data, sub, occurrences.subList(0, cap), comp, true);
 				double profitWithoutReset = baseline - size(data, sub, occurrences.subList(0, cap), comp, false);
