@@ -5,7 +5,8 @@ import static java.util.Collections.reverseOrder;
 import static org.data2semantics.platform.util.Series.series;
 import static org.lilian.util.Functions.tic;
 import static org.lilian.util.Functions.toc;
-import static org.nodes.compression.Functions.log2;
+import static org.lilian.util.Functions.log2;
+import static org.nodes.compression.Functions.prefix;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -45,6 +46,7 @@ import org.nodes.TGraph;
 import org.nodes.UGraph;
 import org.nodes.UNode;
 import org.nodes.algorithms.Nauty;
+import org.nodes.compression.BinomialCompressor;
 import org.nodes.compression.EdgeListCompressor;
 import org.nodes.data.Data;
 import org.nodes.data.GML;
@@ -74,7 +76,6 @@ public class Optima
 	private int numMotifs;
 
 	private NaturalComparator<String> comparator;
-	EdgeListCompressor<String> comp = new EdgeListCompressor<String>(false);
 
 	public Optima(
 			@In(name = "data", print = false) UGraph<String> data,
@@ -112,8 +113,12 @@ public class Optima
 
 		tokens = tokens.subList(0, Math.min(numMotifs, tokens.size()));
 		
-		double baseline = comp.compressedSize(data);
+		double baseline = size(data);
 
+		
+		Global.log().info("baseline size:" + baseline);
+		Global.log().info("size binomial model: " + BinomialCompressor.undirected(data));
+		
 		Global.log().info("Starting compression test");
 
 		int i = 0;
@@ -135,8 +140,8 @@ public class Optima
 			
 			for(int cap : series(0, occurrences.size()))
 			{
-				double profitWithReset = baseline - size(data, sub, occurrences.subList(0, cap), comp, true);
-				double profitWithoutReset = baseline - size(data, sub, occurrences.subList(0, cap), comp, false);
+				double profitWithReset = baseline - size(data, sub, occurrences.subList(0, cap), true);
+				double profitWithoutReset = baseline - size(data, sub, occurrences.subList(0, cap), false);
 				int degree = exDegrees.get(cap);
 				
 				out.write(format("%d, %f, %f, %d\n", cap, profitWithReset, profitWithoutReset, degree));
@@ -149,7 +154,10 @@ public class Optima
 	}
 
 
-
+	public static double size(UGraph<String> graph)
+	{
+		return BinomialCompressor.undirected(graph);
+	}
 
 
 	public static int exDegree(UGraph<String> graph, List<Integer> occurrence)
@@ -208,8 +216,7 @@ public class Optima
 	}
 
 	public double size(UGraph<String> graph, UGraph<String> sub,
-			List<List<Integer>> occurrences, Compressor<Graph<String>> comp,
-			boolean resetWiring)
+			List<List<Integer>> occurrences, boolean resetWiring)
 	{
 		List<List<Integer>> wiring = new ArrayList<List<Integer>>();
 		UGraph<String> copy = MotifCompressor.subbedGraph(graph, sub,
@@ -234,7 +241,7 @@ public class Optima
 		double bits = 0.0;
 
 		// * Store the structure
-		bits += comp.compressedSize(subbed);
+		bits += size(subbed);
 
 		// * Store the labels
 		OnlineModel<Integer> model = new OnlineModel<Integer>(Arrays.asList(
@@ -271,7 +278,7 @@ public class Optima
 		double bits = 0.0;
 
 		// * Store the structure
-		bits += comp.compressedSize(sub);
+		bits += size(sub);
 
 		return bits;
 	}
