@@ -58,7 +58,7 @@ top = n.max(data[:, 0])
 if n.min(data[:, 0]) < - top:
    ax1.set_ylim(bottom=-top)
 
-ax1.set_ylabel('factor')
+ax1.set_ylabel('factor (bits)')
 
 ### 2) Plot the small graphs
 
@@ -70,7 +70,7 @@ side = pluswidth - 0.5
 width = (1.0 - 2.0 * margin - extra) / (nummotifs + 2.0 * side)
 
 i = 0
-for path in glob.glob('motif.*.edgelist'):
+for path in glob.glob('motif.*.edgelist')[:nummotifs]:
     axsmall = fig.add_axes([margin + extra + side*width + width * i, bottom, width, height])
     axsmall.axis('off')
     
@@ -98,6 +98,10 @@ ax3.spines["left"].set_visible(False)
 ax3.get_xaxis().tick_bottom()
 ax3.get_xaxis().set_tick_params(which='both', top='off', bottom='off', right='off', labelbottom='off')
 ax3.get_yaxis().tick_left()
+
+# reduce the number of ticks
+yloc = p.MaxNLocator(4)
+ax3.yaxis.set_major_locator(yloc)
 
 ax3.set_ylabel('freq.')
 
