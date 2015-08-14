@@ -41,6 +41,7 @@ import org.nodes.algorithms.Nauty;
 import org.nodes.compression.BinomialCompressor;
 import org.nodes.compression.EdgeListCompressor;
 import org.nodes.compression.NeighborListCompressor;
+import org.nodes.data.Data;
 import org.nodes.models.USequenceModel;
 import org.nodes.motifs.MotifCompressor;
 import org.nodes.motifs.UPlainMotifExtractor;
@@ -144,19 +145,21 @@ public class UCompareBeta
 		org.lilian.util.Functions.sort(estimates, Collections.reverseOrder(comp), (List) cis, (List) frequencies, (List) subs);
 		
 		File numbersFile = new File(Global.getWorkingDir(), "numbers.csv");
-		File graphsFile = new File(Global.getWorkingDir(), "graphs.csv");
+
 		
 		BufferedWriter numbersWriter = new BufferedWriter(new FileWriter(numbersFile));
-		BufferedWriter graphsWriter  = new BufferedWriter(new FileWriter(graphsFile));
-		
 		for(int i : series(subs.size()))
-		{
-			numbersWriter.write(estimates.get(i) + ", "  + cis.get(i) + ", " + frequencies.get(i) + "\n");
-			graphsWriter.write(subs.get(i).toString() + "\n");
-		}
-		
+			numbersWriter.write(estimates.get(i) + ", "  + cis.get(i) + ", " + frequencies.get(i) + "\n");		
 		numbersWriter.close();
-		graphsWriter.close();
+
+		int i = 0;
+		for(UGraph<String> sub : subs)
+		{
+			File graphFile = new File(Global.getWorkingDir(), String.format("motif.%03d.edgelist", i));
+			Data.writeEdgeList(sub, graphFile);
+			
+			i++;
+		}
 	}
 
 	private int iterations(int size)
