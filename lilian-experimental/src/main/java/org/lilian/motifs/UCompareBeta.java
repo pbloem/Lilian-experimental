@@ -48,7 +48,6 @@ import org.nodes.motifs.UPlainMotifExtractor;
 import org.nodes.random.RandomGraphs;
 import org.nodes.random.SubgraphGenerator;
 import org.nodes.util.Functions;
-import org.nodes.util.FunctionsTest;
 import org.nodes.util.Generator;
 import org.nodes.util.Generators;
 import org.nodes.util.OnlineModel;
