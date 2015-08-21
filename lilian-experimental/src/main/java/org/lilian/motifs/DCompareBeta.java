@@ -1,6 +1,9 @@
 package org.lilian.motifs;
 
+import static org.nodes.util.Pair.p;
 import static org.nodes.util.Series.series;
+import static java.lang.Math.abs;
+import static java.lang.Math.min;
 import static org.lilian.util.Functions.log2;
 import static org.nodes.models.USequenceModel.CIMethod;
 import static org.nodes.models.USequenceModel.CIType;
@@ -28,6 +31,7 @@ import org.data2semantics.platform.annotation.In;
 import org.data2semantics.platform.annotation.Main;
 import org.data2semantics.platform.annotation.Module;
 import org.data2semantics.platform.annotation.Out;
+import org.lilian.util.Fibonacci;
 import org.lilian.util.Functions.NaturalComparator;
 import org.nodes.DGraph;
 import org.nodes.DLink;
@@ -100,6 +104,9 @@ public class DCompareBeta
 	@In(name="min freq")
 	public int minFreq;
 	
+	@In(name="use search", description="whether to search for the best subset of instances to use")
+	public boolean useSearch;
+	
 	private NaturalComparator<String> comparator;
  	
 	@Main(print=false)
@@ -134,7 +141,15 @@ public class DCompareBeta
 		for(DGraph<String> sub : subs)
 		{
 			System.out.println("Analysing sub " + sub);
-			Pair<Double, Double> size = size(data, sub, ex.occurrences(sub), true); 
+			
+			List<List<Integer>> occurrences = ex.occurrences(sub);
+			if(useSearch)
+			{
+				Pair<Integer, Double> res = find(data, sub, occurrences);
+				occurrences = occurrences.subList(0, min(res.first(), occurrences.size()));	
+			}
+			
+			Pair<Double, Double> size = size(data, sub, occurrences, useSearch ? false : true); 
 
 			double profitEstimate = baselineEstimate - size.first(); 
 			double profitCI = baselineLowerBound - size.second();
@@ -203,8 +218,8 @@ public class DCompareBeta
 		DSequenceModel<String> motifModel = new DSequenceModel<String>(sub, its);
 		DSequenceModel<String> subbedModel = new DSequenceModel<String>(subbed, its);
 		
-		System.out.println("motif  size: " + motifModel.logNumGraphs());
-		System.out.println("subbed size: " + subbedModel.logNumGraphs());
+//		System.out.println("motif  size: " + motifModel.logNumGraphs());
+//		System.out.println("subbed size: " + subbedModel.logNumGraphs());
 		
 		List<Double> samples = new ArrayList<Double>(its);
 		for(int i : series(its))
@@ -223,13 +238,13 @@ public class DCompareBeta
 		rest += org.nodes.compression.Functions.prefix(sub.size());
 		// * degree sequence of the motif
 		rest += degreesSize(DSequenceModel.sequence(sub));
-		System.out.println("motif degree size: " + degreesSize(DSequenceModel.sequence(sub)));
+//		System.out.println("motif degree size: " + degreesSize(DSequenceModel.sequence(sub)));
 		
 		// * size of the subbed graph
 		rest += org.nodes.compression.Functions.prefix(subbed.size());
 		// * degree sequence of subbed
 		rest += degreesSize(DSequenceModel.sequence(subbed));
-		System.out.println("subbed degree size: " + degreesSize(DSequenceModel.sequence(subbed)));
+//		System.out.println("subbed degree size: " + degreesSize(DSequenceModel.sequence(subbed)));
 		
 		// * Any node pairs with multiple links
 		double multiEdgeBits = 0.0;
@@ -245,7 +260,7 @@ public class DCompareBeta
 		}
 		rest += multiEdgeBits;
 		
-		System.out.println("removals " + multiEdgeBits);
+//		System.out.println("removals " + multiEdgeBits);
 		
 		// * Store the labels
 		double labelBits = 0.0;
@@ -256,13 +271,13 @@ public class DCompareBeta
 			labelBits += - Functions.log2(model.observe(node.label().equals(
 				MotifCompressor.MOTIF_SYMBOL) ? 0 : 1));
 		
-		System.out.println("labels " + labelBits);
+//		System.out.println("labels " + labelBits);
 		
 		rest += labelBits;
 		
 		// * Store the rewiring information
 		double wiringBits = wiringBits(sub, wiring, resetWiring);
-		System.out.println("wiring " + wiringBits);
+//		System.out.println("wiring " + wiringBits);
 		
 		rest += wiringBits;
 		
@@ -299,5 +314,90 @@ public class DCompareBeta
 		}
 
 		return bits;
+	}
+	
+	/**
+	 * Golden section search
+	 * @param data
+	 * @param motif
+	 * @param occurrences
+	 * @param baseline
+	 * @return
+	 * @throws IOException
+	 */
+	private Pair<Integer, Double> find(
+			DGraph<String> data,
+			DGraph<String> motif, List<List<Integer>> occurrences) 
+		throws IOException
+	{
+		// * Find the first fibonacci number that is bigger than the number of occurrences 
+		int n = occurrences.size();
+		int to = Fibonacci.isFibonacci(n) ? n : (int)Fibonacci.get((int) Math.ceil(Fibonacci.getIndexApprox(n)));
+		
+		FindPhi fp = new FindPhi(data, motif, occurrences);
+		Pair<Integer, Double> results = fp.find(0, to);
+		
+		return results;
+		
+	}	
+	
+	private class FindPhi {
+		private static final double STOP = 0.1;
+		
+		DGraph<String> data; 
+		DGraph<String> motif;
+		List<List<Integer>> occurrences; 
+	
+		public FindPhi(DGraph<String> data, DGraph<String> motif,
+				List<List<Integer>> occurrences)
+		{
+			this.data = data;
+			this.motif = motif;
+			this.occurrences = occurrences;
+		}
+
+		public Pair<Integer, Double> find(int from, int to)
+		{
+			System.out.println("find: " + from + "("+sample(from)+") to " + to + "("+sample(to)+")");
+			
+			int range = to - from;
+			double diff = abs(sample(from) - sample(to));
+			double max  = Math.max(sample(from), sample(to)); 
+					
+			if(range <= 2 || diff/max < STOP)
+			{
+				// return the best of from and to
+				double fromValue = sample(from);
+				double toValue = sample(to);
+				
+				return fromValue < toValue ? p(from, fromValue) : p(to, toValue); 
+			}
+			
+			int r0 = (int)Fibonacci.previous(range);
+			int mid1 = to - r0;
+			int mid2 = from + r0;
+			
+			double y1 = sample(mid1);
+			double y2 = sample(mid2);
+			
+			if(y1 < y2)
+				return find(from, mid2);
+			return find(mid1, to);
+		}
+		
+		private Map<Integer, Double> cache = new HashMap<Integer, Double>();
+		
+		public double sample(int n)
+		{
+			if(! cache.containsKey(n))
+			{
+				double size = size(data, motif, occurrences.subList(0, min(occurrences.size(), n)), false).first();
+				cache.put(n, size);
+				
+				return size;
+			}
+			
+			return cache.get(n);
+		}
 	}
 }
