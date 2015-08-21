@@ -96,19 +96,18 @@ for path in glob.glob('motif.*.edgelist')[:nummotifs]:
     nodes = nwx.draw_networkx_nodes(graph, pos, ax=axsmall, node_size=12)
     nodes.set_edgecolor('red')
     nodes.set_color('red')
-    edges = nwx.draw_networkx_edges(graph, pos, alpha=0)
-    for s in edges.get_segments():
-        x = s[0, 0]
-        y = s[0, 1]
-        xto = s[1, 0]
-        yto = s[1, 1]
-        dx = xto - x
-        dy = yto - y
-        p.arrow(x, y, dx, dy, head_width=0.05, head_length=0.1, length_includes_head=True, fc='k', ec='k')
+    edges = nwx.draw_networkx_edges(graph, pos, alpha=0 if directed else 1)
+    if directed:
+        for s in edges.get_segments():
+            x = s[0, 0]
+            y = s[0, 1]
+            xto = s[1, 0]
+            yto = s[1, 1]
+            dx = xto - x
+            dy = yto - y
+            p.arrow(x, y, dx, dy, head_width=0.05, head_length=0.1, length_includes_head=True, fc='k', ec='k')
     i = i + 1
     
-
-
 ### 3)  Frequency graph
 
 ax3 = fig.add_axes([0.0 + margin + extra, row2height + margin, 1.0 - 2.0 * margin - extra, row3height - margin]) 

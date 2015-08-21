@@ -149,8 +149,14 @@ public class DCompareBeta
 				occurrences = occurrences.subList(0, min(res.first(), occurrences.size()));	
 			}
 			
-			Pair<Double, Double> size = size(data, sub, occurrences, useSearch ? false : true); 
-
+			Pair<Double, Double> sizeReset = size(data, sub, occurrences, true);
+			Pair<Double, Double> sizeNoReset = size(data, sub, occurrences, false); 
+			
+			System.out.println("reset: " + sizeReset);
+			System.out.println("no reset: " + sizeNoReset);
+			
+			Pair<Double, Double> size = sizeNoReset;
+			
 			double profitEstimate = baselineEstimate - size.first(); 
 			double profitCI = baselineLowerBound - size.second();
 			double subFrequency = ex.frequency(sub);
@@ -217,9 +223,6 @@ public class DCompareBeta
 		int its = iterations(subbed.size());
 		DSequenceModel<String> motifModel = new DSequenceModel<String>(sub, its);
 		DSequenceModel<String> subbedModel = new DSequenceModel<String>(subbed, its);
-		
-//		System.out.println("motif  size: " + motifModel.logNumGraphs());
-//		System.out.println("subbed size: " + subbedModel.logNumGraphs());
 		
 		List<Double> samples = new ArrayList<Double>(its);
 		for(int i : series(its))
@@ -344,10 +347,11 @@ public class DCompareBeta
 	private class FindPhi {
 		private static final double STOP = 0.1;
 		
-		DGraph<String> data; 
 		DGraph<String> motif;
 		List<List<Integer>> occurrences; 
 	
+		DGraph<String> data;
+
 		public FindPhi(DGraph<String> data, DGraph<String> motif,
 				List<List<Integer>> occurrences)
 		{

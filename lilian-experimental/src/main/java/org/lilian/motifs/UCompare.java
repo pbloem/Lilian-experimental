@@ -163,6 +163,15 @@ public class UCompare
 		// * signal that these are directed graphs
 		File directed = new File(Global.getWorkingDir(), "undirected.txt");
 		directed.createNewFile();
+		
+		
+		try
+		{
+			org.data2semantics.platform.util.Functions.python(Global.getWorkingDir(), "motifs/plot.py");
+		} catch (InterruptedException e)
+		{
+			System.out.println("Failed to run plot script. " + e);
+		}
 	}
 	
 	public double size(UGraph<String> graph)
