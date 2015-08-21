@@ -140,7 +140,7 @@ public class UCompareBeta
 				occurrences = occurrences.subList(0, min(occurrences.size(), searchRes.first()));
 			}
 				
-			Pair<Double, Double> size = size(data, sub, occurrences, false);
+			Pair<Double, Double> size = size(data, sub, occurrences, true);
 
 			double profitEstimate = baselineEstimate - size.first(); 
 			double profitCI = baselineLowerBound - size.second();

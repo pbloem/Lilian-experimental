@@ -149,13 +149,7 @@ public class DCompareBeta
 				occurrences = occurrences.subList(0, min(res.first(), occurrences.size()));	
 			}
 			
-			Pair<Double, Double> sizeReset = size(data, sub, occurrences, true);
-			Pair<Double, Double> sizeNoReset = size(data, sub, occurrences, false); 
-			
-			System.out.println("reset: " + sizeReset);
-			System.out.println("no reset: " + sizeNoReset);
-			
-			Pair<Double, Double> size = sizeNoReset;
+			Pair<Double, Double> size = size(data, sub, occurrences, true);
 			
 			double profitEstimate = baselineEstimate - size.first(); 
 			double profitCI = baselineLowerBound - size.second();
