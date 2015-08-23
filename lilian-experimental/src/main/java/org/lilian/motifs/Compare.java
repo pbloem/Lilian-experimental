@@ -34,6 +34,7 @@ import org.lilian.util.Functions.NaturalComparator;
 import org.nodes.DGraph;
 import org.nodes.Graph;
 import org.nodes.Graphs;
+import org.nodes.Link;
 import org.nodes.Node;
 import org.nodes.Subgraph;
 import org.nodes.UGraph;
@@ -44,7 +45,9 @@ import org.nodes.compression.BinomialCompressor;
 import org.nodes.compression.EdgeListCompressor;
 import org.nodes.compression.NeighborListCompressor;
 import org.nodes.data.Data;
+import org.nodes.models.DSequenceModel;
 import org.nodes.models.USequenceModel;
+import org.nodes.motifs.DPlainMotifExtractor;
 import org.nodes.motifs.MotifCompressor;
 import org.nodes.motifs.UPlainMotifExtractor;
 import org.nodes.random.RandomGraphs;
@@ -71,7 +74,7 @@ import com.fasterxml.jackson.core.JsonEncoding;
  */
 
 @Module(name="Test confidence intervals")
-public class UCompare
+public class Compare
 {
 	@In(name="motif samples")
 	public int motifSamples;
@@ -89,58 +92,97 @@ public class UCompare
 	public double betaAlpha;
 		
 	@In(name="data")
-	public UGraph<String> data;
+	public Graph<String> data;
 	
 	@In(name="data name")
-	public String dataName;
+	public String dataName = "";
 	
 	@In(name="max motifs")
 	public int maxMotifs;
+	
+	@In(name="minimum frequency")
+	public int minFreq;
 
 	public static enum NullModel{ER, EDGELIST, NEIGHBORLIST}
 	
 	private NaturalComparator<String> comparator;
 	private boolean resets = true;
+	
+	private boolean directed;
  	
 	@Main(print=false)
 	public void main() throws IOException
-	{		
-		data = Graphs.toSimpleUGraph(data);
+	{
+		directed = data instanceof DGraph<?>;
+		Global.log().info("Is data directed? : " + directed + "("+data.getClass()+")");
+
+		if(directed)
+			data = Graphs.toSimpleDGraph((DGraph<String>)data);
+		else
+			data = Graphs.toSimpleUGraph(data);
 		data = Graphs.blank(data, "");
 		
 		Global.log().info("Computing motif code lengths");
 		
-		UPlainMotifExtractor<String> ex 
-			= new UPlainMotifExtractor<String>(
-					data, motifSamples, motifMinSize, motifMaxSize);
 		
-		List<Double> factorsER = new ArrayList<Double>(ex.subgraphs().size());
-		List<Double> factorsNL = new ArrayList<Double>(ex.subgraphs().size());
-		List<Double> factorsEL = new ArrayList<Double>(ex.subgraphs().size());
-		List<Double> factorsBeta =  new ArrayList<Double>(ex.subgraphs().size());
+		List<? extends Graph<String>> subs;
+		List<Double> frequencies;
+		List<List<List<Integer>>> occurrences;
+
+		if(directed)
+		{
+			DPlainMotifExtractor<String> ex 
+			= new DPlainMotifExtractor<String>(
+					(DGraph<String>)data, motifSamples, motifMinSize, motifMaxSize, minFreq);
 		
-		List<Double> frequencies = new ArrayList<Double>(ex.subgraphs().size());
-		List<UGraph<String>> subs = new ArrayList<UGraph<String>>(ex.subgraphs());
+			subs = new ArrayList<Graph<String>>(ex.subgraphs());
+			frequencies = new ArrayList<Double>(subs.size());
+			for(Graph<String> sub : subs)
+				frequencies.add(ex.frequency((DGraph<String>)sub));
+			
+			occurrences = new ArrayList<List<List<Integer>>>(subs.size());
+			for(Graph<String> sub : subs)
+				occurrences.add(ex.occurrences((DGraph<String>)sub));
+		} else
+		{	
+			UPlainMotifExtractor<String> ex 
+				= new UPlainMotifExtractor<String>(
+						(UGraph<String>)data, motifSamples, motifMinSize, motifMaxSize, minFreq);
+			
+			subs = new ArrayList<Graph<String>>(ex.subgraphs());
+			frequencies = new ArrayList<Double>(subs.size());
+			for(Graph<String> sub : subs)
+				frequencies.add(ex.frequency((UGraph<String>)sub));
+			
+			occurrences = new ArrayList<List<List<Integer>>>(subs.size());
+			for(Graph<String> sub : subs)
+				occurrences.add(ex.occurrences((UGraph<String>)sub));
+		}
 		
 		if(subs.size() > maxMotifs)
-			subs = new ArrayList<UGraph<String>>(subs.subList(0, maxMotifs));
-		
+			subs = new ArrayList<Graph<String>>(subs.subList(0, maxMotifs));
+			
+		List<Double> factorsER = new ArrayList<Double>(subs.size());
+		List<Double> factorsNL = new ArrayList<Double>(subs.size());
+		List<Double> factorsEL = new ArrayList<Double>(subs.size());
+		List<Double> factorsBeta =  new ArrayList<Double>(subs.size());
+				
 		double baselineER = size(data, NullModel.ER);
 		double baselineNL = size(data, NullModel.NEIGHBORLIST);
 		double baselineEL = size(data, NullModel.EDGELIST);
 		double baselineBeta = sizeBeta(data).lowerBound(betaAlpha);
 		
-		int j = 0;
-		for(UGraph<String> sub : subs)
+		for(int i : series(subs.size()))
 		{
-			Global.log().info("Analysing sub ("+ (++j) +" of " + subs.size() + "): " + sub);
-			double frequency = ex.frequency(sub);
-			frequencies.add(frequency);
-			Global.log().info("freq: " + frequency);
+			Graph<String> sub = subs.get(i);
+			List<List<Integer>> occs = occurrences.get(i);
+			
+			Global.log().info("Analysing sub ("+ (i+1) +" of " + subs.size() + "): " + sub);
+			Global.log().info("freq: " + frequencies.get(i));
 
 			Global.log().info("null model: ER");
 			{
-				double sizeER = size(data, sub, ex.occurrences(sub), NullModel.ER, resets); 
+				double sizeER = size(data, sub, occs, NullModel.ER, resets); 
 				double factorER = baselineER - sizeER;
 				factorsER.add(factorER);
 				 
@@ -151,7 +193,7 @@ public class UCompare
 
 			Global.log().info("null model: EL");
 			{
-				double sizeEL = size(data, sub, ex.occurrences(sub), NullModel.EDGELIST, resets); 
+				double sizeEL = size(data, sub, occs, NullModel.EDGELIST, resets); 
 				double factorEL = baselineEL - sizeEL;
 				factorsEL.add(factorEL);
 			 
@@ -162,7 +204,7 @@ public class UCompare
 
 			Global.log().info("null model: Beta");
 			{
-				Pair<LogBCaCI, Double> pair = sizeBeta(data, sub, ex.occurrences(sub), resets); 
+				Pair<LogBCaCI, Double> pair = sizeBeta(data, sub, occs, resets); 
 				double sizeBeta = pair.first().upperBound(betaAlpha) + pair.second();
 				double factorBeta = baselineBeta - sizeBeta;
 				factorsBeta.add(factorBeta);
@@ -189,7 +231,7 @@ public class UCompare
 		numbersWriter.close();
 
 		int i = 0;
-		for(UGraph<String> sub : subs)
+		for(Graph<String> sub : subs)
 		{
 			File graphFile = new File(Global.getWorkingDir(), String.format("motif.%03d.edgelist", i));
 			Data.writeEdgeList(sub, graphFile);
@@ -216,47 +258,62 @@ public class UCompare
 		return (int)(betaCeiling / size);
 	}
 	
-	public double size(UGraph<String> graph, NullModel nullModel)
+	public double size(Graph<String> graph, NullModel nullModel)
 	{
 		switch (nullModel) {
 		case ER:
-			return BinomialCompressor.undirected(graph);
+			return directed ?
+				 BinomialCompressor.directed((DGraph<String>)graph) :
+				 BinomialCompressor.undirected((UGraph<String>)graph);
 		case EDGELIST:
-			return EdgeListCompressor.undirected(graph);
+			return directed ?
+				EdgeListCompressor.undirected((DGraph<String>)graph) :	
+				EdgeListCompressor.undirected((UGraph<String>)graph);
 		case NEIGHBORLIST:
-			return NeighborListCompressor.undirected(graph); 
+			return directed ?
+					NeighborListCompressor.undirected((DGraph<String>)graph) : 	
+				NeighborListCompressor.undirected((UGraph<String>)graph); 
 		default:
 			throw new IllegalStateException("Null model not recognized");
 		}
 	}
 	
-	public LogBCaCI sizeBeta(UGraph<String> data)
+	public LogBCaCI sizeBeta(Graph<String> data)
 	{
 		Global.log().info("Computing beta model code length");
 		int its = iterations(data.size());
 		Global.log().info("-- beta model: using " + its + " iterations");
 		
+		if(directed)
+		{
+			DSequenceModel<String> model = new DSequenceModel<String>((DGraph<String>)data, its);
+			return new LogBCaCI(model.logSamples());
+		}	
+			
 		USequenceModel<String> model = new USequenceModel<String>(data, its);
 		return new LogBCaCI(model.logSamples());
 	}
 	
-	public double size(UGraph<String> graph, UGraph<String> sub,
+	public double size(Graph<String> graph, Graph<String> sub,
 			List<List<Integer>> occurrences, NullModel nullModel, boolean resetWiring)
 	{
 		List<List<Integer>> wiring = new ArrayList<List<Integer>>();
-		UGraph<String> subbed = MotifCompressor.subbedGraph(graph, sub,
-				occurrences, wiring);
+		Graph<String> subbed;
+		if(directed)
+			subbed = MotifCompressor.subbedGraph((DGraph<String>) graph, (DGraph<String>)sub, occurrences, wiring);
+		else
+			subbed = MotifCompressor.subbedGraph((UGraph<String>) graph, (UGraph<String>)sub, occurrences, wiring);
 		
-		FrequencyModel<Pair<Integer, Integer>> removals = null;
+		FrequencyModel<Pair<Integer, Integer>> removals = new FrequencyModel<Pair<Integer,Integer>>();
 		
 		if(isSimpleGraphCode(nullModel))
 		{
-			removals = new FrequencyModel<Pair<Integer,Integer>>();
-			subbed = Graphs.toSimpleUGraph(subbed, removals);
+			if(directed)
+				subbed = Graphs.toSimpleDGraph((DGraph<String>)subbed, removals);
+			else
+				subbed = Graphs.toSimpleUGraph((UGraph<String>)subbed, removals);
 		}
 		
-		// * The rest of the graph (for which we can compute the code length 
-		//   directly) 
 		double bits = 0.0;
 		
 		bits += size(sub, nullModel);
@@ -266,7 +323,7 @@ public class UCompare
 		OnlineModel<Integer> model = new OnlineModel<Integer>(Arrays.asList(
 			new Integer(0), new Integer(1)));
 
-		for (UNode<String> node : subbed.nodes())
+		for (Node<String> node : subbed.nodes())
 			bits += - Functions.log2(model.observe(node.label().equals(
 				MotifCompressor.MOTIF_SYMBOL) ? 0 : 1));
 		
@@ -275,11 +332,19 @@ public class UCompare
 		{
 			int maxRemovals = (int)(removals.frequency(removals.maxToken()));
 			OnlineModel<Integer> frequencies = new OnlineModel<Integer>(Series.series(maxRemovals + 1));
-			for(ULink<String> link : subbed.links())
+			for(Link<String> link : subbed.links())
 			{
-				int minor = Math.min(link.first().index(), link.second().index());
-				int major = Math.max(link.first().index(), link.second().index());
-				Pair<Integer, Integer> pair = new Pair<Integer, Integer>(minor, major);
+				Pair<Integer, Integer> pair;
+				
+				if(directed)
+				{
+					pair = new Pair<Integer, Integer>(link.first().index(), link.second().index());
+				} else
+				{
+					int minor = Math.min(link.first().index(), link.second().index());
+					int major = Math.max(link.first().index(), link.second().index());
+					pair = new Pair<Integer, Integer>(minor, major);
+				}
 				
 				int freq = (int) removals.frequency(pair);
 				bits += - Functions.log2(frequencies.observe(freq));
@@ -299,34 +364,50 @@ public class UCompare
 	 * @param occurrences
 	 * @param resetWiring
 	 * @return A pair containing a logbca model over the uncertain element of 
-	 * the code a double representing the rest. If p is the resulting value, 
+	 * the code  a double representing the rest. If p is the resulting value, 
 	 * then p.first().logMean() + p.second() is the best estimate of the total 
 	 * code length. 
 	 */
-	public Pair<LogBCaCI, Double> sizeBeta(UGraph<String> graph, UGraph<String> sub,
+	public Pair<LogBCaCI, Double> sizeBeta(Graph<String> graph, Graph<String> sub,
 			List<List<Integer>> occurrences, boolean resetWiring)
 	{
 		List<List<Integer>> wiring = new ArrayList<List<Integer>>();
-		UGraph<String> subbed = MotifCompressor.subbedGraph(graph, sub,
-				occurrences, wiring);
-		
+		Graph<String> subbed;
+		if(directed)
+			subbed = MotifCompressor.subbedGraph((DGraph<String>) graph, (DGraph<String>)sub, occurrences, wiring);
+		else
+			subbed = MotifCompressor.subbedGraph((UGraph<String>) graph, (UGraph<String>)sub, occurrences, wiring);
+				
 		// * the beta model can only store simple graphs, so we translate subbed
 		//   to a simple graph and store the multiple edges separately 
 		FrequencyModel<Pair<Integer, Integer>> removals = new FrequencyModel<Pair<Integer,Integer>>();
-		subbed = Graphs.toSimpleUGraph(subbed, removals);
+		if(directed)
+			subbed = Graphs.toSimpleDGraph((DGraph<String>)subbed, removals);
+		else
+			subbed = Graphs.toSimpleUGraph((UGraph<String>)subbed, removals);
 		
-		// * The estimate cost of storing the structure of the motif and the 
+		// * The estimated cost of storing the structure of the motif and the 
 		//   structure of the subbed graph. 
 
 		int its = iterations(subbed.size());
-		USequenceModel<String> motifModel = new USequenceModel<String>(sub, its);
-		USequenceModel<String> subbedModel = new USequenceModel<String>(subbed, its);
-		
 		List<Double> samples = new ArrayList<Double>(its);
-		for(int i : series(its))
-			samples.add(motifModel.logSamples().get(i) + subbedModel.logSamples().get(i));
+		if(directed)
+		{
+			DSequenceModel<String> motifModel = new DSequenceModel<String>((DGraph<String>)sub, its);
+			DSequenceModel<String> subbedModel = new DSequenceModel<String>((DGraph<String>)subbed, its);
+			
+			for(int i : series(its))
+				samples.add(motifModel.logSamples().get(i) + subbedModel.logSamples().get(i));
+		} else
+		{
+			USequenceModel<String> motifModel = new USequenceModel<String>((UGraph<String>)sub, its);
+			USequenceModel<String> subbedModel = new USequenceModel<String>((UGraph<String>)subbed, its);
+			
+			for(int i : series(its))
+				samples.add(motifModel.logSamples().get(i) + subbedModel.logSamples().get(i));
+		}
 		
-		LogBCaCI bca = new LogBCaCI(samples, USequenceModel.BOOTSTRAP_SAMPLES);
+		LogBCaCI bca = new LogBCaCI(samples);
 		
 		double betaEstimate = bca.logMean(); 
 		double betaUpperBound = bca.upperBound(betaAlpha);
@@ -338,12 +419,19 @@ public class UCompare
 		// * the size of the motif
 		rest += org.nodes.compression.Functions.prefix(sub.size());
 		// * degree sequence of the motif
-		rest += degreesSize(Graphs.degrees(sub));
+		if(directed)
+			rest += degreesDSize(DSequenceModel.sequence((DGraph<String>)sub));
+		else
+			rest += degreesUSize(Graphs.degrees(sub));
+		
 		
 		// * size of the subbed graph
 		rest += org.nodes.compression.Functions.prefix(subbed.size());
 		// * degree sequence of subbed
-		rest += degreesSize(Graphs.degrees(subbed));
+		if(directed)
+			rest += degreesDSize(DSequenceModel.sequence((DGraph<String>)subbed));
+		else
+			rest += degreesUSize(Graphs.degrees(subbed));
 		
 //		System.out.println("degrees and sizes: " + rest);
 		
@@ -352,7 +440,7 @@ public class UCompare
 			new Integer(0), new Integer(1)));
 
 		double labelBits = 0.0;
-		for (UNode<String> node : subbed.nodes())
+		for (Node<String> node : subbed.nodes())
 			labelBits += - Functions.log2(model.observe(node.label().equals(
 				MotifCompressor.MOTIF_SYMBOL) ? 0 : 1));
 //		System.out.println("labels : " + labelBits);
@@ -363,11 +451,19 @@ public class UCompare
 		double remBits = 0.0;
 		int maxRemovals =(int)(removals.frequency(removals.maxToken()));
 		OnlineModel<Integer> frequencies = new OnlineModel<Integer>(Series.series(maxRemovals + 1));
-		for(ULink<String> link : subbed.links())
+		for(Link<String> link : subbed.links())
 		{
-			int minor = Math.min(link.first().index(), link.second().index());
-			int major = Math.max(link.first().index(), link.second().index());
-			Pair<Integer, Integer> pair = new Pair<Integer, Integer>(minor, major);
+			Pair<Integer, Integer> pair;
+			
+			if(directed)
+			{
+				pair = new Pair<Integer, Integer>(link.first().index(), link.second().index());
+			} else
+			{
+				int minor = Math.min(link.first().index(), link.second().index());
+				int major = Math.max(link.first().index(), link.second().index());
+				pair = new Pair<Integer, Integer>(minor, major);
+			}
 			
 			int freq = (int) removals.frequency(pair);
 			remBits += - Functions.log2(frequencies.observe(freq));
@@ -383,7 +479,19 @@ public class UCompare
 		return new Pair<LogBCaCI, Double>(bca, rest);
 	}
 	
-	public double degreesSize(List<Integer> degrees)
+	public double degreesDSize(List<DSequenceModel.D> degrees)
+	{
+		double sum = 0.0;
+		
+		for(DSequenceModel.D degree : degrees)
+			sum += 
+				org.nodes.compression.Functions.prefix(degree.in()) + 
+				org.nodes.compression.Functions.prefix(degree.out());
+		
+		return sum;
+	}
+	
+	public double degreesUSize(List<Integer> degrees)
 	{
 		double sum = 0.0;
 		
@@ -392,7 +500,7 @@ public class UCompare
 		return sum;
 	}
 	
-	public double wiringBits(UGraph<String> sub, List<List<Integer>> wiring,
+	public double wiringBits(Graph<String> sub, List<List<Integer>> wiring,
 			boolean reset)
 	{
 		OnlineModel<Integer> om = new OnlineModel<Integer>(Series.series(sub

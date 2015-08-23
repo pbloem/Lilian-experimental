@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+
 import matplotlib as mpl
+from sklearn.datasets.tests.test_svmlight_format import datafile
 mpl.use('Agg')
 import matplotlib.pyplot as p
 import numpy as n
@@ -9,6 +12,7 @@ import glob
 from __builtin__ import file
 from matplotlib.pyplot import margins
 import os.path
+import json
 
 margin = 0.05
 extra = 0.05
@@ -21,29 +25,43 @@ row3height = 0.2
 barwidth = 0.3
 pluswidth = 0.45
 
+# Load experiment metadata
+with open('metadata.json') as mdfile:
+    metadata = json.load(mdfile)
+
+dataset = metadata["data"]
+directed = metadata["directed"]
+
+# Load the frequencies and factors
 data = n.genfromtxt('numbers.csv', delimiter=',')
 (nummotifs, numfeatures) = data.shape
 
-clip = 12
+# Clip the number of motifs if necessary 
+clip = 50
 if nummotifs > clip:
     data = data[0:clip,:]
     (nummotifs, numfeatures) = data.shape
-    
-factor = data[:, 0]
-freq = data[:, 1]
-if numfeatures > 2:
-    conf = data[:, 2] 
-else:
-    conf = None
-    
-fig = p.figure(figsize=(16,7))
 
+freq = data[:, 0]    
+factorER = data[:,1]
+factorEL = data[:,2]
+factorBeta = data[:,3]
+    
+fig = p.figure(figsize=(16,9))
+
+### 1) Plot the factors
 ax1 = fig.add_axes([0.0 + margin + extra, row3height + row2height + margin, 1.0 - 2.0 * margin- extra, row1height - 2.0 * margin]); 
 
-### 1) Draw the estimate profits as vertical lines
 ind = n.arange(nummotifs)
 
-ax1.bar(ind - barwidth/2.0, factor, barwidth, color='k')
+bw = barwidth/3
+barsER = ax1.bar(ind - barwidth/2.0, factorER, bw, color='k', linewidth=0)
+barsEL = ax1.bar(ind - barwidth/2.0 + bw, factorEL, bw, color='r', linewidth=0)
+barsBeta = ax1.bar(ind - barwidth/2.0 + 2.0 * bw, factorBeta, bw, color='b', linewidth=0)
+
+barsER.set_label(u"Erdös–Rényi model")
+barsEL.set_label(u"edgelist model")
+barsBeta.set_label(u"beta model")
 
 ax1.set_xlim([0 - pluswidth, nummotifs - 1 + pluswidth])
 
@@ -62,21 +80,19 @@ ax1.spines["left"].set_visible(False)
 ax1.get_xaxis().set_tick_params(which='both', top='off', bottom='off', labelbottom='off')
 ax1.get_yaxis().set_tick_params(which='both', left='off', right='off')
 
-#top = n.max(factor)
-#if n.min(factor) < - top and top > 0:
+# top = n.max(factor)
+# if n.min(factor) < - top and top > 0:
 #   ax1.set_ylim(bottom=-top)
    
+# negative grid (white lines over the bars)   
 ticks = ax1.get_yaxis().get_majorticklocs()   
 ticks = n.delete(ticks, n.where(n.logical_and(ticks < 0.00001, ticks > -0.00001)))
 ax1.hlines(ticks, - pluswidth, nummotifs - 1 + pluswidth, color='w')
 
-# horizontal ticks to show lower bounds
-if conf is not None:
-    ax1.hlines(conf, ind - pluswidth/2.0, ind + pluswidth/2.0, linewidths=2)
- 
+ax1.legend()
 ax1.set_ylabel('factor (bits)')
 
-### 2) Plot the small graphs
+### 2) Plot the motifs
 
 bottom = margin
 height = row2height - margin
@@ -85,8 +101,6 @@ side = pluswidth - 0.5
 width = (1.0 - 2.0 * margin - extra) / (nummotifs + 2.0 * side)
 
 i = 0
-directed = os.path.isfile('directed.txt')
-
 for path in glob.glob('motif.*.edgelist')[:nummotifs]:
     axsmall = fig.add_axes([margin + extra + side*width + width * i, bottom, width, height])
     axsmall.axis('off')
@@ -98,7 +112,7 @@ for path in glob.glob('motif.*.edgelist')[:nummotifs]:
     nodes.set_edgecolor('red')
     nodes.set_color('red')
     edges = nwx.draw_networkx_edges(graph, pos, alpha=0 if directed else 1)
-    if directed:
+    if directed: # draw proper arrows
         for s in edges.get_segments():
             x = s[0, 0]
             y = s[0, 1]
@@ -137,8 +151,6 @@ ax3.hlines(ticks, - pluswidth, nummotifs - 1 + pluswidth, color='w')
 
 ax3.set_ylabel('freq.')
 
-with open('title.txt') as file:
-    title = file.read()
-    fig.suptitle(title)
+fig.suptitle('dataset: ' + dataset)
 
-p.savefig('ucomp.beta.png')
+p.savefig('ucompare.plot.png')
