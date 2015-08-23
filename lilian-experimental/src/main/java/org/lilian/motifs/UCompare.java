@@ -60,8 +60,6 @@ import org.nodes.util.Series;
 import org.nodes.util.bootstrap.BCaCI;
 import org.nodes.util.bootstrap.LogBCaCI;
 
-import com.fasterxml.jackson.core.JsonEncoding;
-
 /**
  * Compares the code length under the motifs to that under a given null-model
  * 
