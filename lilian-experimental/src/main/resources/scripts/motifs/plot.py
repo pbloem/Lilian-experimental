@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import matplotlib as mpl
-from sklearn.datasets.tests.test_svmlight_format import datafile
 mpl.use('Agg')
 import matplotlib.pyplot as p
 import numpy as n
