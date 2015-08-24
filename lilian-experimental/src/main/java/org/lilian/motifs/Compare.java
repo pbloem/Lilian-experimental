@@ -239,7 +239,7 @@ public class Compare
 
 		JSONObject obj = new JSONObject();
 		obj.put("data", dataName);
-		obj.put("directed", false);
+		obj.put("directed", directed);
 		Functions.write(obj.toString(), new File(Global.getWorkingDir(), "metadata.json"));
 		
 		try
