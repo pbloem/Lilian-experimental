@@ -112,8 +112,8 @@ public class Compare
 	public void main() throws IOException
 	{
 		directed = data instanceof DGraph<?>;
-		Global.log().info("Is data directed? : " + directed + "("+data.getClass()+")");
-
+		Global.log().info("Is data directed? : " + directed + " ("+data.getClass()+")");
+		
 		if(directed)
 			data = Graphs.toSimpleDGraph((DGraph<String>)data);
 		else
@@ -121,7 +121,6 @@ public class Compare
 		data = Graphs.blank(data, "");
 		
 		Global.log().info("Computing motif code lengths");
-		
 		
 		List<? extends Graph<String>> subs;
 		List<Double> frequencies;
@@ -158,15 +157,16 @@ public class Compare
 		}
 		
 		if(subs.size() > maxMotifs)
+		{
 			subs = new ArrayList<Graph<String>>(subs.subList(0, maxMotifs));
+			frequencies = new ArrayList<Double>(frequencies.subList(0, maxMotifs));
+		}
 			
 		List<Double> factorsER = new ArrayList<Double>(subs.size());
-		List<Double> factorsNL = new ArrayList<Double>(subs.size());
 		List<Double> factorsEL = new ArrayList<Double>(subs.size());
 		List<Double> factorsBeta =  new ArrayList<Double>(subs.size());
 				
 		double baselineER = size(data, NullModel.ER);
-		double baselineNL = size(data, NullModel.NEIGHBORLIST);
 		double baselineEL = size(data, NullModel.EDGELIST);
 		double baselineBeta = sizeBeta(data).lowerBound(betaAlpha);
 		
