@@ -104,10 +104,10 @@ public class Compare
 	public static enum NullModel{ER, EDGELIST, NEIGHBORLIST}
 	
 	private NaturalComparator<String> comparator;
+	private boolean directed;
+
 	private boolean resets = true;
 	
-	private boolean directed;
- 	
 	@Main(print=false)
 	public void main() throws IOException
 	{
@@ -240,6 +240,9 @@ public class Compare
 		JSONObject obj = new JSONObject();
 		obj.put("data", dataName);
 		obj.put("directed", directed);
+		obj.put("baseline er", baselineER);
+		obj.put("baseline el", baselineEL);
+		obj.put("baseline beta", baselineBeta);
 		Functions.write(obj.toString(), new File(Global.getWorkingDir(), "metadata.json"));
 		
 		try
