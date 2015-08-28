@@ -81,7 +81,7 @@ public class CIs
 		System.out.println();
 		
 		if(gold < 0.0)
-			gold = model.logNumGraphs(); 
+			gold = model.logNumGraphsNaive(); 
 			
 		
 		for(double value: model.logSamples())
@@ -147,7 +147,7 @@ public class CIs
 				
 				writer.write(samples + ", " +
 						+ model.effectiveSampleSize() + ", " + 
-						+ model.logNumGraphs() + ", " 
+						+ model.logNumGraphsNaive() + ", " 
 						+ model.logNormalMean());
 				
 				for(CIMethod method : CIMethod.values())

@@ -62,6 +62,7 @@ import org.nodes.util.Pair;
 import org.nodes.util.Series;
 import org.nodes.util.bootstrap.BCaCI;
 import org.nodes.util.bootstrap.LogBCaCI;
+import org.nodes.util.bootstrap.LogNormalCI;
 
 /**
  * Compares the code length under the motifs to that under a given null-model
@@ -74,6 +75,8 @@ import org.nodes.util.bootstrap.LogBCaCI;
 @Module(name="Test confidence intervals")
 public class Compare
 {
+	private static final int BS_SAMPLES = 10000;
+
 	@In(name="motif samples")
 	public int motifSamples;
 	
@@ -202,7 +205,7 @@ public class Compare
 
 			Global.log().info("null model: Beta");
 			{
-				Pair<LogBCaCI, Double> pair = sizeBeta(data, sub, occs, resets); 
+				Pair<LogNormalCI, Double> pair = sizeBeta(data, sub, occs, resets); 
 				double sizeBeta = pair.first().upperBound(betaAlpha) + pair.second();
 				double factorBeta = baselineBeta - sizeBeta;
 				factorsBeta.add(factorBeta);
@@ -279,7 +282,7 @@ public class Compare
 		}
 	}
 	
-	public LogBCaCI sizeBeta(Graph<String> data)
+	public LogNormalCI sizeBeta(Graph<String> data)
 	{
 		Global.log().info("Computing beta model code length");
 		int its = iterations(data.size());
@@ -288,11 +291,11 @@ public class Compare
 		if(directed)
 		{
 			DSequenceModel<String> model = new DSequenceModel<String>((DGraph<String>)data, its);
-			return new LogBCaCI(model.logSamples());
+			return new LogNormalCI(model.logSamples(), BS_SAMPLES);
 		}	
 			
 		USequenceModel<String> model = new USequenceModel<String>(data, its);
-		return new LogBCaCI(model.logSamples());
+		return new LogNormalCI(model.logSamples(), BS_SAMPLES);
 	}
 	
 	public double size(Graph<String> graph, Graph<String> sub,
@@ -369,7 +372,7 @@ public class Compare
 	 * then p.first().logMean() + p.second() is the best estimate of the total 
 	 * code length. 
 	 */
-	public Pair<LogBCaCI, Double> sizeBeta(Graph<String> graph, Graph<String> sub,
+	public Pair<LogNormalCI, Double> sizeBeta(Graph<String> graph, Graph<String> sub,
 			List<List<Integer>> occurrences, boolean resetWiring)
 	{
 		List<List<Integer>> wiring = new ArrayList<List<Integer>>();
@@ -408,10 +411,7 @@ public class Compare
 				samples.add(motifModel.logSamples().get(i) + subbedModel.logSamples().get(i));
 		}
 		
-		LogBCaCI bca = new LogBCaCI(samples);
-		
-		double betaEstimate = bca.logMean(); 
-		double betaUpperBound = bca.upperBound(betaAlpha);
+		LogNormalCI ci = new LogNormalCI(samples, BS_SAMPLES);
 		
 		// * The rest of the graph (for which we can compute the code length 
 		//   directly) 
@@ -477,7 +477,7 @@ public class Compare
 		double wiringBits = wiringBits(sub, wiring, resetWiring);
 //		System.out.println("wiring: " + wiringBits);
 		
-		return new Pair<LogBCaCI, Double>(bca, rest);
+		return new Pair<LogNormalCI, Double>(ci, rest);
 	}
 	
 	public double degreesDSize(List<DSequenceModel.D> degrees)
