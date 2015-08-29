@@ -36,7 +36,7 @@ data = n.genfromtxt('numbers.csv', delimiter=',')
 (nummotifs, numfeatures) = data.shape
 
 # Clip the number of motifs if necessary 
-clip = 50
+clip = 30
 if nummotifs > clip:
     data = data[0:clip,:]
     (nummotifs, numfeatures) = data.shape
@@ -152,4 +152,5 @@ ax3.set_ylabel('freq.')
 
 fig.suptitle('dataset: ' + dataset)
 
-p.savefig('ucompare.plot.png')
+p.savefig('compare.plot.png')
+p.savefig('compare.plot.pdf')
