@@ -22,7 +22,7 @@ row2height = 0.2
 row3height = 0.2
 
 # To be run in the workspace dir of the UCompareBeta module
-barwidth = 0.3
+barwidth = 0.9
 pluswidth = 0.45
 
 # Load experiment metadata
@@ -31,6 +31,7 @@ with open('metadata.json') as mdfile:
 
 sub_index = metadata["subindex"]
 nums_instances = metadata["nums instances"]
+motif_size = metadata["motif size"]
 directed = False
 
 ni = len(nums_instances)
@@ -46,7 +47,7 @@ runs = width/ni
 freqMeans = means[:,0:ni]
 factMeans = means[:,ni:2*ni]
 
-fig = p.figure(figsize=(16,9))
+fig = p.figure(figsize=(16,7))
 
 ### 1) Plot the factors
 ax1 = fig.add_axes([0.0 + margin + extra, row3height + row2height + margin, 1.0 - 2.0 * margin- extra, row1height - 2.0 * margin]); 
@@ -60,7 +61,9 @@ for i in range(ni):
 for i in range(ni):
     # the data as scatter
     for s in range(nummotifs):
-        ax1.scatter((ind[s] - barwidth/2.0 + (i+0.5) * bw) * n.ones(runs), factors[s,i*runs:(i+1)*runs], s=5, color='r', zorder=3)
+        min = n.min(factors[s,i*runs:(i+1)*runs])
+        max = n.max(factors[s,i*runs:(i+1)*runs])
+        ax1.vlines((ind[s] - barwidth/2.0 + (i+0.5) * bw),min, max, colors='r', linewidths=2, zorder=3)
     
 ax1.set_xlim([0 - pluswidth, nummotifs - 1 + pluswidth])
 
@@ -105,23 +108,21 @@ for path in glob.glob('motif.*.edgelist')[:nummotifs]:
     axsmall.axis('off')
     
     graph = nwx.read_edgelist(path,create_using=(nwx.DiGraph() if directed else nwx.Graph()))
+    ng = nwx.number_of_nodes(graph)
     
     pos = nwx.spring_layout(graph)
     nodes = nwx.draw_networkx_nodes(graph, pos, ax=axsmall, node_size=12)
     if nodes != None:
         nodes.set_edgecolor('red')
         nodes.set_color('red')
-    edges = nwx.draw_networkx_edges(graph, pos, alpha=0 if directed else 1)
-    if directed: # draw proper arrows
-        for s in edges.get_segments():
-            x = s[0, 0]
-            y = s[0, 1]
-            xto = s[1, 0]
-            yto = s[1, 1]
-            dx = xto - x
-            dy = yto - y
-            color = 'r' if (i == sub_index) else 'k' 
-            p.arrow(x, y, dx, dy, head_width=0.05, head_length=0.1, length_includes_head=True, fc=color, ec=color)
+    color = 'r' if i == sub_index else 'k'
+    edges = nwx.draw_networkx_edges(graph, pos, alpha=0 if directed else 1, fc=color, edge_color=color)
+    if nodes == None or ng < motif_size:
+        (minx, maxx) = axsmall.get_xlim()
+        ran = maxx - minx
+        rem = motif_size if (nodes == None) else motif_size - ng
+        axsmall.scatter((n.arange(rem) * (0.333/rem) + 0.666) * ran + minx, 0 * n.ones(rem), s=12, color='r')   
+
     i = i + 1
     
 ### 3)  Frequency graph
@@ -135,8 +136,10 @@ for i in range(ni):
 # the data as scatter
 for i in range(ni):
     for s in range(nummotifs):
-        ax3.scatter((ind[s] - barwidth/2.0 + (i+0.5) * bw) * n.ones(runs), frequencies[s,i*runs:(i+1)*runs], s=5, color='r', zorder=3)
-
+        min = n.min(frequencies[s,i*runs:(i+1)*runs])
+        max = n.max(frequencies[s,i*runs:(i+1)*runs])
+        ax3.vlines((ind[s] - barwidth/2.0 + (i+0.5) * bw),min, max, colors='r', linewidths=2, zorder=3)
+        
 ax3.get_yaxis().set_tick_params(which='both', direction='out')
 
 ax3.set_xlim([0 - pluswidth, nummotifs - 1 + pluswidth])

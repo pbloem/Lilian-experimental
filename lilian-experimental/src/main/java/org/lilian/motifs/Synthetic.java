@@ -125,7 +125,7 @@ public class Synthetic
 		}
 
 		Comparator<Double> natural = Functions.natural();
-		org.lilian.util.Functions.sort(maxFactors, natural, subs);
+		org.lilian.util.Functions.sort(maxFactors, Collections.reverseOrder(natural), subs);
 	}
 	
 	/**
@@ -352,6 +352,8 @@ public class Synthetic
 		JSONObject obj = new JSONObject();
 		obj.put("subindex", subIndex);
 		obj.put("nums instances", numsInstances);
+		obj.put("motif size", nPrime);
+
 		Functions.write(obj.toString(), new File(Global.getWorkingDir(), "metadata.json"));
 		
 		frequencies.close();
