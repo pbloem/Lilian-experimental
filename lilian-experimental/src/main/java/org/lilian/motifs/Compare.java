@@ -1,5 +1,7 @@
 package org.lilian.motifs;
 
+import static org.nodes.util.Functions.log2Choose;
+import static org.nodes.util.Functions.log2Factorial;
 import static org.nodes.util.Series.series;
 import static org.lilian.util.Functions.log2;
 import static org.nodes.models.USequenceModel.CIMethod;
@@ -114,6 +116,8 @@ public class Compare
 	@Main(print=false)
 	public void main() throws IOException
 	{
+		org.nodes.Global.secureRandom(42);
+		
 		directed = data instanceof DGraph<?>;
 		Global.log().info("Is data directed? : " + directed + " ("+data.getClass()+")");
 		
@@ -262,20 +266,22 @@ public class Compare
 		return (int)(betaCeiling / size);
 	}
 	
-	public double size(Graph<String> graph, NullModel nullModel)
+	public static double size(Graph<String> graph, NullModel nullModel)
 	{
+		boolean directed = (graph instanceof DGraph<?>); 
+		
 		switch (nullModel) {
 		case ER:
 			return directed ?
-				 BinomialCompressor.directed((DGraph<String>)graph) :
-				 BinomialCompressor.undirected((UGraph<String>)graph);
+				 BinomialCompressor.directed((DGraph<String>)graph, true) :
+				 BinomialCompressor.undirected((UGraph<String>)graph, true);
 		case EDGELIST:
 			return directed ?
 				EdgeListCompressor.undirected((DGraph<String>)graph) :	
 				EdgeListCompressor.undirected((UGraph<String>)graph);
 		case NEIGHBORLIST:
 			return directed ?
-					NeighborListCompressor.undirected((DGraph<String>)graph) : 	
+				NeighborListCompressor.undirected((DGraph<String>)graph) : 	
 				NeighborListCompressor.undirected((UGraph<String>)graph); 
 		default:
 			throw new IllegalStateException("Null model not recognized");
@@ -298,15 +304,20 @@ public class Compare
 		return new LogNormalCI(model.logSamples(), BS_SAMPLES);
 	}
 	
-	public double size(Graph<String> graph, Graph<String> sub,
+	public static double size(Graph<String> graph, Graph<String> sub,
 			List<List<Integer>> occurrences, NullModel nullModel, boolean resetWiring)
 	{
+		boolean directed = (graph instanceof DGraph<?>); 
+
 		List<List<Integer>> wiring = new ArrayList<List<Integer>>();
 		Graph<String> subbed;
 		if(directed)
 			subbed = MotifCompressor.subbedGraph((DGraph<String>) graph, (DGraph<String>)sub, occurrences, wiring);
 		else
 			subbed = MotifCompressor.subbedGraph((UGraph<String>) graph, (UGraph<String>)sub, occurrences, wiring);
+		
+		System.out.println("num occ " + occurrences.size());
+		System.out.println("subbed size " + subbed.size());
 		
 		FrequencyModel<Pair<Integer, Integer>> removals = new FrequencyModel<Pair<Integer,Integer>>();
 		
@@ -321,15 +332,23 @@ public class Compare
 		double bits = 0.0;
 		
 		bits += size(sub, nullModel);
+		System.out.println("sub " + bits);
 		bits += size(subbed, nullModel);
+		System.out.println("subbed " + bits);
 		
 		// * Store the labels
-		OnlineModel<Integer> model = new OnlineModel<Integer>(Arrays.asList(
-			new Integer(0), new Integer(1)));
-
-		for (Node<String> node : subbed.nodes())
-			bits += - Functions.log2(model.observe(node.label().equals(
-				MotifCompressor.MOTIF_SYMBOL) ? 0 : 1));
+//		OnlineModel<Integer> model = new OnlineModel<Integer>(Arrays.asList(
+//			new Integer(0), new Integer(1)));
+//
+//		for (Node<String> node : subbed.nodes())
+//		{
+//			bits += - Functions.log2(model.observe(node.label().equals(
+//				MotifCompressor.MOTIF_SYMBOL) ? 0 : 1));
+//			System.out.println(node.label().equals(MotifCompressor.MOTIF_SYMBOL));
+//		}
+		
+		bits += log2Choose(occurrences.size(), subbed.size()); 
+		System.out.println("labels " + bits);
 		
 		// * Any node pairs with multiple links
 		if(isSimpleGraphCode(nullModel))
@@ -355,8 +374,18 @@ public class Compare
 			}
 		}
 		
+		System.out.println("removals " + bits);
+		
 		// * Store the rewiring information
 		bits += wiringBits(sub, wiring, resetWiring);
+		System.out.println("wiring " + bits);
+		System.out.println(wiring);
+		
+		// * Store the insertion order, to preserver the precise ordering of the
+		//   nodes in the data 
+		bits += log2Factorial(graph.size()) - log2Factorial(subbed.size());
+
+		System.out.println("insertions " + bits);
 		
 		return bits;
 	}
@@ -367,7 +396,7 @@ public class Compare
 	 * @param sub
 	 * @param occurrences
 	 * @param resetWiring
-	 * @return A pair containing a logbca model over the uncertain element of 
+	 * @return A pair containing a logNormalCI model over the uncertain element of 
 	 * the code  a double representing the rest. If p is the resulting value, 
 	 * then p.first().logMean() + p.second() is the best estimate of the total 
 	 * code length. 
@@ -434,18 +463,8 @@ public class Compare
 		else
 			rest += degreesUSize(Graphs.degrees(subbed));
 		
-//		System.out.println("degrees and sizes: " + rest);
-		
 		// * Store the labels
-		OnlineModel<Integer> model = new OnlineModel<Integer>(Arrays.asList(
-			new Integer(0), new Integer(1)));
-
-		double labelBits = 0.0;
-		for (Node<String> node : subbed.nodes())
-			labelBits += - Functions.log2(model.observe(node.label().equals(
-				MotifCompressor.MOTIF_SYMBOL) ? 0 : 1));
-//		System.out.println("labels : " + labelBits);
-		rest += labelBits;
+		rest += log2Choose(occurrences.size(), subbed.size()); 
 		
 		// * Any node pairs with multiple links
 		
@@ -470,12 +489,14 @@ public class Compare
 			remBits += - Functions.log2(frequencies.observe(freq));
 		}
 		
-//		System.out.println("removals: " + remBits);
 		rest += remBits;
 		
 		// * Store the rewiring information
-		double wiringBits = wiringBits(sub, wiring, resetWiring);
-//		System.out.println("wiring: " + wiringBits);
+		rest += wiringBits(sub, wiring, resetWiring);
+		
+		// * Store the insertion order, to preserve the precise ordering of the
+		//   nodes in the data 
+		rest += log2Factorial(graph.size()) - log2Factorial(subbed.size());
 		
 		return new Pair<LogNormalCI, Double>(ci, rest);
 	}
@@ -501,7 +522,7 @@ public class Compare
 		return sum;
 	}
 	
-	public double wiringBits(Graph<String> sub, List<List<Integer>> wiring,
+	public static double wiringBits(Graph<String> sub, List<List<Integer>> wiring,
 			boolean reset)
 	{
 		OnlineModel<Integer> om = new OnlineModel<Integer>(Series.series(sub
@@ -520,7 +541,7 @@ public class Compare
 		return bits;
 	}
 	
-	public boolean isSimpleGraphCode(NullModel nm)
+	public static boolean isSimpleGraphCode(NullModel nm)
 	{
 		switch(nm){
 			case EDGELIST: 
