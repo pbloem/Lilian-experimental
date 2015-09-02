@@ -316,8 +316,8 @@ public class Compare
 		else
 			subbed = MotifCompressor.subbedGraph((UGraph<String>) graph, (UGraph<String>)sub, occurrences, wiring);
 		
-		System.out.println("num occ " + occurrences.size());
-		System.out.println("subbed size " + subbed.size());
+//		System.out.println("num occ " + occurrences.size());
+//		System.out.println("subbed size " + subbed.size());
 		
 		FrequencyModel<Pair<Integer, Integer>> removals = new FrequencyModel<Pair<Integer,Integer>>();
 		
@@ -332,9 +332,9 @@ public class Compare
 		double bits = 0.0;
 		
 		bits += size(sub, nullModel);
-		System.out.println("sub " + bits);
+//		System.out.println("sub " + bits);
 		bits += size(subbed, nullModel);
-		System.out.println("subbed " + bits);
+//		System.out.println("subbed " + bits);
 		
 		// * Store the labels
 //		OnlineModel<Integer> model = new OnlineModel<Integer>(Arrays.asList(
@@ -347,7 +347,7 @@ public class Compare
 //			System.out.println(node.label().equals(MotifCompressor.MOTIF_SYMBOL));
 //		}
 		
-		bits += log2Choose(occurrences.size(), subbed.size()); 
+//		bits += log2Choose(occurrences.size(), subbed.size()); 
 		System.out.println("labels " + bits);
 		
 		// * Any node pairs with multiple links
@@ -374,18 +374,17 @@ public class Compare
 			}
 		}
 		
-		System.out.println("removals " + bits);
+//		System.out.println("removals " + bits);
 		
 		// * Store the rewiring information
 		bits += wiringBits(sub, wiring, resetWiring);
-		System.out.println("wiring " + bits);
-		System.out.println(wiring);
+//		System.out.println("wiring " + bits);
 		
 		// * Store the insertion order, to preserver the precise ordering of the
 		//   nodes in the data 
 		bits += log2Factorial(graph.size()) - log2Factorial(subbed.size());
 
-		System.out.println("insertions " + bits);
+//		System.out.println("insertions " + bits);
 		
 		return bits;
 	}
