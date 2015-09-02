@@ -103,7 +103,7 @@ side = pluswidth - 0.5
 width = (1.0 - 2.0 * margin - extra) / (nummotifs + 2.0 * side)
 
 i = 0
-for path in glob.glob('motif.*.edgelist')[:nummotifs]:
+for path in sorted(glob.glob('motif.*.edgelist'))[:nummotifs]:
     axsmall = fig.add_axes([margin + extra + side*width + width * i, bottom, width, height])
     axsmall.axis('off')
     

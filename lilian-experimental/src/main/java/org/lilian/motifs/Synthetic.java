@@ -81,7 +81,7 @@ public class Synthetic
 	@Main
 	public void main() throws IOException
 	{
-		subs = Graphs.allIso(nPrime, "");
+		subs = Graphs.allIsoConnected(nPrime, "");
 		System.out.println(subs.size()  + " " + subs);
 		
 		// * Sample the subgraph
@@ -307,13 +307,15 @@ public class Synthetic
 		BufferedWriter factors = new BufferedWriter(new FileWriter(factorsFile));
 		BufferedWriter means = new BufferedWriter(new FileWriter(meansFile));
 		
+		System.out.println(subs);
+		
 		int i = 0, subIndex = -1;
 		for(UGraph<String> sub : subs)
 		{
+			System.out.println(sub);
+			
 			if(sub.equals(this.sub))
 				subIndex = i;
-			else
-				Global.log().info("not equal: " + sub + " != " + this.sub);
 
 			// * Write the subgraph
 			File graphFile = new File(Global.getWorkingDir(), String.format("motif.%03d.edgelist", i));
