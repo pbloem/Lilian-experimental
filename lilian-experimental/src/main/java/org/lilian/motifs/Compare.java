@@ -106,9 +106,8 @@ public class Compare
 	@In(name="minimum frequency")
 	public int minFreq;
 
-	public static enum NullModel{ER, EDGELIST, NEIGHBORLIST}
+	public static enum NullModel{ER, EDGELIST}
 	
-	private NaturalComparator<String> comparator;
 	private boolean directed;
 
 	private boolean resets = true;
@@ -173,8 +172,8 @@ public class Compare
 		List<Double> factorsEL = new ArrayList<Double>(subs.size());
 		List<Double> factorsBeta =  new ArrayList<Double>(subs.size());
 				
-		double baselineER = size(data, NullModel.ER);
-		double baselineEL = size(data, NullModel.EDGELIST);
+		double baselineER = size(data, NullModel.ER, false);
+		double baselineEL = size(data, NullModel.EDGELIST, false);
 		double baselineBeta = sizeBeta(data).lowerBound(betaAlpha);
 		
 		for(int i : series(subs.size()))
@@ -266,23 +265,19 @@ public class Compare
 		return (int)(betaCeiling / size);
 	}
 	
-	public static double size(Graph<String> graph, NullModel nullModel)
+	public static double size(Graph<String> graph, NullModel nullModel, boolean withPrior)
 	{
 		boolean directed = (graph instanceof DGraph<?>); 
 		
 		switch (nullModel) {
 		case ER:
 			return directed ?
-				 BinomialCompressor.directed((DGraph<String>)graph, true) :
-				 BinomialCompressor.undirected((UGraph<String>)graph, true);
+				 BinomialCompressor.directed((DGraph<String>)graph, true, withPrior) :
+				 BinomialCompressor.undirected((UGraph<String>)graph, true, withPrior);
 		case EDGELIST:
 			return directed ?
-				EdgeListCompressor.undirected((DGraph<String>)graph) :	
-				EdgeListCompressor.undirected((UGraph<String>)graph);
-		case NEIGHBORLIST:
-			return directed ?
-				NeighborListCompressor.undirected((DGraph<String>)graph) : 	
-				NeighborListCompressor.undirected((UGraph<String>)graph); 
+				EdgeListCompressor.directed((DGraph<String>) graph, withPrior) :	
+				EdgeListCompressor.undirected((UGraph<String>) graph, withPrior);
 		default:
 			throw new IllegalStateException("Null model not recognized");
 		}
@@ -316,9 +311,6 @@ public class Compare
 		else
 			subbed = MotifCompressor.subbedGraph((UGraph<String>) graph, (UGraph<String>)sub, occurrences, wiring);
 		
-//		System.out.println("num occ " + occurrences.size());
-//		System.out.println("subbed size " + subbed.size());
-		
 		FrequencyModel<Pair<Integer, Integer>> removals = new FrequencyModel<Pair<Integer,Integer>>();
 		
 		if(isSimpleGraphCode(nullModel))
@@ -331,24 +323,13 @@ public class Compare
 		
 		double bits = 0.0;
 		
-		bits += size(sub, nullModel);
+		bits += size(sub, nullModel, true);
 //		System.out.println("sub " + bits);
-		bits += size(subbed, nullModel);
+		bits += size(subbed, nullModel, true);
 //		System.out.println("subbed " + bits);
 		
-		// * Store the labels
-//		OnlineModel<Integer> model = new OnlineModel<Integer>(Arrays.asList(
-//			new Integer(0), new Integer(1)));
-//
-//		for (Node<String> node : subbed.nodes())
-//		{
-//			bits += - Functions.log2(model.observe(node.label().equals(
-//				MotifCompressor.MOTIF_SYMBOL) ? 0 : 1));
-//			System.out.println(node.label().equals(MotifCompressor.MOTIF_SYMBOL));
-//		}
-		
 //		bits += log2Choose(occurrences.size(), subbed.size()); 
-		System.out.println("labels " + bits);
+//		System.out.println("labels " + bits);
 		
 		// * Any node pairs with multiple links
 		if(isSimpleGraphCode(nullModel))
@@ -544,8 +525,6 @@ public class Compare
 	{
 		switch(nm){
 			case EDGELIST: 
-				return false;
-			case NEIGHBORLIST:
 				return false;
 			case ER:
 				return true;
