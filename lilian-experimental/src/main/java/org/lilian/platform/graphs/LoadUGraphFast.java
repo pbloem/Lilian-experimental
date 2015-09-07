@@ -15,19 +15,16 @@ import org.nodes.data.Data;
 
 
 @Module(name="Load undirected graph")
-public class LoadUGraph
+public class LoadUGraphFast
 {
 
 	@In(name="file")
 	public String file;
-	
-	@In(name="bipartite")
-	public boolean bipartite;
 
 	@Main(name="data", print=false)
 	public UGraph<String> load() throws IOException
 	{
-		UGraph<String> data =  Data.edgeList(new File(file), bipartite);
+		UGraph<String> data =  Data.edgeListUndirectedUnlabeled(new File(file), true);
 		
 		Global.log().info("Loaded data ("+data.size()+" nodes, "+data.numLinks()+" links).");
 		

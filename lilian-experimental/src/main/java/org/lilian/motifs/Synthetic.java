@@ -159,9 +159,6 @@ public class Synthetic
 		for(UNode<String> node : graph.nodes())
 			candidates.add(node);
 		
-//		for(UNode<String> node : graph.nodes())
-//			System.out.println(node.degree());
-
 		// * remove all candidates with too high degree
 		Iterator<UNode<String>> it = candidates.iterator();
 		while(it.hasNext())

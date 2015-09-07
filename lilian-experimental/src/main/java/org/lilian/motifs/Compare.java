@@ -106,6 +106,12 @@ public class Compare
 	@In(name="minimum frequency")
 	public int minFreq;
 
+	@In(name="blank", description="Whether to 'blank' the data (ie. set all labels to a common value).")
+	public boolean blank;
+	
+	@In(name="simplify", description="Whether to remove multiple edges and self-loops.")
+	public boolean simplify;
+	
 	public static enum NullModel{ER, EDGELIST}
 	
 	private boolean directed;
@@ -119,12 +125,20 @@ public class Compare
 		
 		directed = data instanceof DGraph<?>;
 		Global.log().info("Is data directed? : " + directed + " ("+data.getClass()+")");
+		if(simplify)
+		{
+			if(directed)
+				data = Graphs.toSimpleDGraph((DGraph<String>)data);
+			else
+				data = Graphs.toSimpleUGraph(data);
+		}
 		
-		if(directed)
-			data = Graphs.toSimpleDGraph((DGraph<String>)data);
-		else
-			data = Graphs.toSimpleUGraph(data);
-		data = Graphs.blank(data, "");
+		if(blank)
+		{
+			Global.log().info("Blanking.");
+			data = Graphs.blank(data, "");
+			Global.log().info("Blanked.");
+		}
 		
 		Global.log().info("Computing motif code lengths");
 		
