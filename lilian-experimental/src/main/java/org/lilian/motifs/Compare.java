@@ -88,8 +88,8 @@ public class Compare
 	@In(name="motif max size", description="maximum motif size (inclusive!)")
 	public int motifMaxSize;
 	
-	@In(name="beta ceiling", description="An indicator for the number of iterations to use for the beta model. The number of iteration is the size of the graph divided by the ceiling.")
-	public int betaCeiling;
+	@In(name="beta iterations", description="Number of iteration to use for the beta model.")
+	public int betaIterations;
 	
 	@In(name="beta alpha", description="The alpha value to use in the lower bound of the beta model.")
 	public double betaAlpha;
@@ -273,12 +273,7 @@ public class Compare
 			System.out.println("Failed to run plot script. " + e);
 		}
 	}
-	
-	private int iterations(int size)
-	{
-		return (int)(betaCeiling / size);
-	}
-	
+
 	public static double size(Graph<String> graph, NullModel nullModel, boolean withPrior)
 	{
 		boolean directed = (graph instanceof DGraph<?>); 
@@ -300,16 +295,15 @@ public class Compare
 	public LogNormalCI sizeBeta(Graph<String> data)
 	{
 		Global.log().info("Computing beta model code length");
-		int its = iterations(data.size());
-		Global.log().info("-- beta model: using " + its + " iterations");
+		Global.log().info("-- beta model: using " + betaIterations + " iterations");
 		
 		if(directed)
 		{
-			DSequenceModel<String> model = new DSequenceModel<String>((DGraph<String>)data, its);
+			DSequenceModel<String> model = new DSequenceModel<String>((DGraph<String>)data, betaIterations);
 			return new LogNormalCI(model.logSamples(), BS_SAMPLES);
 		}	
 			
-		USequenceModel<String> model = new USequenceModel<String>(data, its);
+		USequenceModel<String> model = new USequenceModel<String>(data, betaIterations);
 		return new LogNormalCI(model.logSamples(), BS_SAMPLES);
 	}
 	
@@ -416,21 +410,20 @@ public class Compare
 		// * The estimated cost of storing the structure of the motif and the 
 		//   structure of the subbed graph. 
 
-		int its = iterations(subbed.size());
-		List<Double> samples = new ArrayList<Double>(its);
+		List<Double> samples = new ArrayList<Double>(betaIterations);
 		if(directed)
 		{
-			DSequenceModel<String> motifModel = new DSequenceModel<String>((DGraph<String>)sub, its);
-			DSequenceModel<String> subbedModel = new DSequenceModel<String>((DGraph<String>)subbed, its);
+			DSequenceModel<String> motifModel = new DSequenceModel<String>((DGraph<String>)sub, betaIterations);
+			DSequenceModel<String> subbedModel = new DSequenceModel<String>((DGraph<String>)subbed, betaIterations);
 			
-			for(int i : series(its))
+			for(int i : series(betaIterations))
 				samples.add(motifModel.logSamples().get(i) + subbedModel.logSamples().get(i));
 		} else
 		{
-			USequenceModel<String> motifModel = new USequenceModel<String>((UGraph<String>)sub, its);
-			USequenceModel<String> subbedModel = new USequenceModel<String>((UGraph<String>)subbed, its);
+			USequenceModel<String> motifModel = new USequenceModel<String>((UGraph<String>)sub, betaIterations);
+			USequenceModel<String> subbedModel = new USequenceModel<String>((UGraph<String>)subbed, betaIterations);
 			
-			for(int i : series(its))
+			for(int i : series(betaIterations))
 				samples.add(motifModel.logSamples().get(i) + subbedModel.logSamples().get(i));
 		}
 		

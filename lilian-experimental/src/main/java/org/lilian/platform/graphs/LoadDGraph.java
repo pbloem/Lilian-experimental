@@ -21,12 +21,15 @@ public class LoadDGraph
 	
 	@In(name="fast")
 	public boolean fast;
+	
+	@In(name="blank")
+	public boolean blank;
 
 	@Main(name="data", print=false)
 	public DGraph<String> load() throws IOException
 	{
 		if(! fast)
-			return Data.edgeListDirected(new File(file));
+			return Data.edgeListDirected(new File(file), blank);
 		
 		return Data.edgeListDirectedUnlabeled(new File(file), true);
 	}
