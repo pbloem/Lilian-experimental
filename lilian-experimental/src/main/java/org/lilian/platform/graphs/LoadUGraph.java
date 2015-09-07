@@ -23,11 +23,14 @@ public class LoadUGraph
 	
 	@In(name="bipartite")
 	public boolean bipartite;
+	
+	@In(name="blank")
+	public boolean blank;
 
 	@Main(name="data", print=false)
 	public UGraph<String> load() throws IOException
 	{
-		UGraph<String> data =  Data.edgeList(new File(file), bipartite);
+		UGraph<String> data =  Data.edgeList(new File(file), bipartite, blank);
 		
 		Global.log().info("Loaded data ("+data.size()+" nodes, "+data.numLinks()+" links).");
 		
