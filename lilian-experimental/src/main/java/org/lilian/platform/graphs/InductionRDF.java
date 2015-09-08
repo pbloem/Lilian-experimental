@@ -18,7 +18,7 @@ import org.nodes.Subgraph;
 import org.nodes.algorithms.Nauty;
 import org.nodes.data.RDF;
 import org.lilian.graphs.grammar.Induction;
-import org.nodes.random.SubgraphGenerator;
+import org.nodes.random.SimpleSubgraphGenerator;
 import org.lilian.models.BasicFrequencyModel;
 import org.lilian.util.Functions;
 import org.lilian.util.Order;

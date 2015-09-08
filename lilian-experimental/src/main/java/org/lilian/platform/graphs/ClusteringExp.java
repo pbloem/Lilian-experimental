@@ -23,7 +23,7 @@ import org.nodes.data.RDF;
 import org.lilian.graphs.grammar.Clustering;
 import org.lilian.graphs.grammar.Induction;
 import org.nodes.random.RandomGraphs;
-import org.nodes.random.SubgraphGenerator;
+import org.nodes.random.SimpleSubgraphGenerator;
 
 @Module(name="Motif extraction", description="Detects frequent subgraphs in networks")
 public class ClusteringExp

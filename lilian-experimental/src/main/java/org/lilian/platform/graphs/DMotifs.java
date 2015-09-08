@@ -22,6 +22,7 @@ import org.nodes.data.Data;
 import org.nodes.data.GML;
 import org.nodes.data.RDF;
 import org.nodes.random.RandomGraphs;
+import org.nodes.random.SimpleSubgraphGenerator;
 import org.nodes.random.SubgraphGenerator;
 import org.nodes.util.FrequencyModel;
 import org.lilian.util.Functions;

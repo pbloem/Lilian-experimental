@@ -53,7 +53,7 @@ import org.nodes.motifs.DPlainMotifExtractor;
 import org.nodes.motifs.MotifCompressor;
 import org.nodes.motifs.UPlainMotifExtractor;
 import org.nodes.random.RandomGraphs;
-import org.nodes.random.SubgraphGenerator;
+import org.nodes.random.SimpleSubgraphGenerator;
 import org.nodes.util.FrequencyModel;
 import org.nodes.util.Functions;
 import org.nodes.util.Generator;
@@ -188,7 +188,11 @@ public class Compare
 				
 		double baselineER = size(data, NullModel.ER, false);
 		double baselineEL = size(data, NullModel.EDGELIST, false);
-		double baselineBeta = sizeBeta(data).lowerBound(betaAlpha);
+		LogNormalCI ci = sizeBeta(data);
+		double baselineBeta = ci.lowerBound(betaAlpha);
+		
+		System.out.println("Difference between estimate and lowerbound: " + (ci.mlMean() - ci.lowerBound(betaAlpha)));
+
 		
 		for(int i : series(subs.size()))
 		{
@@ -223,6 +227,9 @@ public class Compare
 			Global.log().info("null model: Beta");
 			{
 				Pair<LogNormalCI, Double> pair = sizeBeta(data, sub, occs, resets); 
+				
+				System.out.println("Difference between estimate and upperbound: " + (pair.first().upperBound(betaAlpha) - pair.first().mlMean()));
+				
 				double sizeBeta = pair.first().upperBound(betaAlpha) + pair.second();
 				double factorBeta = baselineBeta - sizeBeta;
 				factorsBeta.add(factorBeta);
@@ -441,7 +448,6 @@ public class Compare
 		else
 			rest += degreesUSize(Graphs.degrees(sub));
 		
-		
 		// * size of the subbed graph
 		rest += org.nodes.compression.Functions.prefix(subbed.size());
 		// * degree sequence of subbed
@@ -490,23 +496,46 @@ public class Compare
 	
 	public double degreesDSize(List<DSequenceModel.D> degrees)
 	{
-		double sum = 0.0;
+		double sumKT = 0.0;
+		
+		int maxIn = Integer.MIN_VALUE, maxOut = Integer.MIN_VALUE;
+		for(DSequenceModel.D degree : degrees)
+		{
+			maxIn = Math.max(maxIn, degree.in());
+			maxOut = Math.max(maxOut, degree.out());
+		}
+		
+		sumKT += org.nodes.compression.Functions.prefix(maxIn);
+		sumKT += org.nodes.compression.Functions.prefix(maxOut);
+		
+		OnlineModel<Integer> modelIn = new OnlineModel<Integer>(Series.series(maxIn + 1)); 
+		OnlineModel<Integer> modelOut = new OnlineModel<Integer>(Series.series(maxOut + 1)); 
 		
 		for(DSequenceModel.D degree : degrees)
-			sum += 
-				org.nodes.compression.Functions.prefix(degree.in()) + 
-				org.nodes.compression.Functions.prefix(degree.out());
+		{
+			sumKT += - Functions.log2(modelIn.observe(degree.in()));
+			sumKT += - Functions.log2(modelOut.observe(degree.out()));
+		}
 		
-		return sum;
+		return sumKT;
 	}
 	
 	public double degreesUSize(List<Integer> degrees)
 	{
-		double sum = 0.0;
+		double sumKT = 0.0;
+		
+		int max = Integer.MIN_VALUE;
+		for(int degree : degrees)
+			max = Math.max(max, degree);
+		
+		sumKT += org.nodes.compression.Functions.prefix(max);
+		
+		OnlineModel<Integer> model = new OnlineModel<Integer>(Series.series(max + 1)); 
 		
 		for(int degree : degrees)
-			sum += org.nodes.compression.Functions.prefix(degree);
-		return sum;
+			sumKT += - Functions.log2(model.observe(degree));
+		
+		return sumKT;
 	}
 	
 	public static double wiringBits(Graph<String> sub, List<List<Integer>> wiring,

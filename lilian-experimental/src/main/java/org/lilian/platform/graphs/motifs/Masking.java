@@ -46,6 +46,7 @@ import org.nodes.motifs.MotifCompressor;
 import org.nodes.motifs.MotifVar;
 import org.nodes.motifs.MotifVarTags;
 import org.nodes.random.RandomGraphs;
+import org.nodes.random.SimpleSubgraphGenerator;
 import org.nodes.random.SubgraphGenerator;
 import org.nodes.util.BitString;
 import org.nodes.util.Compressor;

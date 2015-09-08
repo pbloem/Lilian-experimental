@@ -53,7 +53,7 @@ import org.lilian.graphs.grammar.Induction;
 import org.lilian.rdf.SBSimplifier;
 import org.lilian.util.Functions;
 import org.nodes.random.RandomGraphs;
-import org.nodes.random.SubgraphGenerator;
+import org.nodes.random.SimpleSubgraphGenerator;
 import org.nodes.rdf.InformedAvoidance;
 import org.nodes.util.FrequencyModel;
 import org.nodes.util.MaxObserver;

@@ -45,6 +45,7 @@ import org.nodes.data.GML;
 import org.nodes.data.RDF;
 import org.nodes.motifs.MotifCompressor;
 import org.nodes.random.RandomGraphs;
+import org.nodes.random.SimpleSubgraphGenerator;
 import org.nodes.random.SubgraphGenerator;
 import org.nodes.util.Compressor;
 import org.nodes.util.FrequencyModel;
