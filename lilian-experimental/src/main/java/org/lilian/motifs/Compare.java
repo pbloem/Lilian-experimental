@@ -2,8 +2,10 @@ package org.lilian.motifs;
 
 import static org.nodes.util.Functions.log2Choose;
 import static org.nodes.util.Functions.log2Factorial;
+import static org.nodes.util.OnlineModel.storeSequenceML;
 import static org.nodes.util.Series.series;
 import static org.lilian.util.Functions.log2;
+import static org.nodes.Graphs.degrees;
 import static org.nodes.models.USequenceModel.CIMethod;
 import static org.nodes.models.USequenceModel.CIType;
 import static org.nodes.motifs.MotifCompressor.exDegree;
@@ -181,6 +183,8 @@ public class Compare
 			subs = new ArrayList<Graph<String>>(subs.subList(0, maxMotifs));
 			frequencies = new ArrayList<Double>(frequencies.subList(0, maxMotifs));
 		}
+		
+		System.out.println(frequencies);
 			
 		List<Double> factorsER = new ArrayList<Double>(subs.size());
 		List<Double> factorsEL = new ArrayList<Double>(subs.size());
@@ -188,11 +192,10 @@ public class Compare
 				
 		double baselineER = size(data, NullModel.ER, false);
 		double baselineEL = size(data, NullModel.EDGELIST, false);
-		LogNormalCI ci = sizeBeta(data);
-		double baselineBeta = ci.lowerBound(betaAlpha);
+		Pair<LogNormalCI, Double> pairBeta = sizeBeta(data);
+		double baselineBeta = pairBeta.first().lowerBound(betaAlpha) + pairBeta.second();
 		
-		System.out.println("Difference between estimate and lowerbound: " + (ci.mlMean() - ci.lowerBound(betaAlpha)));
-
+		System.out.println("Difference between estimate and lowerbound: " + (pairBeta.first().mlMean() - pairBeta.first().lowerBound(betaAlpha)));
 		
 		for(int i : series(subs.size()))
 		{
@@ -299,19 +302,28 @@ public class Compare
 		}
 	}
 	
-	public LogNormalCI sizeBeta(Graph<String> data)
+	public Pair<LogNormalCI, Double> sizeBeta(Graph<String> data)
 	{
 		Global.log().info("Computing beta model code length");
 		Global.log().info("-- beta model: using " + betaIterations + " iterations");
+
+		
+		LogNormalCI ci;		
+		double rest;
 		
 		if(directed)
 		{
 			DSequenceModel<String> model = new DSequenceModel<String>((DGraph<String>)data, betaIterations);
-			return new LogNormalCI(model.logSamples(), BS_SAMPLES);
-		}	
-			
-		USequenceModel<String> model = new USequenceModel<String>(data, betaIterations);
-		return new LogNormalCI(model.logSamples(), BS_SAMPLES);
+			ci =  new LogNormalCI(model.logSamples(), BS_SAMPLES);
+			rest = storeSequenceML(Graphs.inDegrees((DGraph<?>)data)) + storeSequenceML(Graphs.outDegrees((DGraph<?>)data));
+		} else 
+		{
+			USequenceModel<String> model = new USequenceModel<String>(data, betaIterations);
+			ci =  new LogNormalCI(model.logSamples(), BS_SAMPLES);
+			rest = storeSequenceML(degrees(data));
+		}
+		
+		return Pair.p(ci, rest);
 	}
 	
 	public static double size(Graph<String> graph, Graph<String> sub,
