@@ -392,10 +392,10 @@ public class CompareLarge
 		double bits = 0.0;
 
 		// * size of the subbed graph under the binomial compressor
-		int n = subbedSize;
-		int t = n * n - n;
+		double n = subbedSize;
+		double t = n * n - n;
 		
-		bits += org.nodes.compression.Functions.prefix(n) + Functions.log2(t) + log2Choose(subbedLinks, t);
+		bits += org.nodes.compression.Functions.prefix((int)n) + Functions.log2(t) + log2Choose(subbedLinks, t);
 		
 		List<Integer> additions = new ArrayList<Integer>(graph.size());
 		for(Pair<Integer, Integer> token : nodeToInstance.tokens())
