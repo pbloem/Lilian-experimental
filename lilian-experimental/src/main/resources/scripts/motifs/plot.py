@@ -88,7 +88,7 @@ ticks = ax1.get_yaxis().get_majorticklocs()
 ticks = n.delete(ticks, n.where(n.logical_and(ticks < 0.00001, ticks > -0.00001)))
 ax1.hlines(ticks, - pluswidth, nummotifs - 1 + pluswidth, color='w')
 
-ax1.legend()
+# ax1.legend()
 ax1.set_ylabel('factor (bits)')
 
 ### 2) Plot the motifs

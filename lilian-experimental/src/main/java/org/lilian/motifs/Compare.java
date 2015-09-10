@@ -2,6 +2,7 @@ package org.lilian.motifs;
 
 import static org.nodes.util.Functions.log2Choose;
 import static org.nodes.util.Functions.log2Factorial;
+import static org.nodes.util.OnlineModel.storeSequence;
 import static org.nodes.util.OnlineModel.storeSequenceML;
 import static org.nodes.util.Series.series;
 import static org.lilian.util.Functions.log2;
@@ -315,12 +316,12 @@ public class Compare
 		{
 			DSequenceModel<String> model = new DSequenceModel<String>((DGraph<String>)data, betaIterations);
 			ci =  new LogNormalCI(model.logSamples(), BS_SAMPLES);
-			rest = storeSequenceML(Graphs.inDegrees((DGraph<?>)data)) + storeSequenceML(Graphs.outDegrees((DGraph<?>)data));
+			rest = storeSequence(Graphs.inDegrees((DGraph<?>)data)) + storeSequenceML(Graphs.outDegrees((DGraph<?>)data));
 		} else 
 		{
 			USequenceModel<String> model = new USequenceModel<String>(data, betaIterations);
 			ci =  new LogNormalCI(model.logSamples(), BS_SAMPLES);
-			rest = storeSequenceML(degrees(data));
+			rest = storeSequence(degrees(data));
 		}
 		
 		return Pair.p(ci, rest);
