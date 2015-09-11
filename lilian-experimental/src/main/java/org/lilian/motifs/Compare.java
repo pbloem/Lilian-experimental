@@ -191,8 +191,8 @@ public class Compare
 		List<Double> factorsEL = new ArrayList<Double>(subs.size());
 		List<Double> factorsBeta =  new ArrayList<Double>(subs.size());
 				
-		double baselineER = size(data, NullModel.ER, true);
-		double baselineEL = size(data, NullModel.EDGELIST, true);
+		double baselineER = size(data, NullModel.ER, false);
+		double baselineEL = size(data, NullModel.EDGELIST, false);
 		Pair<LogNormalCI, Double> pairBeta = sizeBeta(data);
 		double baselineBeta = pairBeta.first().lowerBound(betaAlpha) + pairBeta.second();
 		
