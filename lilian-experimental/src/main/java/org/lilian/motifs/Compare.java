@@ -191,12 +191,14 @@ public class Compare
 		List<Double> factorsEL = new ArrayList<Double>(subs.size());
 		List<Double> factorsBeta =  new ArrayList<Double>(subs.size());
 				
-		double baselineER = size(data, NullModel.ER, false);
-		double baselineEL = size(data, NullModel.EDGELIST, false);
+		double baselineER = size(data, NullModel.ER, true);
+		double baselineEL = size(data, NullModel.EDGELIST, true);
 		Pair<LogNormalCI, Double> pairBeta = sizeBeta(data);
 		double baselineBeta = pairBeta.first().lowerBound(betaAlpha) + pairBeta.second();
 		
 		System.out.println("Difference between estimate and lowerbound: " + (pairBeta.first().mlMean() - pairBeta.first().lowerBound(betaAlpha)));
+		System.out.println("Cost of storing degrees: " + pairBeta.second());
+
 		
 		for(int i : series(subs.size()))
 		{
@@ -316,12 +318,16 @@ public class Compare
 		{
 			DSequenceModel<String> model = new DSequenceModel<String>((DGraph<String>)data, betaIterations);
 			ci =  new LogNormalCI(model.logSamples(), BS_SAMPLES);
-			rest = storeSequence(Graphs.inDegrees((DGraph<?>)data)) + storeSequenceML(Graphs.outDegrees((DGraph<?>)data));
+			rest = storeSequenceML(Graphs.inDegrees((DGraph<?>)data)) + storeSequenceML(Graphs.outDegrees((DGraph<?>)data));
+			
+			System.out.println("Difference between ML and KT " + (storeSequence(Graphs.inDegrees((DGraph<?>)data)) + storeSequence(Graphs.outDegrees((DGraph<?>)data)) - storeSequenceML(Graphs.inDegrees((DGraph<?>)data)) - storeSequenceML(Graphs.outDegrees((DGraph<?>)data))) );
 		} else 
 		{
 			USequenceModel<String> model = new USequenceModel<String>(data, betaIterations);
 			ci =  new LogNormalCI(model.logSamples(), BS_SAMPLES);
-			rest = storeSequence(degrees(data));
+			rest = storeSequenceML(degrees(data));
+		
+			System.out.println("Difference between ML and KT " + (storeSequence(degrees(data)) - storeSequenceML(degrees(data))));
 		}
 		
 		return Pair.p(ci, rest);
@@ -362,25 +368,30 @@ public class Compare
 		// * Any node pairs with multiple links
 		if(isSimpleGraphCode(nullModel))
 		{
-			int maxRemovals = (int)(removals.frequency(removals.maxToken()));
-			OnlineModel<Integer> frequencies = new OnlineModel<Integer>(Series.series(maxRemovals + 1));
-			for(Link<String> link : subbed.links())
-			{
-				Pair<Integer, Integer> pair;
-				
-				if(directed)
-				{
-					pair = new Pair<Integer, Integer>(link.first().index(), link.second().index());
-				} else
-				{
-					int minor = Math.min(link.first().index(), link.second().index());
-					int major = Math.max(link.first().index(), link.second().index());
-					pair = new Pair<Integer, Integer>(minor, major);
-				}
-				
-				int freq = (int) removals.frequency(pair);
-				bits += - Functions.log2(frequencies.observe(freq));
-			}
+//			int maxRemovals = (int)(removals.frequency(removals.maxToken()));
+//			OnlineModel<Integer> frequencies = new OnlineModel<Integer>(Series.series(maxRemovals + 1));
+//			for(Link<String> link : subbed.links())
+//			{
+//				Pair<Integer, Integer> pair;
+//				
+//				if(directed)
+//				{
+//					pair = new Pair<Integer, Integer>(link.first().index(), link.second().index());
+//				} else
+//				{
+//					int minor = Math.min(link.first().index(), link.second().index());
+//					int major = Math.max(link.first().index(), link.second().index());
+//					pair = new Pair<Integer, Integer>(minor, major);
+//				}
+//				
+//				int freq = (int) removals.frequency(pair);
+//				bits += - Functions.log2(frequencies.observe(freq));
+//			}
+			
+			List<Integer> additions = new ArrayList<Integer>((int)removals.distinct());
+			for(Pair<Integer, Integer> pair : removals.tokens())
+				additions.add((int)removals.frequency(pair));
+			bits += OnlineModel.storeSequence(additions); 
 		}
 		
 //		System.out.println("removals " + bits);
@@ -474,29 +485,32 @@ public class Compare
 		
 		// * Any node pairs with multiple links
 		
-		double remBits = 0.0;
-		int maxRemovals =(int)(removals.frequency(removals.maxToken()));
-		OnlineModel<Integer> frequencies = new OnlineModel<Integer>(Series.series(maxRemovals + 1));
-		for(Link<String> link : subbed.links())
-		{
-			Pair<Integer, Integer> pair;
-			
-			if(directed)
-			{
-				pair = new Pair<Integer, Integer>(link.first().index(), link.second().index());
-			} else
-			{
-				int minor = Math.min(link.first().index(), link.second().index());
-				int major = Math.max(link.first().index(), link.second().index());
-				pair = new Pair<Integer, Integer>(minor, major);
-			}
-			
-			int freq = (int) removals.frequency(pair);
-			remBits += - Functions.log2(frequencies.observe(freq));
-		}
+//		double remBits = 0.0;
+//		int maxRemovals =(int)(removals.frequency(removals.maxToken()));
+//		OnlineModel<Integer> frequencies = new OnlineModel<Integer>(Series.series(maxRemovals + 1));
+//		for(Link<String> link : subbed.links())
+//		{
+//			Pair<Integer, Integer> pair;
+//			
+//			if(directed)
+//			{
+//				pair = new Pair<Integer, Integer>(link.first().index(), link.second().index());
+//			} else
+//			{
+//				int minor = Math.min(link.first().index(), link.second().index());
+//				int major = Math.max(link.first().index(), link.second().index());
+//				pair = new Pair<Integer, Integer>(minor, major);
+//			}
+//			
+//			int freq = (int) removals.frequency(pair);
+//			remBits += - Functions.log2(frequencies.observe(freq));
+//		}
 		
-		rest += remBits;
-		
+		List<Integer> additions = new ArrayList<Integer>((int)removals.distinct());
+		for(Pair<Integer, Integer> pair : removals.tokens())
+			additions.add((int)removals.frequency(pair));
+		rest += OnlineModel.storeSequence(additions); 
+				
 		// * Store the rewiring information
 		rest += wiringBits(sub, wiring, resetWiring);
 		
