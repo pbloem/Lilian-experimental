@@ -47,6 +47,7 @@ import org.nodes.UGraph;
 import org.nodes.ULink;
 import org.nodes.UNode;
 import org.nodes.algorithms.Nauty;
+import org.nodes.clustering.ConnectionClusterer;
 import org.nodes.compression.BinomialCompressor;
 import org.nodes.compression.EdgeListCompressor;
 import org.nodes.compression.NeighborListCompressor;
@@ -116,6 +117,10 @@ public class Compare
 	@In(name="simplify", description="Whether to remove multiple edges and self-loops.")
 	public boolean simplify;
 	
+	
+	@In(name="num threads")
+	public int numThreads;
+	
 	public static enum NullModel{ER, EDGELIST}
 	
 	private boolean directed;
@@ -143,6 +148,12 @@ public class Compare
 			data = Graphs.blank(data, "");
 			Global.log().info("Blanked.");
 		}
+		
+		Global.log().info("data nodes: " + data.size());
+		Global.log().info("data links: " + data.numLinks());
+		
+		List<Integer> degrees = Graphs.degrees(data);
+		Collections.sort(degrees, Collections.reverseOrder());
 		
 		Global.log().info("Computing motif code lengths");
 		
@@ -315,7 +326,6 @@ public class Compare
 		Global.log().info("Computing beta model code length");
 		Global.log().info("-- beta model: using " + betaIterations + " iterations");
 
-		
 		LogNormalCI ci;		
 		double rest;
 		
@@ -328,7 +338,9 @@ public class Compare
 			System.out.println("Difference between ML and KT " + (storeSequence(Graphs.inDegrees((DGraph<?>)data)) + storeSequence(Graphs.outDegrees((DGraph<?>)data)) - storeSequenceML(Graphs.inDegrees((DGraph<?>)data)) - storeSequenceML(Graphs.outDegrees((DGraph<?>)data))) );
 		} else 
 		{
-			USequenceModel<String> model = new USequenceModel<String>(data, betaIterations);
+			USequenceModel<String> model = new USequenceModel<String>(data);
+			model.nonUniform(betaIterations, numThreads);
+			
 			ci =  new LogNormalCI(model.logSamples(), BS_SAMPLES);
 			rest = storeSequenceML(degrees(data));
 		
@@ -431,8 +443,10 @@ public class Compare
 				samples.add(motifModel.logSamples().get(i) + subbedModel.logSamples().get(i));
 		} else
 		{
-			USequenceModel<String> motifModel = new USequenceModel<String>((UGraph<String>)sub, betaIterations);
-			USequenceModel<String> subbedModel = new USequenceModel<String>((UGraph<String>)subbed, betaIterations);
+			USequenceModel<String> motifModel = new USequenceModel<String>((UGraph<String>)sub);
+			motifModel.nonUniform(betaIterations, numThreads);
+			USequenceModel<String> subbedModel = new USequenceModel<String>((UGraph<String>)subbed);
+			subbedModel.nonUniform(betaIterations, numThreads);
 			
 			for(int i : series(betaIterations))
 				samples.add(motifModel.logSamples().get(i) + subbedModel.logSamples().get(i));
