@@ -339,7 +339,7 @@ public class Compare
 		} else 
 		{
 			USequenceModel<String> model = new USequenceModel<String>(data);
-			model.nonUniform(betaIterations, numThreads);
+			model.nonuniform(betaIterations, numThreads);
 			
 			ci =  new LogNormalCI(model.logSamples(), BS_SAMPLES);
 			rest = storeSequenceML(degrees(data));
@@ -444,9 +444,9 @@ public class Compare
 		} else
 		{
 			USequenceModel<String> motifModel = new USequenceModel<String>((UGraph<String>)sub);
-			motifModel.nonUniform(betaIterations, numThreads);
+			motifModel.nonuniform(betaIterations, numThreads);
 			USequenceModel<String> subbedModel = new USequenceModel<String>((UGraph<String>)subbed);
-			subbedModel.nonUniform(betaIterations, numThreads);
+			subbedModel.nonuniform(betaIterations, numThreads);
 			
 			for(int i : series(betaIterations))
 				samples.add(motifModel.logSamples().get(i) + subbedModel.logSamples().get(i));
