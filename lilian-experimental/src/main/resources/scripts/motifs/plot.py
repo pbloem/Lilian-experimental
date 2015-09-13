@@ -100,7 +100,7 @@ side = pluswidth - 0.5
 width = (1.0 - 2.0 * margin - extra) / (nummotifs + 2.0 * side)
 
 i = 0
-for path in glob.glob('motif.*.edgelist')[:nummotifs]:
+for path in sorted(glob.glob('motif.*.edgelist'))[:nummotifs]:
     axsmall = fig.add_axes([margin + extra + side*width + width * i, bottom, width, height])
     axsmall.axis('off')
     
@@ -108,8 +108,9 @@ for path in glob.glob('motif.*.edgelist')[:nummotifs]:
     
     pos = nwx.spring_layout(graph)
     nodes = nwx.draw_networkx_nodes(graph, pos, ax=axsmall, node_size=12)
-    nodes.set_edgecolor('red')
-    nodes.set_color('red')
+    if nodes != None:
+        nodes.set_edgecolor('red')
+        nodes.set_color('red')
     edges = nwx.draw_networkx_edges(graph, pos, alpha=0 if directed else 1)
     if directed: # draw proper arrows
         for s in edges.get_segments():

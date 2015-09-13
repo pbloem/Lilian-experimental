@@ -4,6 +4,7 @@ import static org.nodes.util.Functions.log2;
 import static org.nodes.util.Functions.log2Choose;
 import static org.nodes.util.Functions.log2Factorial;
 import static org.nodes.util.Functions.logFactorial;
+import static org.nodes.util.Functions.max;
 import static org.nodes.util.Series.series;
 import static org.lilian.util.Functions.log2;
 import static org.nodes.compression.Functions.log2;
@@ -405,6 +406,7 @@ public class CompareLarge
 		for(Pair<Integer, Integer> token : instanceToInstance.tokens())
 			additions.add((int)instanceToInstance.frequency(token) - 1);
 		
+		bits += prefix(max(additions));
 		bits += OnlineModel.storeSequence(additions); 
 		
 		return bits;

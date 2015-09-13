@@ -7,6 +7,7 @@ import static org.nodes.util.OnlineModel.storeSequenceML;
 import static org.nodes.util.Series.series;
 import static org.lilian.util.Functions.log2;
 import static org.nodes.Graphs.degrees;
+import static org.nodes.compression.Functions.prefix;
 import static org.nodes.models.USequenceModel.CIMethod;
 import static org.nodes.models.USequenceModel.CIType;
 import static org.nodes.motifs.MotifCompressor.exDegree;
@@ -156,6 +157,9 @@ public class Compare
 					(DGraph<String>)data, motifSamples, motifMinSize, motifMaxSize, minFreq);
 		
 			subs = new ArrayList<Graph<String>>(ex.subgraphs());
+			
+			Collections.reverse(subs);
+			
 			frequencies = new ArrayList<Double>(subs.size());
 			for(Graph<String> sub : subs)
 				frequencies.add(ex.frequency((DGraph<String>)sub));
@@ -184,6 +188,7 @@ public class Compare
 			subs = new ArrayList<Graph<String>>(subs.subList(0, maxMotifs));
 			frequencies = new ArrayList<Double>(frequencies.subList(0, maxMotifs));
 		}
+		
 		
 		System.out.println(frequencies);
 			
@@ -355,58 +360,33 @@ public class Compare
 				subbed = Graphs.toSimpleUGraph((UGraph<String>)subbed, removals);
 		}
 		
-		double bits = 0.0;
+		FrequencyModel<String> bits = new FrequencyModel<String>();
 		
-		bits += size(sub, nullModel, true);
-//		System.out.println("sub " + bits);
-		bits += size(subbed, nullModel, true);
-//		System.out.println("subbed " + bits);
-		
-//		bits += log2Choose(occurrences.size(), subbed.size()); 
-//		System.out.println("labels " + bits);
+		bits.add("sub", size(sub, nullModel, true));
+
+		bits.add("subbed", size(subbed, nullModel, true));
 		
 		// * Any node pairs with multiple links
 		if(isSimpleGraphCode(nullModel))
 		{
-//			int maxRemovals = (int)(removals.frequency(removals.maxToken()));
-//			OnlineModel<Integer> frequencies = new OnlineModel<Integer>(Series.series(maxRemovals + 1));
-//			for(Link<String> link : subbed.links())
-//			{
-//				Pair<Integer, Integer> pair;
-//				
-//				if(directed)
-//				{
-//					pair = new Pair<Integer, Integer>(link.first().index(), link.second().index());
-//				} else
-//				{
-//					int minor = Math.min(link.first().index(), link.second().index());
-//					int major = Math.max(link.first().index(), link.second().index());
-//					pair = new Pair<Integer, Integer>(minor, major);
-//				}
-//				
-//				int freq = (int) removals.frequency(pair);
-//				bits += - Functions.log2(frequencies.observe(freq));
-//			}
-			
 			List<Integer> additions = new ArrayList<Integer>((int)removals.distinct());
 			for(Pair<Integer, Integer> pair : removals.tokens())
 				additions.add((int)removals.frequency(pair));
-			bits += OnlineModel.storeSequence(additions); 
+			bits.add("multiple-edges", prefix(Functions.max(additions)));
+			bits.add("multiple-edges", OnlineModel.storeSequence(additions)); 
 		}
 		
-//		System.out.println("removals " + bits);
-		
 		// * Store the rewiring information
-		bits += wiringBits(sub, wiring, resetWiring);
-//		System.out.println("wiring " + bits);
+		bits.add("wiring", wiringBits(sub, wiring, resetWiring));
 		
-		// * Store the insertion order, to preserver the precise ordering of the
+		// * Store the insertion order, to preserve the precise ordering of the
 		//   nodes in the data 
-		bits += log2Factorial(graph.size()) - log2Factorial(subbed.size());
+		bits.add("insertions", log2Factorial(graph.size()) - log2Factorial(subbed.size()));
 
-//		System.out.println("insertions " + bits);
+		System.out.println("bits: ");
+		bits.print(System.out);
 		
-		return bits;
+		return bits.total();
 	}
 	
 	/**
@@ -462,63 +442,47 @@ public class Compare
 		
 		// * The rest of the graph (for which we can compute the code length 
 		//   directly) 
-		double rest = 0.0;
+		FrequencyModel<String> rest = new FrequencyModel<String>();
 		
 		// * the size of the motif
-		rest += org.nodes.compression.Functions.prefix(sub.size());
+		rest.add("sub", prefix(sub.size()));
 		// * degree sequence of the motif
 		if(directed)
-			rest += degreesDSize(DSequenceModel.sequence((DGraph<String>)sub));
+			rest.add("sub", degreesDSize(DSequenceModel.sequence((DGraph<String>)sub)));
 		else
-			rest += degreesUSize(Graphs.degrees(sub));
+			rest.add("sub", degreesUSize(Graphs.degrees(sub)));
 		
 		// * size of the subbed graph
-		rest += org.nodes.compression.Functions.prefix(subbed.size());
+		rest.add("subbed", prefix(subbed.size()));
 		// * degree sequence of subbed
 		if(directed)
-			rest += degreesDSize(DSequenceModel.sequence((DGraph<String>)subbed));
+			rest.add("subbed", degreesDSize(DSequenceModel.sequence((DGraph<String>)subbed)));
 		else
-			rest += degreesUSize(Graphs.degrees(subbed));
+			rest.add("subbed", degreesUSize(Graphs.degrees(subbed)));
 		
 		// * Store the labels
-		rest += log2Choose(occurrences.size(), subbed.size()); 
+		rest.add("labels", log2Choose(occurrences.size(), subbed.size())); 
 		
 		// * Any node pairs with multiple links
-		
-//		double remBits = 0.0;
-//		int maxRemovals =(int)(removals.frequency(removals.maxToken()));
-//		OnlineModel<Integer> frequencies = new OnlineModel<Integer>(Series.series(maxRemovals + 1));
-//		for(Link<String> link : subbed.links())
-//		{
-//			Pair<Integer, Integer> pair;
-//			
-//			if(directed)
-//			{
-//				pair = new Pair<Integer, Integer>(link.first().index(), link.second().index());
-//			} else
-//			{
-//				int minor = Math.min(link.first().index(), link.second().index());
-//				int major = Math.max(link.first().index(), link.second().index());
-//				pair = new Pair<Integer, Integer>(minor, major);
-//			}
-//			
-//			int freq = (int) removals.frequency(pair);
-//			remBits += - Functions.log2(frequencies.observe(freq));
-//		}
-		
 		List<Integer> additions = new ArrayList<Integer>((int)removals.distinct());
 		for(Pair<Integer, Integer> pair : removals.tokens())
 			additions.add((int)removals.frequency(pair));
-		rest += OnlineModel.storeSequence(additions); 
+		
+		rest.add("multi-edges", prefix(Functions.max(additions)));
+		rest.add("multi-edges", OnlineModel.storeSequence(additions)); 
 				
 		// * Store the rewiring information
-		rest += wiringBits(sub, wiring, resetWiring);
+		rest.add("wiring", wiringBits(sub, wiring, resetWiring));
 		
 		// * Store the insertion order, to preserve the precise ordering of the
 		//   nodes in the data 
-		rest += log2Factorial(graph.size()) - log2Factorial(subbed.size());
+		rest.add("insertions", log2Factorial(graph.size()) - log2Factorial(subbed.size()));
 		
-		return new Pair<LogNormalCI, Double>(ci, rest);
+		System.out.println(ci.mlMean() + " " + ci.upperBound(betaAlpha));
+		System.out.println("rest: ");
+		rest.print(System.out);
+		
+		return new Pair<LogNormalCI, Double>(ci, rest.total());
 	}
 	
 	public double degreesDSize(List<DSequenceModel.D> degrees)
