@@ -117,9 +117,7 @@ public class Compare
 	@In(name="simplify", description="Whether to remove multiple edges and self-loops.")
 	public boolean simplify;
 	
-	
-	@In(name="num threads")
-	public int numThreads;
+	public static final int NUM_THREADS = Runtime.getRuntime().availableProcessors();;
 	
 	public static enum NullModel{ER, EDGELIST}
 	
@@ -331,7 +329,9 @@ public class Compare
 		
 		if(directed)
 		{
-			DSequenceModel<String> model = new DSequenceModel<String>((DGraph<String>)data, betaIterations);
+			DSequenceModel<String> model = new DSequenceModel<String>((DGraph<String>)data);
+			model.nonuniform(betaIterations, NUM_THREADS);
+
 			ci =  new LogNormalCI(model.logSamples(), BS_SAMPLES);
 			rest = storeSequenceML(Graphs.inDegrees((DGraph<?>)data)) + storeSequenceML(Graphs.outDegrees((DGraph<?>)data));
 			
@@ -339,7 +339,7 @@ public class Compare
 		} else 
 		{
 			USequenceModel<String> model = new USequenceModel<String>(data);
-			model.nonuniform(betaIterations, numThreads);
+			model.nonuniform(betaIterations, NUM_THREADS);
 			
 			ci =  new LogNormalCI(model.logSamples(), BS_SAMPLES);
 			rest = storeSequenceML(degrees(data));
@@ -436,17 +436,19 @@ public class Compare
 		List<Double> samples = new ArrayList<Double>(betaIterations);
 		if(directed)
 		{
-			DSequenceModel<String> motifModel = new DSequenceModel<String>((DGraph<String>)sub, betaIterations);
-			DSequenceModel<String> subbedModel = new DSequenceModel<String>((DGraph<String>)subbed, betaIterations);
+			DSequenceModel<String> motifModel = new DSequenceModel<String>((DGraph<String>)sub);
+			DSequenceModel<String> subbedModel = new DSequenceModel<String>((DGraph<String>)subbed);
+			motifModel.nonuniform(betaIterations, NUM_THREADS);
+			subbedModel.nonuniform(betaIterations, NUM_THREADS);
 			
 			for(int i : series(betaIterations))
 				samples.add(motifModel.logSamples().get(i) + subbedModel.logSamples().get(i));
 		} else
 		{
 			USequenceModel<String> motifModel = new USequenceModel<String>((UGraph<String>)sub);
-			motifModel.nonuniform(betaIterations, numThreads);
 			USequenceModel<String> subbedModel = new USequenceModel<String>((UGraph<String>)subbed);
-			subbedModel.nonuniform(betaIterations, numThreads);
+			motifModel.nonuniform(betaIterations, NUM_THREADS);
+			subbedModel.nonuniform(betaIterations, NUM_THREADS);
 			
 			for(int i : series(betaIterations))
 				samples.add(motifModel.logSamples().get(i) + subbedModel.logSamples().get(i));
