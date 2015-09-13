@@ -384,7 +384,7 @@ public class Compare
 			List<Integer> additions = new ArrayList<Integer>((int)removals.distinct());
 			for(Pair<Integer, Integer> pair : removals.tokens())
 				additions.add((int)removals.frequency(pair));
-			bits.add("multiple-edges", prefix(Functions.max(additions)));
+			bits.add("multiple-edges", prefix(additions.isEmpty() ? 0 : Functions.max(additions)));
 			bits.add("multiple-edges", OnlineModel.storeSequence(additions)); 
 		}
 		
@@ -484,7 +484,7 @@ public class Compare
 		for(Pair<Integer, Integer> pair : removals.tokens())
 			additions.add((int)removals.frequency(pair));
 		
-		rest.add("multi-edges", prefix(Functions.max(additions)));
+		rest.add("multi-edges", prefix(additions.isEmpty() ? 0 : Functions.max(additions)));
 		rest.add("multi-edges", OnlineModel.storeSequence(additions)); 
 				
 		// * Store the rewiring information
