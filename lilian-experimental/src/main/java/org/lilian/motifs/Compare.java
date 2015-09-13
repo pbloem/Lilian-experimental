@@ -167,8 +167,6 @@ public class Compare
 		
 			subs = new ArrayList<Graph<String>>(ex.subgraphs());
 			
-			Collections.reverse(subs);
-			
 			frequencies = new ArrayList<Double>(subs.size());
 			for(Graph<String> sub : subs)
 				frequencies.add(ex.frequency((DGraph<String>)sub));
