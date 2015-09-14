@@ -454,7 +454,6 @@ public class Compare
 		
 		// * The estimated cost of storing the structure of the motif and the 
 		//   structure of the subbed graph. 
-
 		List<Double> samples = new ArrayList<Double>(betaIterations);
 		if(directed)
 		{
@@ -524,7 +523,7 @@ public class Compare
 		//   nodes in the data 
 		rest.add("insertions", log2Factorial(graph.size()) - log2Factorial(subbed.size()));
 		
-		System.out.println(ci.mlMean() + " " + ci.upperBound(betaAlpha));
+//		System.out.println(ci.mlMean() + " " + ci.upperBound(betaAlpha));
 //		System.out.println("rest: ");
 //		rest.print(System.out);
 		

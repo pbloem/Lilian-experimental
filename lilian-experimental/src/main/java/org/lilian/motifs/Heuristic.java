@@ -62,6 +62,7 @@ public class Heuristic
 		for(int s : Series.series(instanceSamples))
 		{
 			DGraph<String> sub = Functions.choose(ex.subgraphs());
+			System.out.println(sub);
 			
 			List<List<Integer>> instances = ex.occurrences(sub);
 			int instance = Global.random().nextInt(instances.size());
@@ -76,6 +77,8 @@ public class Heuristic
 			pair = comp.sizeBeta(data, sub, Functions.minList(instances, instance), true);
 			double sizeWithout = pair.first().upperBound(0.05) + pair.second();
 			double profit = sizeWithout - sizeWith;
+			
+			System.out.println(profit + " (" + sizeWith + ", " + sizeWithout + ")");
 			
 			double numNodes = sub.size();
 			double numLinks = sub.numLinks();

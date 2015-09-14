@@ -185,7 +185,8 @@ public class CompareLarge
 		
 		Comparator<Double> comp = Functions.natural();
 		org.lilian.util.Functions.sort(
-				frequencies, Collections.reverseOrder(comp), 
+				factorsEL, Collections.reverseOrder(comp), 
+				(List) frequencies,
 				(List) factorsER, 
 				(List) factorsEL, 
 				(List) subs);
