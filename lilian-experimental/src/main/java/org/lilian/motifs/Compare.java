@@ -5,11 +5,14 @@ import static org.nodes.util.Functions.log2Factorial;
 import static org.nodes.util.OnlineModel.storeSequence;
 import static org.nodes.util.OnlineModel.storeSequenceML;
 import static org.nodes.util.Series.series;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static org.lilian.util.Functions.log2;
 import static org.nodes.Graphs.degrees;
 import static org.nodes.compression.Functions.prefix;
 import static org.nodes.models.USequenceModel.CIMethod;
 import static org.nodes.models.USequenceModel.CIType;
+import static org.nodes.motifs.MotifCompressor.MOTIF_SYMBOL;
 import static org.nodes.motifs.MotifCompressor.exDegree;
 
 import java.io.BufferedWriter;
@@ -38,6 +41,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.lilian.util.Functions.NaturalComparator;
 import org.nodes.DGraph;
+import org.nodes.DNode;
 import org.nodes.Graph;
 import org.nodes.Graphs;
 import org.nodes.Link;
@@ -121,7 +125,7 @@ public class Compare
 	
 	public static enum NullModel{ER, EDGELIST}
 	
-	private boolean directed;
+	boolean directed;
 
 	private boolean resets = true;
 	
@@ -129,6 +133,7 @@ public class Compare
 	public void main() throws IOException
 	{
 		org.nodes.Global.secureRandom(42);
+		Global.log().info("Threads available: " +  NUM_THREADS);
 		
 		directed = data instanceof DGraph<?>;
 		Global.log().info("Is data directed? : " + directed + " ("+data.getClass()+")");
@@ -169,7 +174,7 @@ public class Compare
 			
 			frequencies = new ArrayList<Double>(subs.size());
 			for(Graph<String> sub : subs)
-				frequencies.add(ex.frequency((DGraph<String>)sub));
+				frequencies.add((double)ex.occurrences((DGraph<String>)sub).size());
 			
 			occurrences = new ArrayList<List<List<Integer>>>(subs.size());
 			for(Graph<String> sub : subs)
@@ -183,7 +188,7 @@ public class Compare
 			subs = new ArrayList<Graph<String>>(ex.subgraphs());
 			frequencies = new ArrayList<Double>(subs.size());
 			for(Graph<String> sub : subs)
-				frequencies.add(ex.frequency((UGraph<String>)sub));
+				frequencies.add((double)ex.occurrences((UGraph<String>)sub).size());
 			
 			occurrences = new ArrayList<List<List<Integer>>>(subs.size());
 			for(Graph<String> sub : subs)
@@ -195,13 +200,11 @@ public class Compare
 			subs = new ArrayList<Graph<String>>(subs.subList(0, maxMotifs));
 			frequencies = new ArrayList<Double>(frequencies.subList(0, maxMotifs));
 		}
-		
-		
-		System.out.println(frequencies);
 			
-		List<Double> factorsER = new ArrayList<Double>(subs.size());
-		List<Double> factorsEL = new ArrayList<Double>(subs.size());
-		List<Double> factorsBeta =  new ArrayList<Double>(subs.size());
+		List<Double> factorsER   = new ArrayList<Double>(subs.size());
+		List<Double> factorsEL   = new ArrayList<Double>(subs.size());
+		List<Double> factorsBeta = new ArrayList<Double>(subs.size());
+		List<Double> maxFactors   =  new ArrayList<Double>(subs.size());
 				
 		double baselineER = size(data, NullModel.ER, false);
 		double baselineEL = size(data, NullModel.EDGELIST, false);
@@ -219,12 +222,16 @@ public class Compare
 			
 			Global.log().info("Analysing sub ("+ (i+1) +" of " + subs.size() + "): " + sub);
 			Global.log().info("freq: " + frequencies.get(i));
+			
+			double max = Double.NEGATIVE_INFINITY;
 
 			Global.log().info("null model: ER");
 			{
 				double sizeER = size(data, sub, occs, NullModel.ER, resets); 
 				double factorER = baselineER - sizeER;
 				factorsER.add(factorER);
+				
+				max = Math.max(max, factorER);
 				 
 				Global.log().info("ER baseline: " + baselineER);
 				Global.log().info("ER motif code: " + sizeER);
@@ -236,6 +243,8 @@ public class Compare
 				double sizeEL = size(data, sub, occs, NullModel.EDGELIST, resets); 
 				double factorEL = baselineEL - sizeEL;
 				factorsEL.add(factorEL);
+				
+				max = Math.max(max, factorEL);
 			 
 				Global.log().info("EL baseline: " + baselineEL);
 				Global.log().info("EL motif code: " + sizeEL);
@@ -252,15 +261,20 @@ public class Compare
 				double factorBeta = baselineBeta - sizeBeta;
 				factorsBeta.add(factorBeta);
 			 
+				max = Math.max(max, factorBeta);
+				
 				Global.log().info("Beta baseline: " + baselineBeta);
 				Global.log().info("Beta motif code: " + sizeBeta);
 				Global.log().info("Beta factor: " + factorBeta);
 			}
+			
+			maxFactors.add(max);
 		}
 		
 		Comparator<Double> comp = Functions.natural();
 		org.lilian.util.Functions.sort(
-				frequencies, Collections.reverseOrder(comp), 
+				factorsBeta, Collections.reverseOrder(comp),
+				(List) frequencies,
 				(List) factorsER, 
 				(List) factorsEL, 
 				(List) factorsBeta, 
@@ -379,9 +393,19 @@ public class Compare
 		// * Any node pairs with multiple links
 		if(isSimpleGraphCode(nullModel))
 		{
-			List<Integer> additions = new ArrayList<Integer>((int)removals.distinct());
-			for(Pair<Integer, Integer> pair : removals.tokens())
-				additions.add((int)removals.frequency(pair));
+			List<Integer> additions = new ArrayList<Integer>();
+			for(Link<String> link : subbed.links())
+				if(MOTIF_SYMBOL.equals(link.first().label()) || MOTIF_SYMBOL.equals(link.second().label()))
+				{
+					int i = link.first().index(), j = link.second().index();
+					
+					Pair<Integer, Integer> pair = 
+							directed ? Pair.p(i, j) : Pair.p(min(i,  j), max(i, j));
+				
+					additions.add((int)removals.frequency(pair));
+				}
+			
+			
 			bits.add("multiple-edges", prefix(additions.isEmpty() ? 0 : Functions.max(additions)));
 			bits.add("multiple-edges", OnlineModel.storeSequence(additions)); 
 		}
@@ -393,8 +417,8 @@ public class Compare
 		//   nodes in the data 
 		bits.add("insertions", log2Factorial(graph.size()) - log2Factorial(subbed.size()));
 
-		System.out.println("bits: ");
-		bits.print(System.out);
+//		System.out.println("bits: ");
+//		bits.print(System.out);
 		
 		return bits.total();
 	}
@@ -412,7 +436,7 @@ public class Compare
 	 */
 	public Pair<LogNormalCI, Double> sizeBeta(Graph<String> graph, Graph<String> sub,
 			List<List<Integer>> occurrences, boolean resetWiring)
-	{
+	{		
 		List<List<Integer>> wiring = new ArrayList<List<Integer>>();
 		Graph<String> subbed;
 		if(directed)
@@ -478,9 +502,17 @@ public class Compare
 		rest.add("labels", log2Choose(occurrences.size(), subbed.size())); 
 		
 		// * Any node pairs with multiple links
-		List<Integer> additions = new ArrayList<Integer>((int)removals.distinct());
-		for(Pair<Integer, Integer> pair : removals.tokens())
-			additions.add((int)removals.frequency(pair));
+		List<Integer> additions = new ArrayList<Integer>();
+		for(Link<String> link : subbed.links())
+			if(MOTIF_SYMBOL.equals(link.first().label()) || MOTIF_SYMBOL.equals(link.second().label()))
+			{
+				int i = link.first().index(), j = link.second().index();
+				
+				Pair<Integer, Integer> pair = 
+						directed ? Pair.p(i, j) : Pair.p(min(i,  j), max(i, j));
+			
+				additions.add((int)removals.frequency(pair));
+			}
 		
 		rest.add("multi-edges", prefix(additions.isEmpty() ? 0 : Functions.max(additions)));
 		rest.add("multi-edges", OnlineModel.storeSequence(additions)); 
@@ -493,8 +525,8 @@ public class Compare
 		rest.add("insertions", log2Factorial(graph.size()) - log2Factorial(subbed.size()));
 		
 		System.out.println(ci.mlMean() + " " + ci.upperBound(betaAlpha));
-		System.out.println("rest: ");
-		rest.print(System.out);
+//		System.out.println("rest: ");
+//		rest.print(System.out);
 		
 		return new Pair<LogNormalCI, Double>(ci, rest.total());
 	}
@@ -558,7 +590,7 @@ public class Compare
 			for (int wire : motifWires)
 				bits += -log2(om.observe(wire));
 		}
-
+		
 		return bits;
 	}
 	
