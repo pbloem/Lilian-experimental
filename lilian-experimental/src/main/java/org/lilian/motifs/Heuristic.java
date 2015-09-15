@@ -62,7 +62,6 @@ public class Heuristic
 		for(int s : Series.series(instanceSamples))
 		{
 			DGraph<String> sub = Functions.choose(ex.subgraphs());
-			System.out.println(sub);
 			
 			List<List<Integer>> instances = ex.occurrences(sub);
 			int instance = Global.random().nextInt(instances.size());

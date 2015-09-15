@@ -147,7 +147,8 @@ public class CompareLarge
 			
 		List<Double> factorsER = new ArrayList<Double>(subs.size());
 		List<Double> factorsEL = new ArrayList<Double>(subs.size());
-				
+		List<Double> maxFactors = new ArrayList<Double>(subs.size());
+
 		double baselineER = size(data, NullModel.ER, false);
 		double baselineEL = size(data, NullModel.EDGELIST, false);
 		
@@ -158,6 +159,8 @@ public class CompareLarge
 			
 			Global.log().info("Analysing sub ("+ (i+1) +" of " + subs.size() + "): " + sub);
 			Global.log().info("freq: " + frequencies.get(i));
+			
+			double max = Double.NEGATIVE_INFINITY;
 
 			Global.log().info("null model: ER");
 			{
@@ -168,6 +171,8 @@ public class CompareLarge
 				Global.log().info("ER baseline: " + baselineER);
 				Global.log().info("ER motif code: " + sizeER);
 				Global.log().info("ER factor: " + factorER);
+				
+				max = Math.max(max, factorER);
 			}
 
 			Global.log().info("null model: EL");
@@ -179,13 +184,16 @@ public class CompareLarge
 				Global.log().info("EL baseline: " + baselineEL);
 				Global.log().info("EL motif code: " + sizeEL);
 				Global.log().info("EL factor: " + factorEL);
+				
+				max = Math.max(max, factorEL);
 			}
 
+			maxFactors.add(max);
 		}
 		
 		Comparator<Double> comp = Functions.natural();
 		org.lilian.util.Functions.sort(
-				factorsEL, Collections.reverseOrder(comp), 
+				maxFactors, Collections.reverseOrder(comp), 
 				(List) frequencies,
 				(List) factorsER, 
 				(List) factorsEL, 
