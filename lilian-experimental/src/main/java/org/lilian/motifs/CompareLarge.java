@@ -90,7 +90,7 @@ public class CompareLarge
 	@In(name="motif max size", description="maximum motif size (inclusive!)")
 	public int motifMaxSize;
 		
-	@In(name="data")
+	@In(name="data", print=false)
 	public DGraph<String> data;
 	
 	@In(name="data name")
