@@ -10,8 +10,8 @@ import static java.lang.Math.min;
 import static org.lilian.util.Functions.log2;
 import static org.nodes.Graphs.degrees;
 import static org.nodes.compression.Functions.prefix;
-import static org.nodes.models.USequenceModel.CIMethod;
-import static org.nodes.models.USequenceModel.CIType;
+import static org.nodes.models.USequenceEstimator.CIMethod;
+import static org.nodes.models.USequenceEstimator.CIType;
 import static org.nodes.motifs.MotifCompressor.MOTIF_SYMBOL;
 import static org.nodes.motifs.MotifCompressor.exDegree;
 
@@ -56,8 +56,15 @@ import org.nodes.compression.BinomialCompressor;
 import org.nodes.compression.EdgeListCompressor;
 import org.nodes.compression.NeighborListCompressor;
 import org.nodes.data.Data;
-import org.nodes.models.DSequenceModel;
-import org.nodes.models.USequenceModel;
+import org.nodes.models.DSequenceEstimator;
+import org.nodes.models.DegreeSequenceModel;
+import org.nodes.models.DegreeSequenceModel.Margin;
+import org.nodes.models.DegreeSequenceModel.Prior;
+import org.nodes.models.ERSimpleModel;
+import org.nodes.models.EdgeListModel;
+import org.nodes.models.MotifModel;
+import org.nodes.models.MotifSearchModel;
+import org.nodes.models.USequenceEstimator;
 import org.nodes.motifs.DPlainMotifExtractor;
 import org.nodes.motifs.MotifCompressor;
 import org.nodes.motifs.UPlainMotifExtractor;
@@ -121,9 +128,12 @@ public class Compare
 	@In(name="simplify", description="Whether to remove multiple edges and self-loops.")
 	public boolean simplify;
 	
+	@In(name="use search")
+	public boolean search;
+	
 	public static final int NUM_THREADS = Runtime.getRuntime().availableProcessors();;
 	
-	public static enum NullModel{ER, EDGELIST}
+	public static enum NullModel{ER, EDGELIST, BETA}
 	
 	boolean directed;
 
@@ -206,15 +216,10 @@ public class Compare
 		List<Double> factorsBeta = new ArrayList<Double>(subs.size());
 		List<Double> maxFactors   =  new ArrayList<Double>(subs.size());
 				
-		double baselineER = size(data, NullModel.ER, false);
-		double baselineEL = size(data, NullModel.EDGELIST, false);
-		Pair<LogNormalCI, Double> pairBeta = sizeBeta(data);
-		double baselineBeta = pairBeta.first().lowerBound(betaAlpha) + pairBeta.second();
-		
-		System.out.println("Difference between estimate and lowerbound: " + (pairBeta.first().mlMean() - pairBeta.first().lowerBound(betaAlpha)));
-		System.out.println("Cost of storing degrees: " + pairBeta.second());
-
-		
+		double baselineER = new ERSimpleModel(true).codelength(data);
+		double baselineEL = new EdgeListModel(true).codelength(data);
+		double baselineBeta = new DegreeSequenceModel(betaIterations, betaAlpha, Prior.ML, Margin.LOWERBOUND).codelength(data);
+				
 		for(int i : series(subs.size()))
 		{
 			Graph<String> sub = subs.get(i);
@@ -227,7 +232,9 @@ public class Compare
 
 			Global.log().info("null model: ER");
 			{
-				double sizeER = size(data, sub, occs, NullModel.ER, resets); 
+				double sizeER = search ?  
+					MotifSearchModel.sizeER(data, sub, occs, resets):
+					MotifModel.sizeER(data, sub, occs,resets) ; 
 				double factorER = baselineER - sizeER;
 				factorsER.add(factorER);
 				
@@ -240,7 +247,9 @@ public class Compare
 
 			Global.log().info("null model: EL");
 			{
-				double sizeEL = size(data, sub, occs, NullModel.EDGELIST, resets); 
+				double sizeEL = search ? 
+					MotifSearchModel.sizeEL(data, sub, occs,  resets):
+					MotifModel.sizeEL(data, sub, occs,  resets);
 				double factorEL = baselineEL - sizeEL;
 				factorsEL.add(factorEL);
 				
@@ -253,11 +262,10 @@ public class Compare
 
 			Global.log().info("null model: Beta");
 			{
-				Pair<LogNormalCI, Double> pair = sizeBeta(data, sub, occs, resets); 
-				
-				System.out.println("Difference between estimate and upperbound: " + (pair.first().upperBound(betaAlpha) - pair.first().mlMean()));
-				
-				double sizeBeta = pair.first().upperBound(betaAlpha) + pair.second();
+
+				double sizeBeta = search ? 
+						MotifSearchModel.sizeBeta(data, sub, occs, resets, betaIterations, betaAlpha) :
+						MotifModel.sizeBeta(data, sub, occs, resets, betaIterations, betaAlpha);	
 				double factorBeta = baselineBeta - sizeBeta;
 				factorsBeta.add(factorBeta);
 			 
@@ -311,297 +319,5 @@ public class Compare
 		{
 			System.out.println("Failed to run plot script. " + e);
 		}
-	}
-
-	public static double size(Graph<String> graph, NullModel nullModel, boolean withPrior)
-	{
-		boolean directed = (graph instanceof DGraph<?>); 
-		
-		switch (nullModel) {
-		case ER:
-			return directed ?
-				 BinomialCompressor.directed((DGraph<String>)graph, true, withPrior) :
-				 BinomialCompressor.undirected((UGraph<String>)graph, true, withPrior);
-		case EDGELIST:
-			return directed ?
-				EdgeListCompressor.directed((DGraph<String>) graph, withPrior) :	
-				EdgeListCompressor.undirected((UGraph<String>) graph, withPrior);
-		default:
-			throw new IllegalStateException("Null model not recognized");
-		}
-	}
-	
-	public Pair<LogNormalCI, Double> sizeBeta(Graph<String> data)
-	{
-		Global.log().info("Computing beta model code length");
-		Global.log().info("-- beta model: using " + betaIterations + " iterations");
-
-		LogNormalCI ci;		
-		double rest;
-		
-		if(directed)
-		{
-			DSequenceModel<String> model = new DSequenceModel<String>((DGraph<String>)data);
-			model.nonuniform(betaIterations, NUM_THREADS);
-
-			ci =  new LogNormalCI(model.logSamples(), BS_SAMPLES);
-			rest = storeSequenceML(Graphs.inDegrees((DGraph<?>)data)) + storeSequenceML(Graphs.outDegrees((DGraph<?>)data));
-			
-			System.out.println("Difference between ML and KT " + (storeSequence(Graphs.inDegrees((DGraph<?>)data)) + storeSequence(Graphs.outDegrees((DGraph<?>)data)) - storeSequenceML(Graphs.inDegrees((DGraph<?>)data)) - storeSequenceML(Graphs.outDegrees((DGraph<?>)data))) );
-		} else 
-		{
-			USequenceModel<String> model = new USequenceModel<String>(data);
-			model.nonuniform(betaIterations, NUM_THREADS);
-			
-			ci =  new LogNormalCI(model.logSamples(), BS_SAMPLES);
-			rest = storeSequenceML(degrees(data));
-		
-			System.out.println("Difference between ML and KT " + (storeSequence(degrees(data)) - storeSequenceML(degrees(data))));
-		}
-		
-		return Pair.p(ci, rest);
-	}
-	
-	public static double size(Graph<String> graph, Graph<String> sub,
-			List<List<Integer>> occurrences, NullModel nullModel, boolean resetWiring)
-	{
-		boolean directed = (graph instanceof DGraph<?>); 
-
-		List<List<Integer>> wiring = new ArrayList<List<Integer>>();
-		Graph<String> subbed;
-		if(directed)
-			subbed = MotifCompressor.subbedGraph((DGraph<String>) graph, (DGraph<String>)sub, occurrences, wiring);
-		else
-			subbed = MotifCompressor.subbedGraph((UGraph<String>) graph, (UGraph<String>)sub, occurrences, wiring);
-		
-		FrequencyModel<Pair<Integer, Integer>> removals = new FrequencyModel<Pair<Integer,Integer>>();
-		
-		if(isSimpleGraphCode(nullModel))
-		{
-			if(directed)
-				subbed = Graphs.toSimpleDGraph((DGraph<String>)subbed, removals);
-			else
-				subbed = Graphs.toSimpleUGraph((UGraph<String>)subbed, removals);
-		}
-		
-		FrequencyModel<String> bits = new FrequencyModel<String>();
-		
-		bits.add("sub", size(sub, nullModel, true));
-
-		bits.add("subbed", size(subbed, nullModel, true));
-		
-		// * Any node pairs with multiple links
-		if(isSimpleGraphCode(nullModel))
-		{
-			List<Integer> additions = new ArrayList<Integer>();
-			for(Link<String> link : subbed.links())
-				if(MOTIF_SYMBOL.equals(link.first().label()) || MOTIF_SYMBOL.equals(link.second().label()))
-				{
-					int i = link.first().index(), j = link.second().index();
-					
-					Pair<Integer, Integer> pair = 
-							directed ? Pair.p(i, j) : Pair.p(min(i,  j), max(i, j));
-				
-					additions.add((int)removals.frequency(pair));
-				}
-			
-			
-			bits.add("multiple-edges", prefix(additions.isEmpty() ? 0 : Functions.max(additions)));
-			bits.add("multiple-edges", OnlineModel.storeSequence(additions)); 
-		}
-		
-		// * Store the rewiring information
-		bits.add("wiring", wiringBits(sub, wiring, resetWiring));
-		
-		// * Store the insertion order, to preserve the precise ordering of the
-		//   nodes in the data 
-		bits.add("insertions", log2Factorial(graph.size()) - log2Factorial(subbed.size()));
-
-//		System.out.println("bits: ");
-//		bits.print(System.out);
-		
-		return bits.total();
-	}
-	
-	/**
-	 * 
-	 * @param graph
-	 * @param sub
-	 * @param occurrences
-	 * @param resetWiring
-	 * @return A pair containing a logNormalCI model over the uncertain element of 
-	 * the code  a double representing the rest. If p is the resulting value, 
-	 * then p.first().logMean() + p.second() is the best estimate of the total 
-	 * code length. 
-	 */
-	public Pair<LogNormalCI, Double> sizeBeta(Graph<String> graph, Graph<String> sub,
-			List<List<Integer>> occurrences, boolean resetWiring)
-	{		
-		List<List<Integer>> wiring = new ArrayList<List<Integer>>();
-		Graph<String> subbed;
-		if(directed)
-			subbed = MotifCompressor.subbedGraph((DGraph<String>) graph, (DGraph<String>)sub, occurrences, wiring);
-		else
-			subbed = MotifCompressor.subbedGraph((UGraph<String>) graph, (UGraph<String>)sub, occurrences, wiring);
-				
-		// * the beta model can only store simple graphs, so we translate subbed
-		//   to a simple graph and store the multiple edges separately 
-		FrequencyModel<Pair<Integer, Integer>> removals = new FrequencyModel<Pair<Integer,Integer>>();
-		if(directed)
-			subbed = Graphs.toSimpleDGraph((DGraph<String>)subbed, removals);
-		else
-			subbed = Graphs.toSimpleUGraph((UGraph<String>)subbed, removals);
-		
-		// * The estimated cost of storing the structure of the motif and the 
-		//   structure of the subbed graph. 
-		List<Double> samples = new ArrayList<Double>(betaIterations);
-		if(directed)
-		{
-			DSequenceModel<String> motifModel = new DSequenceModel<String>((DGraph<String>)sub);
-			DSequenceModel<String> subbedModel = new DSequenceModel<String>((DGraph<String>)subbed);
-			motifModel.nonuniform(betaIterations, NUM_THREADS);
-			subbedModel.nonuniform(betaIterations, NUM_THREADS);
-			
-			for(int i : series(betaIterations))
-				samples.add(motifModel.logSamples().get(i) + subbedModel.logSamples().get(i));
-		} else
-		{
-			USequenceModel<String> motifModel = new USequenceModel<String>((UGraph<String>)sub);
-			USequenceModel<String> subbedModel = new USequenceModel<String>((UGraph<String>)subbed);
-			motifModel.nonuniform(betaIterations, NUM_THREADS);
-			subbedModel.nonuniform(betaIterations, NUM_THREADS);
-			
-			for(int i : series(betaIterations))
-				samples.add(motifModel.logSamples().get(i) + subbedModel.logSamples().get(i));
-		}
-		
-		LogNormalCI ci = new LogNormalCI(samples, BS_SAMPLES);
-		
-		// * The rest of the graph (for which we can compute the code length 
-		//   directly) 
-		FrequencyModel<String> rest = new FrequencyModel<String>();
-		
-		// * the size of the motif
-		rest.add("sub", prefix(sub.size()));
-		// * degree sequence of the motif
-		if(directed)
-			rest.add("sub", degreesDSize(DSequenceModel.sequence((DGraph<String>)sub)));
-		else
-			rest.add("sub", degreesUSize(Graphs.degrees(sub)));
-		
-		// * size of the subbed graph
-		rest.add("subbed", prefix(subbed.size()));
-		// * degree sequence of subbed
-		if(directed)
-			rest.add("subbed", degreesDSize(DSequenceModel.sequence((DGraph<String>)subbed)));
-		else
-			rest.add("subbed", degreesUSize(Graphs.degrees(subbed)));
-		
-		// * Store the labels
-		rest.add("labels", log2Choose(occurrences.size(), subbed.size())); 
-		
-		// * Any node pairs with multiple links
-		List<Integer> additions = new ArrayList<Integer>();
-		for(Link<String> link : subbed.links())
-			if(MOTIF_SYMBOL.equals(link.first().label()) || MOTIF_SYMBOL.equals(link.second().label()))
-			{
-				int i = link.first().index(), j = link.second().index();
-				
-				Pair<Integer, Integer> pair = 
-						directed ? Pair.p(i, j) : Pair.p(min(i,  j), max(i, j));
-			
-				additions.add((int)removals.frequency(pair));
-			}
-		
-		rest.add("multi-edges", prefix(additions.isEmpty() ? 0 : Functions.max(additions)));
-		rest.add("multi-edges", OnlineModel.storeSequence(additions)); 
-				
-		// * Store the rewiring information
-		rest.add("wiring", wiringBits(sub, wiring, resetWiring));
-		
-		// * Store the insertion order, to preserve the precise ordering of the
-		//   nodes in the data 
-		rest.add("insertions", log2Factorial(graph.size()) - log2Factorial(subbed.size()));
-		
-//		System.out.println(ci.mlMean() + " " + ci.upperBound(betaAlpha));
-//		System.out.println("rest: ");
-//		rest.print(System.out);
-		
-		return new Pair<LogNormalCI, Double>(ci, rest.total());
-	}
-	
-	public double degreesDSize(List<DSequenceModel.D> degrees)
-	{
-		double sumKT = 0.0;
-		
-		int maxIn = Integer.MIN_VALUE, maxOut = Integer.MIN_VALUE;
-		for(DSequenceModel.D degree : degrees)
-		{
-			maxIn = Math.max(maxIn, degree.in());
-			maxOut = Math.max(maxOut, degree.out());
-		}
-		
-		sumKT += org.nodes.compression.Functions.prefix(maxIn);
-		sumKT += org.nodes.compression.Functions.prefix(maxOut);
-		
-		OnlineModel<Integer> modelIn = new OnlineModel<Integer>(Series.series(maxIn + 1)); 
-		OnlineModel<Integer> modelOut = new OnlineModel<Integer>(Series.series(maxOut + 1)); 
-		
-		for(DSequenceModel.D degree : degrees)
-		{
-			sumKT += - Functions.log2(modelIn.observe(degree.in()));
-			sumKT += - Functions.log2(modelOut.observe(degree.out()));
-		}
-		
-		return sumKT;
-	}
-	
-	public double degreesUSize(List<Integer> degrees)
-	{
-		double sumKT = 0.0;
-		
-		int max = Integer.MIN_VALUE;
-		for(int degree : degrees)
-			max = Math.max(max, degree);
-		
-		sumKT += org.nodes.compression.Functions.prefix(max);
-		
-		OnlineModel<Integer> model = new OnlineModel<Integer>(Series.series(max + 1)); 
-		
-		for(int degree : degrees)
-			sumKT += - Functions.log2(model.observe(degree));
-		
-		return sumKT;
-	}
-	
-	public static double wiringBits(Graph<String> sub, List<List<Integer>> wiring,
-			boolean reset)
-	{
-		OnlineModel<Integer> om = new OnlineModel<Integer>(Series.series(sub
-				.size()));
-
-		double bits = 0.0;
-		for (List<Integer> motifWires : wiring)
-		{
-			if (reset)
-				om = new OnlineModel<Integer>(Series.series(sub.size()));
-
-			for (int wire : motifWires)
-				bits += -log2(om.observe(wire));
-		}
-		
-		return bits;
-	}
-	
-	public static boolean isSimpleGraphCode(NullModel nm)
-	{
-		switch(nm){
-			case EDGELIST: 
-				return false;
-			case ER:
-				return true;
-		}
-		
-		return false;
 	}
 }

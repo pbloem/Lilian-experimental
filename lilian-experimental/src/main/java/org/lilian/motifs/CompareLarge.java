@@ -1,14 +1,9 @@
 package org.lilian.motifs;
 
 import static org.nodes.util.Functions.log2;
-import static org.nodes.util.Functions.log2Choose;
-import static org.nodes.util.Functions.log2Factorial;
-import static org.nodes.util.Functions.logFactorial;
-import static org.nodes.util.Functions.max;
 import static org.nodes.util.Series.series;
-import static org.nodes.compression.Functions.prefix;
-import static org.nodes.models.USequenceModel.CIMethod;
-import static org.nodes.models.USequenceModel.CIType;
+import static org.nodes.models.USequenceEstimator.CIMethod;
+import static org.nodes.models.USequenceEstimator.CIType;
 import static org.nodes.motifs.MotifCompressor.exDegree;
 
 import java.io.BufferedWriter;
@@ -20,13 +15,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.data2semantics.platform.Global;
@@ -43,8 +36,6 @@ import org.nodes.DLink;
 import org.nodes.DNode;
 import org.nodes.Graph;
 import org.nodes.Graphs;
-import org.nodes.Link;
-import org.nodes.Node;
 import org.nodes.Subgraph;
 import org.nodes.TGraph;
 import org.nodes.TLink;
@@ -56,20 +47,22 @@ import org.nodes.compression.BinomialCompressor;
 import org.nodes.compression.EdgeListCompressor;
 import org.nodes.compression.NeighborListCompressor;
 import org.nodes.data.Data;
-import org.nodes.models.DSequenceModel;
-import org.nodes.models.USequenceModel;
+import org.nodes.models.DSequenceEstimator;
+import org.nodes.models.ERSimpleModel;
+import org.nodes.models.EdgeListModel;
+import org.nodes.models.MotifModel;
+import org.nodes.models.MotifSearchModel;
+import org.nodes.models.USequenceEstimator;
 import org.nodes.motifs.DPlainMotifExtractor;
 import org.nodes.motifs.MotifCompressor;
 import org.nodes.motifs.UPlainMotifExtractor;
 import org.nodes.random.RandomGraphs;
 import org.nodes.random.SimpleSubgraphGenerator;
-import org.nodes.util.FrequencyModel;
 import org.nodes.util.Functions;
 import org.nodes.util.Generator;
 import org.nodes.util.Generators;
 import org.nodes.util.OnlineModel;
 import org.nodes.util.Order;
-import org.nodes.util.Pair;
 import org.nodes.util.Series;
 import org.nodes.util.bootstrap.BCaCI;
 import org.nodes.util.bootstrap.LogBCaCI;
@@ -108,9 +101,10 @@ public class CompareLarge
 	
 	@In(name="minimum frequency")
 	public int minFreq;
+	
+	@In(name="use search")
+	public boolean search;
 		
-	private boolean directed;
-
 	private boolean resets = true;
 	
 	@Main(print=false)
@@ -149,8 +143,8 @@ public class CompareLarge
 		List<Double> factorsEL = new ArrayList<Double>(subs.size());
 		List<Double> maxFactors = new ArrayList<Double>(subs.size());
 
-		double baselineER = size(data, NullModel.ER, false);
-		double baselineEL = size(data, NullModel.EDGELIST, false);
+		double baselineER = (new ERSimpleModel(false)).codelength(data);
+		double baselineEL = (new EdgeListModel(false)).codelength(data);
 		
 		for(int i : series(subs.size()))
 		{
@@ -164,7 +158,7 @@ public class CompareLarge
 
 			Global.log().info("null model: ER");
 			{
-				double sizeER = size(data, sub, occs, NullModel.ER, resets); 
+				double sizeER = search ? MotifSearchModel.sizeER(data, sub, occs,  resets) : MotifModel.sizeER(data, sub, occs,  resets); 
 				double factorER = baselineER - sizeER;
 				factorsER.add(factorER);
 				 
@@ -177,7 +171,7 @@ public class CompareLarge
 
 			Global.log().info("null model: EL");
 			{
-				double sizeEL = size(data, sub, occs, NullModel.EDGELIST, resets); 
+				double sizeEL = search ? MotifSearchModel.sizeEL(data, sub, occs, resets) : MotifModel.sizeEL(data, sub, occs, resets); 
 				double factorEL = baselineEL - sizeEL;
 				factorsEL.add(factorEL);
 			 
@@ -193,7 +187,7 @@ public class CompareLarge
 		
 		Comparator<Double> comp = Functions.natural();
 		org.lilian.util.Functions.sort(
-				maxFactors, Collections.reverseOrder(comp), 
+				factorsEL, Collections.reverseOrder(comp), 
 				(List) frequencies,
 				(List) factorsER, 
 				(List) factorsEL, 
@@ -229,223 +223,5 @@ public class CompareLarge
 		{
 			System.out.println("Failed to run plot script. " + e);
 		}
-	}
-
-	public static double size(DGraph<String> graph, NullModel nullModel, boolean withPrior)
-	{		
-		switch (nullModel) {
-		case ER:
-			return BinomialCompressor.directed((DGraph<String>)graph, true, withPrior);
-		case EDGELIST:
-			return EdgeListCompressor.directed((DGraph<String>) graph, withPrior);	
-		default:
-			throw new IllegalStateException("Null model not recognized");
-		}
-	}
-	
-	public static double size(DGraph<String> graph, DGraph<String> sub,
-			List<List<Integer>> occurrences, NullModel nullModel, boolean resetWiring)
-	{		
-		FrequencyModel<String> bits = new FrequencyModel<String>();
-		
-		bits.add("sub", size(sub, nullModel, true));
-		if(nullModel == NullModel.ER)  
-			sizeSubbedER(graph, sub, occurrences, bits);
-		else
-			sizeSubbedEL(graph, sub, occurrences, bits);
-		
-		// * Store the rewiring information
-		bits.add("wiring", wiringBits(graph, sub, occurrences, resetWiring));
-		
-		// * Store the insertion order, to preserve the precise ordering of the
-		//   nodes in the data
-		int subbedSize = graph.size() - (sub.size() - 1) * occurrences.size(); 
-		bits.add("insertions", log2Factorial(graph.size()) - log2Factorial(subbedSize));
-
-//		System.out.println("bits (fast):");
-//		bits.print(System.out);
-		
-		return bits.total();
-	}
-	
-	private static void sizeSubbedEL(DGraph<String> graph, DGraph<String> sub,
-			List<List<Integer>> occurrences, FrequencyModel<String> bits)
-	{
-		// - This list holds the index of the occurrence the node belongs to
-		List<Integer> inOccurrence = new ArrayList<Integer>(graph.size());
-		for (int i : Series.series(graph.size()))
-			inOccurrence.add(null);
-
-		for (int occIndex : Series.series(occurrences.size()))
-			for (Integer i : occurrences.get(occIndex))
-				inOccurrence.set(i, occIndex);
-
-		OnlineModel<Integer> source = new OnlineModel<Integer>(Collections.EMPTY_LIST);
-		OnlineModel<Integer> target = new OnlineModel<Integer>(Collections.EMPTY_LIST);
-
-		// - observe all symbols
-		for (Node<String> node : graph.nodes())
-			if (inOccurrence.get(node.index()) == null)
-			{
-				source.add(node.index(), 0.0);
-				target.add(node.index(), 0.0);
-			}
-
-		// - negative numbers represent symbol nodes
-		for (int i : Series.series(1, occurrences.size() + 1))
-		{
-			source.add(-i, 0.0);
-			target.add(-i, 0.0);
-		}
-
-		// * count the number of links in the subbed graph
-		int subbedNumLinks = graph.numLinks() - sub.numLinks() * occurrences.size();
-
-		// * Size of the subbed graph
-		bits.add("subbed", prefix(graph.size() - (sub.size() - 1) * occurrences.size()));
-		// * Num links in the subbed graph
-		bits.add("subbed",  prefix(subbedNumLinks));
-
-		for (Link<String> link : graph.links())
-		{
-			Integer firstOcc = inOccurrence.get(link.first().index());
-			Integer secondOcc = inOccurrence.get(link.second().index());
-
-			//* If link exists in subbed graph
-			if ((firstOcc == null && secondOcc == null)
-					|| firstOcc != secondOcc)
-			{
-				int first = link.first().index();
-				int second = link.second().index();
-
-				first = inOccurrence.get(first) == null ? first
-						: -(inOccurrence.get(first) + 1);
-				second = inOccurrence.get(second) == null ? second
-						: -(inOccurrence.get(second) + 1);
-
-				double p = source.observe(first) * target.observe(second);
-				bits.add("subbed",  -Functions.log2(p));
-			}
-		}
-
-		bits.add("subbed", - logFactorial(subbedNumLinks, 2.0));
-	}
-
-	private static void sizeSubbedER(DGraph<String> graph, Graph<String> sub,
-			List<List<Integer>> occurrences, FrequencyModel<String> bits)
-	{
-		int subbedSize = graph.size() - (sub.size() - 1) * occurrences.size();
-		int subbedLinks = 0;
-		
-		// * records which node is in which occurrence (if any)
-		Map<Integer, Integer> nodeInOccurrence = new HashMap<Integer, Integer>();
-		
-		for(int occurrenceIndex : series(occurrences.size()))
-			for(int nodeIndex : occurrences.get(occurrenceIndex))
-				nodeInOccurrence.put(nodeIndex, occurrenceIndex);
-		
-		FrequencyModel<Pair<Integer, Integer>> nodeToInstance = 
-				new FrequencyModel<Pair<Integer,Integer>>();
-		FrequencyModel<Pair<Integer, Integer>> instanceToNode = 
-				new FrequencyModel<Pair<Integer,Integer>>();
-		FrequencyModel<Pair<Integer, Integer>> instanceToInstance = 
-				new FrequencyModel<Pair<Integer,Integer>>();
-		
-		for(DLink<String> link : graph.links())
-		{
-			int fromInstance = nodeInOccurrence.get(link.from().index()) == null ? -1 : nodeInOccurrence.get(link.from().index()); 
-			int toInstance =   nodeInOccurrence.get(link.to().index()) == null ? -1 : nodeInOccurrence.get(link.to().index()); 
-		
-			if(fromInstance == -1 && toInstance == -1)
-			{
-				subbedLinks++;
-				continue;
-			}
-			
-			if(fromInstance == -1)
-			{
-				Pair<Integer, Integer> n2i = Pair.p(link.from().index(), toInstance);
-				if(nodeToInstance.frequency(n2i) == 0.0)
-					subbedLinks++;
-				nodeToInstance.add(n2i);
-				continue;
-			}
-			
-			if(toInstance == -1)
-			{
-				Pair<Integer, Integer> i2n = Pair.p(fromInstance, link.to().index());
-				if(instanceToNode.frequency(i2n) == 0.0)
-					subbedLinks++;
-				instanceToNode.add(i2n);
-				continue;
-			}
-			
-			if(fromInstance != toInstance)
-			{
-				Pair<Integer, Integer> i2i = Pair.p(fromInstance, toInstance);
-				if(instanceToInstance.frequency(i2i) == 0.0)
-					subbedLinks++;
-				instanceToInstance.add(i2i);
-			}
-		}
-		
-		// * size of the subbed graph under the binomial compressor
-		double n = subbedSize;
-		double t = n * n - n;
-		
-		bits.add("subbed", prefix((int)n) + Functions.log2(t) + log2Choose(subbedLinks, t));
-		
-		List<Integer> additions = new ArrayList<Integer>(graph.size());
-		for(Pair<Integer, Integer> token : nodeToInstance.tokens())
-			additions.add((int)nodeToInstance.frequency(token) - 1);
-		for(Pair<Integer, Integer> token : instanceToNode.tokens())
-			additions.add((int)instanceToNode.frequency(token) - 1);
-		for(Pair<Integer, Integer> token : instanceToInstance.tokens())
-			additions.add((int)instanceToInstance.frequency(token) - 1);
-		
-		bits.add("multiple-edges", prefix(additions.isEmpty() ? 0 : max(additions)));
-		bits.add("multiple-edges", OnlineModel.storeSequence(additions)); 
-	}
-
-	public static double wiringBits(DGraph<String> graph, DGraph<String> sub, List<List<Integer>> occurrences,
-			boolean reset)
-	{
-		OnlineModel<Integer> om = new OnlineModel<Integer>(Series.series(sub.size()));
-		
-		double wiringBits = 0.0;
-		
-		for (List<Integer> occurrence : occurrences)
-		{			
-			if(reset)
-				om = new OnlineModel<Integer>(Series.series(sub.size()));
-			
-			// * The index of the node within the occurrence
-			for (int indexInSubgraph : series(occurrence.size()))
-			{
-				DNode<String> node = graph.get(occurrence.get(indexInSubgraph));
-				
-				for(DLink<String> link : node.links())
-				{
-					DNode<String> neighbor = link.other(node);
-					
-					if(! occurrence.contains(neighbor.index()))
-						wiringBits += - log2(om.observe(indexInSubgraph));
-				}
-			}
-		}	
-		
-		return wiringBits;
-	}
-	
-	public static boolean isSimpleGraphCode(NullModel nm)
-	{
-		switch(nm){
-			case EDGELIST: 
-				return false;
-			case ER:
-				return true;
-		}
-		
-		return false;
 	}
 }

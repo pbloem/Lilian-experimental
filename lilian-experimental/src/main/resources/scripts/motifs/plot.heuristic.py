@@ -47,3 +47,11 @@ clean(ax)
 p.colorbar()
 
 p.savefig('heuristic.png')
+
+p.figure()
+
+data = n.genfromtxt('cutoffs.csv', delimiter=',')
+p.scatter(data[:,0], data[:,1], linewidth=0, alpha=0.05)
+
+p.ylim([0, 500])
+p.savefig('cutoffs.png')

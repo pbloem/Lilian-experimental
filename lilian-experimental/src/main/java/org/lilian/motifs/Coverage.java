@@ -4,8 +4,8 @@ import static org.nodes.util.Functions.log2;
 import static org.nodes.util.Functions.log2Sum;
 import static org.nodes.util.LogNum.fromDouble;
 import static org.nodes.util.Series.series;
-import static org.nodes.models.USequenceModel.CIMethod;
-import static org.nodes.models.USequenceModel.CIType;
+import static org.nodes.models.USequenceEstimator.CIMethod;
+import static org.nodes.models.USequenceEstimator.CIType;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -34,8 +34,8 @@ import org.nodes.Link;
 import org.nodes.MapUTGraph;
 import org.nodes.Node;
 import org.nodes.UGraph;
-import org.nodes.models.DSequenceModel;
-import org.nodes.models.USequenceModel;
+import org.nodes.models.DSequenceEstimator;
+import org.nodes.models.USequenceEstimator;
 import org.nodes.random.RandomGraphs;
 import org.nodes.util.Functions;
 import org.nodes.util.LogNum;
@@ -90,7 +90,7 @@ public class Coverage
 			
 			if(directed)
 			{
-				DSequenceModel<String> model = new DSequenceModel<String>((DGraph<String>)data);
+				DSequenceEstimator<String> model = new DSequenceEstimator<String>((DGraph<String>)data);
 				for(int i : series(singleSample))
 				{
 					model.nonuniform();
@@ -103,7 +103,7 @@ public class Coverage
 
 			} else
 			{
-				USequenceModel<String> model = new USequenceModel<String>((UGraph<String>)data);
+				USequenceEstimator<String> model = new USequenceEstimator<String>((UGraph<String>)data);
 				for(int i : series(singleSample))
 				{
 					model.nonuniform();
@@ -136,9 +136,9 @@ public class Coverage
 				List<Double> logSamples;
 				
 				if(directed)
-					logSamples = (new DSequenceModel<String>((DGraph<String>)data, n)).logSamples();
+					logSamples = (new DSequenceEstimator<String>((DGraph<String>)data, n)).logSamples();
 				else
-					logSamples = (new USequenceModel<String>(data, n)).logSamples();
+					logSamples = (new USequenceEstimator<String>(data, n)).logSamples();
 								
 				LogNormalCI ci = new LogNormalCI(logSamples, 20000);
 		

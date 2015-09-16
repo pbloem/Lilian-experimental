@@ -33,6 +33,7 @@ import org.nodes.UTGraph;
 import org.nodes.algorithms.Nauty;
 import org.nodes.compression.BinomialCompressor;
 import org.nodes.data.Data;
+import org.nodes.models.MotifSearchModel;
 import org.nodes.motifs.UPlainMotifExtractor;
 import org.nodes.random.RandomGraphs;
 import org.nodes.util.FrequencyModel;
@@ -222,7 +223,7 @@ public class Synthetic
 				occurrences = Collections.emptyList();
 			
 			Global.log().info("Analysing sub: " + s);
-			double motifSize = Compare.size(graph, s, occurrences, NullModel.ER, true);
+			double motifSize = MotifSearchModel.sizeER(graph, s, occurrences, true);
 			Global.log().info("motif size: " + motifSize);
 			double factor = baseline - motifSize;
 			

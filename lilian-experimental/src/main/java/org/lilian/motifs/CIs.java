@@ -1,8 +1,8 @@
 package org.lilian.motifs;
 
 import static org.nodes.util.Series.series;
-import static org.nodes.models.USequenceModel.CIMethod;
-import static org.nodes.models.USequenceModel.CIType;
+import static org.nodes.models.USequenceEstimator.CIMethod;
+import static org.nodes.models.USequenceEstimator.CIType;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -25,7 +25,7 @@ import org.nodes.Link;
 import org.nodes.MapUTGraph;
 import org.nodes.Node;
 import org.nodes.UGraph;
-import org.nodes.models.USequenceModel;
+import org.nodes.models.USequenceEstimator;
 import org.nodes.random.RandomGraphs;
 import org.nodes.util.Pair;
 import org.nodes.util.Series;
@@ -70,7 +70,7 @@ public class CIs
 		File file = new File(Global.getWorkingDir(), "single-sample.csv");
 		BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 		
-		USequenceModel<String> model = new USequenceModel<String>(data);
+		USequenceEstimator<String> model = new USequenceEstimator<String>(data);
 		
 		for(int i : series(singleSample))
 		{
@@ -97,10 +97,10 @@ public class CIs
 		
 		for(int n : covSizes)
 		{
-			FrequencyModel<CIMethod> hits = new FrequencyModel<USequenceModel.CIMethod>();
+			FrequencyModel<CIMethod> hits = new FrequencyModel<USequenceEstimator.CIMethod>();
 			for(int i : series(covSample))
 			{
-				model = new USequenceModel<String>(data, n);
+				model = new USequenceEstimator<String>(data, n);
 				
 				for(CIMethod method : CIMethod.values())
 				{
@@ -133,7 +133,7 @@ public class CIs
 		file = new File(Global.getWorkingDir(), "convergence.csv");
 		writer = new BufferedWriter(new FileWriter(file));
 		
-		model = new USequenceModel<String>(data);
+		model = new USequenceEstimator<String>(data);
 
 		for(int samples : series(3, bigSample+1))
 		{
