@@ -33,6 +33,8 @@ import org.nodes.UTGraph;
 import org.nodes.algorithms.Nauty;
 import org.nodes.compression.BinomialCompressor;
 import org.nodes.data.Data;
+import org.nodes.models.ERSimpleModel;
+import org.nodes.models.MotifModel;
 import org.nodes.models.MotifSearchModel;
 import org.nodes.motifs.UPlainMotifExtractor;
 import org.nodes.random.RandomGraphs;
@@ -210,11 +212,11 @@ public class Synthetic
 		// * Perform the motif search
 		UPlainMotifExtractor<String> ex = new UPlainMotifExtractor<String>(graph, motifSamples, nPrime);
 		
-		double baseline = BinomialCompressor.undirected(graph, true);
+		double baseline = new ERSimpleModel(false).codelength(graph);
 		Global.log().info("baseline " + baseline);
 		
-		int nn = graph.size(), nl = graph.numLinks();
-		Global.log().info("choose: " + log2Choose(nl, (nn*nn-nn)/2 ));
+//		int nn = graph.size(), nl = graph.numLinks();
+//		Global.log().info("choose: " + log2Choose(nl, (nn*nn-nn)/2 ));
 		
 		for(UGraph<String> s : subs)
 		{
