@@ -128,8 +128,8 @@ public class Compare
 	@In(name="simplify", description="Whether to remove multiple edges and self-loops.")
 	public boolean simplify;
 	
-	@In(name="use search")
-	public boolean search;
+	@In(name="beta search depth")
+	public int betaSearchDepth;
 	
 	public static final int NUM_THREADS = Runtime.getRuntime().availableProcessors();;
 	
@@ -232,9 +232,7 @@ public class Compare
 
 			Global.log().info("null model: ER");
 			{
-				double sizeER = search ?  
-					MotifSearchModel.sizeER(data, sub, occs, resets):
-					MotifModel.sizeER(data, sub, occs,resets) ; 
+				double sizeER = MotifSearchModel.sizeER(data, sub, occs, resets);
 				double factorER = baselineER - sizeER;
 				factorsER.add(factorER);
 				
@@ -247,9 +245,8 @@ public class Compare
 
 			Global.log().info("null model: EL");
 			{
-				double sizeEL = search ? 
-					MotifSearchModel.sizeEL(data, sub, occs,  resets):
-					MotifModel.sizeEL(data, sub, occs,  resets);
+				double sizeEL = MotifSearchModel.sizeEL(data, sub, occs,  resets);
+					
 				double factorEL = baselineEL - sizeEL;
 				factorsEL.add(factorEL);
 				
@@ -263,9 +260,8 @@ public class Compare
 			Global.log().info("null model: Beta");
 			{
 
-				double sizeBeta = search ? 
-						MotifSearchModel.sizeBeta(data, sub, occs, resets, betaIterations, betaAlpha) :
-						MotifModel.sizeBeta(data, sub, occs, resets, betaIterations, betaAlpha);	
+				double sizeBeta = 
+						MotifSearchModel.sizeBeta(data, sub, occs, resets, betaIterations, betaAlpha, betaSearchDepth);
 				double factorBeta = baselineBeta - sizeBeta;
 				factorsBeta.add(factorBeta);
 			 
