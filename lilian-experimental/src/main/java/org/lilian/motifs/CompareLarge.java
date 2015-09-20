@@ -101,6 +101,9 @@ public class CompareLarge
 	
 	@In(name="minimum frequency")
 	public int minFreq;
+
+	@In(name="search depth")
+	public int searchDepth;
 	
 	private boolean resets = true;
 	
@@ -133,9 +136,7 @@ public class CompareLarge
 			subs = new ArrayList<DGraph<String>>(subs.subList(0, maxMotifs));
 			frequencies = new ArrayList<Double>(frequencies.subList(0, maxMotifs));
 		}
-		
-		System.out.println(frequencies);
-			
+					
 		List<Double> factorsER = new ArrayList<Double>(subs.size());
 		List<Double> factorsEL = new ArrayList<Double>(subs.size());
 		List<Double> maxFactors = new ArrayList<Double>(subs.size());
@@ -155,7 +156,7 @@ public class CompareLarge
 
 			Global.log().info("null model: ER");
 			{
-				double sizeER = MotifSearchModel.sizeER(data, sub, occs, resets); 
+				double sizeER = MotifSearchModel.sizeER(data, sub, occs, resets, searchDepth); 
 				double factorER = baselineER - sizeER;
 				factorsER.add(factorER);
 				 
@@ -168,7 +169,7 @@ public class CompareLarge
 
 			Global.log().info("null model: EL");
 			{
-				double sizeEL = MotifSearchModel.sizeEL(data, sub, occs, resets); 
+				double sizeEL = MotifSearchModel.sizeEL(data, sub, occs, resets, searchDepth); 
 				double factorEL = baselineEL - sizeEL;
 				factorsEL.add(factorEL);
 			 
