@@ -102,9 +102,6 @@ public class CompareLarge
 	@In(name="minimum frequency")
 	public int minFreq;
 	
-	@In(name="search depth")
-	public int searchDepth;
-		
 	private boolean resets = true;
 	
 	@Main(print=false)
@@ -158,7 +155,7 @@ public class CompareLarge
 
 			Global.log().info("null model: ER");
 			{
-				double sizeER = MotifSearchModel.sizeER(data, sub, occs, resets, searchDepth); 
+				double sizeER = MotifSearchModel.sizeER(data, sub, occs, resets); 
 				double factorER = baselineER - sizeER;
 				factorsER.add(factorER);
 				 
@@ -171,7 +168,7 @@ public class CompareLarge
 
 			Global.log().info("null model: EL");
 			{
-				double sizeEL = MotifSearchModel.sizeEL(data, sub, occs, resets, searchDepth); 
+				double sizeEL = MotifSearchModel.sizeEL(data, sub, occs, resets); 
 				double factorEL = baselineEL - sizeEL;
 				factorsEL.add(factorEL);
 			 
