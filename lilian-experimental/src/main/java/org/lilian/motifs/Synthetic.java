@@ -110,7 +110,7 @@ public class Synthetic
 		try
 		{
 			org.data2semantics.platform.util.Functions.python(Global.getWorkingDir(), "motifs/plot.synthetic.py");
-		} catch (InterruptedException e)
+		} catch (Exception e)
 		{
 			System.out.println("Failed to run plot script. " + e);
 		}

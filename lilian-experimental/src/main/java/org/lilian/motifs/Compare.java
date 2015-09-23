@@ -311,7 +311,7 @@ public class Compare
 		try
 		{
 			org.data2semantics.platform.util.Functions.python(Global.getWorkingDir(), "motifs/plot.py");
-		} catch (InterruptedException e)
+		} catch (Exception e)
 		{
 			System.out.println("Failed to run plot script. " + e);
 		}

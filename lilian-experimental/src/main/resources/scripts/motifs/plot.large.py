@@ -21,7 +21,7 @@ row2height = 0.2
 row3height = 0.2
 
 # To be run in the workspace dir of the UCompareBeta module
-barwidth = 0.3
+barwidth = 0.6
 pluswidth = 0.45
 
 # Load experiment metadata
@@ -49,10 +49,11 @@ fig = p.figure(figsize=(16,9))
 
 ### 1) Plot the factors
 ax1 = fig.add_axes([0.0 + margin + extra, row3height + row2height + margin, 1.0 - 2.0 * margin- extra, row1height - 2.0 * margin]); 
+ax1.set_yscale('log')
 
 ind = n.arange(nummotifs)
 
-bw = barwidth/3
+bw = barwidth/2
 barsER = ax1.bar(ind - barwidth/2.0, factorER, bw, color='k', linewidth=0)
 barsEL = ax1.bar(ind - barwidth/2.0 + bw, factorEL, bw, color='r', linewidth=0)
 
@@ -61,10 +62,10 @@ barsEL.set_label(u"edgelist model")
 
 ax1.set_xlim([0 - pluswidth, nummotifs - 1 + pluswidth])
 
-ax1.hlines(0, - pluswidth, nummotifs - 1 + pluswidth)
+ax1.hlines(1, - pluswidth, nummotifs - 1 + pluswidth)
 
-yloc = p.MaxNLocator(7)
-ax1.get_yaxis().set_major_locator(yloc)
+#yloc = p.MaxNLocator(7)
+#ax1.get_yaxis().set_major_locator(yloc)
 
 ax1.get_yaxis().set_tick_params(which='both', direction='out')
 
@@ -87,6 +88,8 @@ ax1.hlines(ticks, - pluswidth, nummotifs - 1 + pluswidth, color='w')
 
 ax1.legend()
 ax1.set_ylabel('factor (bits)')
+
+ax1.set_ylim(bottom=1)
 
 ### 2) Plot the motifs
 
