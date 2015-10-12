@@ -9,7 +9,7 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static org.lilian.util.Functions.log2;
 import static org.nodes.Graphs.degrees;
-import static org.nodes.compression.Functions.prefix;
+import static org.nodes.util.Functions.prefix;
 import static org.nodes.models.USequenceEstimator.CIMethod;
 import static org.nodes.models.USequenceEstimator.CIType;
 import static org.nodes.motifs.MotifCompressor.MOTIF_SYMBOL;
