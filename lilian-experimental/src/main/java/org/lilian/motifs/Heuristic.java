@@ -101,7 +101,7 @@ public class Heuristic
 				sizeWithout = MotifModel.sizeER(data, sub, Functions.minList(instances, instance), true);
 			} else if(nullModel == NullModel.EDGELIST)
 			{
-				baseline = new EdgeListModel(false).codelength(data);
+				baseline = new EdgeListModel(Prior.ML).codelength(data);
 				sizeWith = MotifModel.sizeEL(data, sub, instances,  true);
 				sizeWithout = MotifModel.sizeEL(data, sub, Functions.minList(instances, instance), true);
 			}

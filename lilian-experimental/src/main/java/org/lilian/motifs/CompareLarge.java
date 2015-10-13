@@ -48,6 +48,7 @@ import org.nodes.compression.EdgeListCompressor;
 import org.nodes.compression.NeighborListCompressor;
 import org.nodes.data.Data;
 import org.nodes.models.DSequenceEstimator;
+import org.nodes.models.DegreeSequenceModel.Prior;
 import org.nodes.models.ERSimpleModel;
 import org.nodes.models.EdgeListModel;
 import org.nodes.models.MotifModel;
@@ -142,7 +143,7 @@ public class CompareLarge
 		List<Double> maxFactors = new ArrayList<Double>(subs.size());
 
 		double baselineER = (new ERSimpleModel(false)).codelength(data);
-		double baselineEL = (new EdgeListModel(false)).codelength(data);
+		double baselineEL = (new EdgeListModel(Prior.ML)).codelength(data);
 		
 		for(int i : series(subs.size()))
 		{

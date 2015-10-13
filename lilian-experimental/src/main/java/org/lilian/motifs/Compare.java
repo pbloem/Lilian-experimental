@@ -217,7 +217,7 @@ public class Compare
 		List<Double> maxFactors   =  new ArrayList<Double>(subs.size());
 				
 		double baselineER = new ERSimpleModel(true).codelength(data);
-		double baselineEL = new EdgeListModel(true).codelength(data);
+		double baselineEL = new EdgeListModel(Prior.ML).codelength(data);
 		double baselineBeta = new DegreeSequenceModel(betaIterations, betaAlpha, Prior.ML, Margin.LOWERBOUND).codelength(data);
 				
 		for(int i : series(subs.size()))

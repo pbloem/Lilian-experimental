@@ -20,6 +20,7 @@ import org.nodes.UGraph;
 import org.nodes.UNode;
 import org.nodes.compression.BinomialCompressor;
 import org.nodes.data.Data;
+import org.nodes.models.DegreeSequenceModel.Prior;
 import org.nodes.models.EdgeListModel;
 import org.nodes.models.MotifModel;
 import org.nodes.motifs.MotifCompressor;
@@ -50,7 +51,7 @@ public class SyntheticTest
 
 		UGraph<String> sub = ex.subgraphs().get(0);
 		System.out.println("frequency: " + ex.frequency(sub));
-		double motifSize = MotifModel.size(graph, sub, ex.occurrences(sub), new EdgeListModel(true), false);
+		double motifSize = MotifModel.size(graph, sub, ex.occurrences(sub), new EdgeListModel(Prior.COMPLETE), false);
 		
 		System.out.println(baseline + " " + motifSize);
 		
