@@ -49,7 +49,8 @@ fig = p.figure(figsize=(16,9))
 
 ### 1) Plot the factors
 ax1 = fig.add_axes([0.0 + margin + extra, row3height + row2height + margin, 1.0 - 2.0 * margin- extra, row1height - 2.0 * margin]); 
-ax1.set_yscale('log')
+
+#ax1.set_yscale('log')
 
 ind = n.arange(nummotifs)
 
@@ -152,5 +153,5 @@ ax3.set_ylabel('freq.')
 
 fig.suptitle('dataset: ' + dataset)
 
-p.savefig('compare.plot.png')
-p.savefig('compare.plot.pdf')
+p.savefig('compare-plot.png')
+p.savefig('compare-plot.pdf')

@@ -56,8 +56,18 @@ ind = n.arange(nummotifs)
 
 bw = barwidth/ni
 for i in range(ni):
+    color = u'slategrey'
+    label = u'$n^i = 0$'
+    if i == 1:
+        color = u'darkslategrey'
+        label = u'$n^i = 10$'
+    if i == 2:
+        color = u'k'
+        label = u'$n^i = 100$'
+    
     # the means as bars
-    ax1.bar(ind - barwidth/2.0 + i * bw, factMeans[:, i], bw, color='k', zorder=1)
+    bars = ax1.bar(ind - barwidth/2.0 + i * bw, factMeans[:, i], bw, color=color, zorder=1, linewidth=0)
+    bars.set_label(label)
 for i in range(ni):
     # the data as scatter
     for s in range(nummotifs):
@@ -131,8 +141,14 @@ ax3 = fig.add_axes([0.0 + margin + extra, row2height + margin, 1.0 - 2.0 * margi
 
 # ax3.bar(ind - barwidth/2.0, freq, barwidth, color='k')
 for i in range(ni):
+    color = u'slategrey'
+    if i == 1:
+        color = u'darkslategrey'
+    if i == 2:
+        color = u'k'
+    
     # the means as bars
-    ax3.bar(ind - barwidth/2.0 + i * bw, freqMeans[:, i], bw, color='k', zorder=1)
+    ax3.bar(ind - barwidth/2.0 + i * bw, freqMeans[:, i], bw, color=color, zorder=1, linewidth=0)
 # the data as scatter
 for i in range(ni):
     for s in range(nummotifs):
@@ -164,5 +180,5 @@ ax3.hlines(ticks, - pluswidth, nummotifs - 1 + pluswidth, color='w', zorder=2)
 
 ax3.set_ylabel('freq.')
 
-p.savefig('synthetic.plot.png')
-p.savefig('synthetic.plot.pdf')
+p.savefig('synthetic-plot.png')
+p.savefig('synthetic-plot.pdf')

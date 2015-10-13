@@ -21,7 +21,7 @@ row2height = 0.2
 row3height = 0.2
 
 # To be run in the workspace dir of the UCompareBeta module
-barwidth = 0.3
+barwidth = 0.6
 pluswidth = 0.45
 
 # Load experiment metadata
@@ -36,7 +36,7 @@ data = n.genfromtxt('numbers.csv', delimiter=',')
 (nummotifs, numfeatures) = data.shape
 
 # Clip the number of motifs if necessary 
-clip = 30
+clip = 100
 if nummotifs > clip:
     data = data[0:clip,:]
     (nummotifs, numfeatures) = data.shape
@@ -46,7 +46,7 @@ factorER = data[:,1]
 factorEL = data[:,2]
 factorBeta = data[:,3]
     
-fig = p.figure(figsize=(16,9))
+fig = p.figure(figsize=(48,9))
 
 ### 1) Plot the factors
 ax1 = fig.add_axes([0.0 + margin + extra, row3height + row2height + margin, 1.0 - 2.0 * margin- extra, row1height - 2.0 * margin]); 
@@ -60,7 +60,7 @@ barsBeta = ax1.bar(ind - barwidth/2.0 + 2.0 * bw, factorBeta, bw, color='b', lin
 
 barsER.set_label(u"Erdös–Rényi model")
 barsEL.set_label(u"edgelist model")
-barsBeta.set_label(u"beta model")
+barsBeta.set_label(u"degree-sequence model")
 
 ax1.set_xlim([0 - pluswidth, nummotifs - 1 + pluswidth])
 
@@ -153,5 +153,5 @@ ax3.set_ylabel('freq.')
 
 fig.suptitle('dataset: ' + dataset)
 
-p.savefig('compare.plot.png')
-p.savefig('compare.plot.pdf')
+p.savefig('compare-plot.png')
+p.savefig('compare-plot.pdf')
