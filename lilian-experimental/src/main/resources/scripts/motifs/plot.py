@@ -36,7 +36,7 @@ data = n.genfromtxt('numbers.csv', delimiter=',')
 (nummotifs, numfeatures) = data.shape
 
 # Clip the number of motifs if necessary 
-clip = 100
+clip = 500
 if nummotifs > clip:
     data = data[0:clip,:]
     (nummotifs, numfeatures) = data.shape
@@ -46,7 +46,7 @@ factorER = data[:,1]
 factorEL = data[:,2]
 factorBeta = data[:,3]
     
-fig = p.figure(figsize=(48,9))
+fig = p.figure(figsize=(48,7))
 
 ### 1) Plot the factors
 ax1 = fig.add_axes([0.0 + margin + extra, row3height + row2height + margin, 1.0 - 2.0 * margin- extra, row1height - 2.0 * margin]); 

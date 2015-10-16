@@ -33,7 +33,9 @@ import org.nodes.UTGraph;
 import org.nodes.algorithms.Nauty;
 import org.nodes.compression.BinomialCompressor;
 import org.nodes.data.Data;
+import org.nodes.models.DegreeSequenceModel.Prior;
 import org.nodes.models.ERSimpleModel;
+import org.nodes.models.EdgeListModel;
 import org.nodes.models.MotifModel;
 import org.nodes.models.MotifSearchModel;
 import org.nodes.motifs.UPlainMotifExtractor;
@@ -213,6 +215,7 @@ public class Synthetic
 		UPlainMotifExtractor<String> ex = new UPlainMotifExtractor<String>(graph, motifSamples, nPrime);
 		
 		double baseline = new ERSimpleModel(false).codelength(graph);
+		// double baseline = new EdgeListModel(Prior.ML).codelength(graph);
 		Global.log().info("baseline " + baseline);
 		
 //		int nn = graph.size(), nl = graph.numLinks();

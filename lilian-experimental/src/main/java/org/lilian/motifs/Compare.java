@@ -260,8 +260,7 @@ public class Compare
 			Global.log().info("null model: Beta");
 			{
 
-				double sizeBeta = 
-						MotifSearchModel.sizeBeta(data, sub, occs, resets, betaIterations, betaAlpha, betaSearchDepth);
+				double sizeBeta = MotifSearchModel.sizeBeta(data, sub, occs, resets, betaIterations, betaAlpha, betaSearchDepth);
 				double factorBeta = baselineBeta - sizeBeta;
 				factorsBeta.add(factorBeta);
 			 
