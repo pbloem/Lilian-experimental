@@ -13,9 +13,9 @@ import org.lilian.data.real.Similitude;
 import org.lilian.data.real.classification.Classification;
 import org.lilian.data.real.classification.Classifier;
 import org.lilian.data.real.classification.Classifiers;
-import org.lilian.data.real.fractal.IFS;
-import org.lilian.data.real.fractal.IFSClassifierSingle;
-import org.lilian.data.real.fractal.IFSs;
+import org.lilian.data.real.fractal.old.IFS;
+import org.lilian.data.real.fractal.old.IFSClassifierSingle;
+import org.lilian.data.real.fractal.old.IFSs;
 import org.lilian.experiment.AbstractExperiment;
 
 public class IFSClassifierSingleTest extends AbstractExperiment

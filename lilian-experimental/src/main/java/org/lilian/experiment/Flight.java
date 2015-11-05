@@ -20,7 +20,7 @@ import org.lilian.data.real.Draw;
 import org.lilian.data.real.MVN;
 import org.lilian.data.real.Map;
 import org.lilian.data.real.Point;
-import org.lilian.data.real.fractal.IFS;
+import org.lilian.data.real.fractal.old.IFS;
 import org.lilian.neural.Activations;
 import org.lilian.neural.FullNN;
 import org.lilian.neural.NeuralNetworks;

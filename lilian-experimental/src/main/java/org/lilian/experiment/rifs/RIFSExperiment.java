@@ -15,7 +15,7 @@ import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
-import org.lilian.data.real.fractal.IFS;
+import org.lilian.data.real.fractal.old.IFS;
 import org.lilian.data.real.fractal.random.ChoiceTree;
 import org.lilian.data.real.fractal.random.DiscreteRIFS;
 import org.lilian.data.real.fractal.random.RIFSEM;

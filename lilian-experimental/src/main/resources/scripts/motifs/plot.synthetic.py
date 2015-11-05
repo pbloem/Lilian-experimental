@@ -14,6 +14,13 @@ from matplotlib.pyplot import margins
 import os.path
 import json
 
+
+font = {'family' : 'normal',
+        'weight' : 'normal',
+        'size'   : 15}
+
+mpl.rc('font', **font)
+
 margin = 0.05
 extra = 0.05
 

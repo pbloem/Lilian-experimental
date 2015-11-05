@@ -27,6 +27,7 @@ import org.lilian.data.real.MVN;
 import org.lilian.data.real.Map;
 import org.lilian.data.real.Maps;
 import org.lilian.data.real.Point;
+import org.lilian.data.real.fractal.old.IFSs;
 import org.lilian.util.Functions;
 import org.lilian.util.Series;
 

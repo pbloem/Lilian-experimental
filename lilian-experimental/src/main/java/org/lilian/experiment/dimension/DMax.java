@@ -8,7 +8,7 @@ import org.lilian.Global;
 import org.lilian.data.dimension.Takens;
 import org.lilian.data.real.MVN;
 import org.lilian.data.real.Point;
-import org.lilian.data.real.fractal.IFSs;
+import org.lilian.data.real.fractal.old.IFSs;
 import org.lilian.experiment.AbstractExperiment;
 import org.lilian.experiment.Parameter;
 import org.lilian.experiment.Resources;

@@ -13,6 +13,8 @@ import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
 import org.lilian.data.real.Point;
 import org.lilian.data.real.Similitude;
+import org.lilian.data.real.fractal.old.IFS;
+import org.lilian.data.real.fractal.old.IFSs;
 import org.lilian.util.Series;
 
 @Module(name = "Depth test")

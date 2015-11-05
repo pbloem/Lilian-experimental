@@ -218,7 +218,7 @@ public class Compare
 				
 		double baselineER = new ERSimpleModel(true).codelength(data);
 		double baselineEL = new EdgeListModel(Prior.ML).codelength(data);
-		double baselineBeta = new DegreeSequenceModel(betaIterations, betaAlpha, Prior.ML, Margin.LOWERBOUND).codelength(data);
+		double baselineBeta = 0.0; // new DegreeSequenceModel(betaIterations, betaAlpha, Prior.ML, Margin.LOWERBOUND).codelength(data);
 				
 		for(int i : series(subs.size()))
 		{
@@ -260,7 +260,8 @@ public class Compare
 			Global.log().info("null model: Beta");
 			{
 
-				double sizeBeta = MotifSearchModel.sizeBeta(data, sub, occs, resets, betaIterations, betaAlpha, betaSearchDepth);
+				double sizeBeta = 100.0; 
+						// MotifSearchModel.sizeBeta(data, sub, occs, resets, betaIterations, betaAlpha, betaSearchDepth);
 				double factorBeta = baselineBeta - sizeBeta;
 				factorsBeta.add(factorBeta);
 			 
