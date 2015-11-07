@@ -170,7 +170,5 @@ public class Visual
 		
 		image= Draw.draw(ifs.generator(), its, 1000/div, true);
 		ImageIO.write(image, "PNG", new File(genDir, name+".deep.png"));
-
-		
 	}
 }

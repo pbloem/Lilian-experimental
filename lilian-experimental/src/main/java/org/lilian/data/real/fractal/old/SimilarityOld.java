@@ -1,4 +1,4 @@
-package org.lilian.data.real.fractal;
+package org.lilian.data.real.fractal.old;
 
 import static org.junit.Assert.*;
 
