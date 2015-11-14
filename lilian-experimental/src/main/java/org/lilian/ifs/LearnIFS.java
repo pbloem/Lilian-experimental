@@ -99,6 +99,13 @@ public class LearnIFS
 		
 		for(int i : series(iterations))
 			write(bestHistory.get(i), bestDepths.get(i), bestPosts.get(i), dir, String.format("iteration.%06d", i));
+		
+		try
+		{
+			org.data2semantics.platform.util.Functions.python(Global.getWorkingDir(), "fractals/histogram.py");
+		} catch (Exception e) {
+			System.out.println("Failed to run plot script. " + e);
+		}
 	}
 	
 	public synchronized void done(double likelihood, List<IFS<Similitude>> history, List<List<Double>> depths, List<Similitude> posts)
@@ -171,7 +178,9 @@ public class LearnIFS
 			
 			double likelihood = -em.logLikelihood(data);
 			
-			done(likelihood, history, dHistory, pHistory);			
+			done(likelihood, history, dHistory, pHistory);	
+			
+			System.out.println("Thread " + rep + " finished");
 		}
 	}
 }
