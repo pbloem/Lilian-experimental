@@ -160,7 +160,11 @@ public class Data
 			throws IOException
 		{
 			Classified<Point> data = Classification.readCSV(new File(file));
-			return data.points(cls);
+			
+			if(cls >= 0)
+				return data.points(cls);
+			
+			return data;
 		}
 	}
 	

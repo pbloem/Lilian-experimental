@@ -71,10 +71,6 @@ public class LearnIFS
 	{
 		org.lilian.Global.random = new java.util.Random();
 		
-		
-		Similitude trans = new Similitude(1.0, new Point(10.0, 0.0), new Point(0.0));
-		// data = trans.map(data);
-		
 		BufferedImage image = Draw.draw(data, 400, true);
 		ImageIO.write(image, "PNG", new File(Global.getWorkingDir(), "data.png"));
 
@@ -121,7 +117,7 @@ public class LearnIFS
 		}
 	}
 
-	private <M extends Map & Parametrizable> void write(IFS<Similitude> ifs, List<Double> depths, Similitude post, File dir, String name) throws IOException
+	public <M extends Map & Parametrizable> void write(IFS<Similitude> ifs, List<Double> depths, Similitude post, File dir, String name) throws IOException
 	{
 		int div = highQuality ? 1 : 4;
 		int its = highQuality ? (int) 1000000 : 10000;
@@ -153,7 +149,7 @@ public class LearnIFS
 			List<List<Double>> dHistory = new ArrayList<List<Double>>(iterations);			
 			List<Similitude> pHistory = new ArrayList<Similitude>(iterations);			
 			
-			IFS<Similitude> initial = IFSs.initialSphere(2, numComponents, 1.0, 0.5, true);
+			IFS<Similitude> initial = IFSs.initialSphere(data.get(0).dimensionality(), numComponents, 1.0, 0.5, true);
 
 			EM em = new EM(data, sampleSize, initial, depth, true);
 			
