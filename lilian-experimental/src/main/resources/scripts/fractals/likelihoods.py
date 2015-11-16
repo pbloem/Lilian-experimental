@@ -20,9 +20,9 @@ fig = p.figure(figsize=(4,4))
 ax = p.subplot(111)
 ### 1) Plot the factors
 
-ax.scatter(n.random.normal(1.0, 0.05, num), ll[:,0], linewidth=0, c='k')
-ax.scatter(n.random.normal(2.0, 0.05, num), ll[:,1], linewidth=0, c='r')
-ax.scatter(n.random.normal(3.0, 0.05, num), ll[:,2], linewidth=0, c='b')
+ax.scatter(n.random.normal(1.0, 0.01, num), ll[:,0], s=2, linewidth=0, c='k')
+ax.scatter(n.random.normal(2.0, 0.01, num), ll[:,1], s=2, linewidth=0, c='r')
+ax.scatter(n.random.normal(3.0, 0.01, num), ll[:,2], s=2, linewidth=0, c='b')
 
 x = [1, 2, 3]
 labels = ['iso', 'mog', 'ifs']
@@ -39,6 +39,8 @@ ax.get_yaxis().set_major_locator(yloc)
 
 ax.get_xaxis().set_tick_params(which='both', top='off')
 ax.get_yaxis().set_tick_params(which='both', right='off')
+
+fig.tight_layout()
 
 p.savefig('likelihoods.png')
 p.savefig('likelihoods.pdf')

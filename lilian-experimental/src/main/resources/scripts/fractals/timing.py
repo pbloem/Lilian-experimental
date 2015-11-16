@@ -56,8 +56,8 @@ ax1.set_xlabel('data size')
 ax1.set_ylabel('time (s)')
 
 
-exp = ax2.errorbar(dimension[:, 0], dimension[:,1], yerr= 1.96 * dimension[:, 2])
-max = ax2.errorbar(dimension[:, 0], dimension[:,3], yerr= 1.96 *  dimension[:, 4])
+exp = ax2.errorbar(dimension[:, 0], dimension[:,1], yerr= 1.96 * dimension[:, 2], capsize=0)
+max = ax2.errorbar(dimension[:, 0], dimension[:,3], yerr= 1.96 *  dimension[:, 4], capsize=0)
 clip_off(exp)
 clip_off(max)
 ax2.set_xlabel('dimension')
@@ -85,5 +85,5 @@ clean(ax3)
 
 fig.tight_layout()
 
-p.savefig('likelihoods.png')
-p.savefig('likelihoods.pdf')
+p.savefig('timing.png')
+p.savefig('timing.pdf')

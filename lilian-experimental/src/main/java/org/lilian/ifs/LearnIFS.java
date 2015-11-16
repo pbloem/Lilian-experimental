@@ -96,6 +96,8 @@ public class LearnIFS
 		for(int i : series(iterations))
 			write(bestHistory.get(i), bestDepths.get(i), bestPosts.get(i), dir, String.format("iteration.%06d", i));
 		
+		
+		
 		try
 		{
 			org.data2semantics.platform.util.Functions.python(Global.getWorkingDir(), "fractals/histogram.py");
@@ -151,6 +153,10 @@ public class LearnIFS
 			
 			IFS<Similitude> initial = IFSs.initialSphere(data.get(0).dimensionality(), numComponents, 1.0, 0.5, true);
 
+			if(rep == 0)
+				initial = IFSs.sierpinskiSim();
+
+			
 			EM em = new EM(data, sampleSize, initial, depth, true);
 			
 			history.add(em.model());
@@ -158,21 +164,26 @@ public class LearnIFS
 						
 			for(int i : series(iterations))
 			{
+				
+				try
+				{ 
+					write(em.model(), em.depths(), em.post(), dir, String.format("rep.%04d.%04d", rep, i));
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+				
 				em.iterate();
 				
 				history.add(em.model());
 				dHistory.add(em.depths());
 				pHistory.add(em.post());
+				
+
 			}
 			
-			try
-			{
-				write(em.model(), em.depths(), em.post(), dir, String.format("rep.%04d", rep));
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+			double likelihood = - em.logLikelihood(data);
 			
-			double likelihood = -em.logLikelihood(data);
+			System.out.println(rep + " " + likelihood);
 			
 			done(likelihood, history, dHistory, pHistory);	
 			

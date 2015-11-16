@@ -19,6 +19,7 @@ import javax.imageio.ImageIO;
 import org.data2semantics.platform.Global;
 import org.data2semantics.platform.annotation.In;
 import org.data2semantics.platform.annotation.Main;
+import org.lilian.data.real.Datasets;
 import org.lilian.data.real.Draw;
 import org.lilian.data.real.Map;
 import org.lilian.data.real.MogEM;
@@ -28,11 +29,17 @@ import org.lilian.data.real.fractal.EM;
 import org.lilian.data.real.fractal.IFS;
 import org.lilian.data.real.fractal.IFSs;
 import org.lilian.search.Parametrizable;
+import org.lilian.util.Pair;
+
+import net.sf.javaml.core.Dataset;
 
 public class IFSHigh
 {
 	@In(name="data")
 	public List<Point> data;
+	
+	public List<Point> dataFull;
+	public List<Point> dataTest;
 	
 	@In(name="num components")
 	public int numComponents;
@@ -63,10 +70,12 @@ public class IFSHigh
 
 		for(int rep : series(repeats))
 		{
-			exec.execute(new RepeatISO(rep, Global.getWorkingDir()));
-			exec.execute(new RepeatMOG(rep, Global.getWorkingDir()));
-			exec.execute(new RepeatIFS(rep, Global.getWorkingDir()));
-
+			Pair<List<Point>, List<Point>> split = Datasets.split(data, 0.5);
+			List<Point> d = split.first();
+			List<Point> t = split.second();
+			exec.execute(new RepeatISO(d, t, rep, Global.getWorkingDir()));
+			exec.execute(new RepeatMOG(d, t, rep, Global.getWorkingDir()));
+			exec.execute(new RepeatIFS(d, t, rep, Global.getWorkingDir()));
 		}
 
 		exec.shutdown();
@@ -77,7 +86,7 @@ public class IFSHigh
 		
 		Writer out = new BufferedWriter(new FileWriter(new File(Global.getWorkingDir(), "likelihoods.csv")));
 		for(int i : series(ifsLikelihoods.size()))
-			out.write(ifsLikelihoods.get(i) + ", " + isoLikelihoods.get(i) + ", " + mogLikelihoods.get(i) + "\n"); 
+			out.write(isoLikelihoods.get(i) + ", " + mogLikelihoods.get(i) + ifsLikelihoods.get(i) + "\n"); 
 		out.close();
 	
 		try
@@ -105,14 +114,20 @@ public class IFSHigh
 
 	private class RepeatIFS extends Thread
 	{		
+		private List<Point> data;
+		private List<Point> test;
 		private int rep;
 		private File dir;
 		
-		public RepeatIFS(int rep, File dir)
+
+		public RepeatIFS(List<Point> data, List<Point> test, int rep, File dir)
 		{
+			this.data = data;
+			this.test = test;
 			this.rep = rep;
 			this.dir = dir;
 		}
+
 
 		@Override
 		public void run()
@@ -124,7 +139,7 @@ public class IFSHigh
 			for(int i : series(iterations))
 				em.iterate();
 						
-			doneIFS(-em.logLikelihood(data));	
+			doneIFS(-em.logLikelihood(test));	
 			
 			System.out.println("IFS Thread " + rep + " finished");
 		}
@@ -132,11 +147,15 @@ public class IFSHigh
 	
 	private class RepeatISO extends Thread
 	{		
+		private List<Point> data;
+		private List<Point> test;
 		private int rep;
 		private File dir;
 		
-		public RepeatISO(int rep, File dir)
+		public RepeatISO(List<Point> data, List<Point> test, int rep, File dir)
 		{
+			this.data = data;
+			this.test = test;
 			this.rep = rep;
 			this.dir = dir;
 		}
@@ -162,7 +181,7 @@ public class IFSHigh
 //				}
 			
 						
-			doneISO(-em.logLikelihood(data));	
+			doneISO(-em.logLikelihood(test));	
 			
 			System.out.println("ISO Thread " + rep + " finished");
 		}
@@ -170,11 +189,16 @@ public class IFSHigh
 	
 	private class RepeatMOG extends Thread
 	{		
+		private List<Point> data;
+		private List<Point> test;
+		
 		private int rep;
 		private File dir;
 		
-		public RepeatMOG(int rep, File dir)
+		public RepeatMOG(List<Point> data, List<Point> test, int rep, File dir)
 		{
+			this.data = data;
+			this.test = test;
 			this.rep = rep;
 			this.dir = dir;
 		}
@@ -197,7 +221,7 @@ public class IFSHigh
 //				}
 			
 			
-			doneMOG(-em.model().logDensity(data));
+			doneMOG(-em.model().logDensity(test));
 			
 			System.out.println("MOG Thread " + rep + " finished");
 		}
